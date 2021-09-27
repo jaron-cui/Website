@@ -1,5 +1,8 @@
 
 
+SCREENWIDTH = 600
+SCREENHEIGHT = 400
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -7,25 +10,20 @@ function sleep(ms) {
 async function loop() {
     var angle = 0
     var cameraVector = [1, 0, 0]
-    var points = [[100, 0, 0], [100, 20, 0], [80, -30, 30]]
+    var cameraPosition = [0, 0, 0]
+    var faces = [new Face("red", [[100, -300, -200], [100, 200, -100], [80, 200, 150]])]
+    var display = document.getElementById("display2")
     
     for(n = 0; n < 1000; n += 1) {
         var cameraBasis = invertMatrix([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector])
 
-        var screen = blankScreen()
-        for (n = 0; n < points.length; n += 1) {
-            var screenPos = screenPosition(points[n], cameraBasis)
-            var x = Math.ceil(screenPos[0]*.2) + 14
-            var y = Math.ceil(screenPos[1]*.2) + 9
-            if (x < 30 && x >= 0 && y >= 0 && y < 20) {
-                screen[y][x] = "&#9608"
-            }
+        display.innerHTML = ""
+        for (value of faces) {
+            var polygon = value.htmlScreenPolygon(cameraPosition, cameraBasis)
+            display.appendChild(polygon)
         }
-        document.getElementById("display").innerHTML = renderScreen(screen)
 
-        for (n = 0; n < points.length; n += 1) {
-            points[n][0] -= 2
-        }
+        cameraPosition[0] += 1
         await sleep(50)
     }
     /*var screen = blankScreen()
@@ -33,14 +31,16 @@ async function loop() {
     document.getElementById("display").innerHTML = renderScreen(screen)*/
 }
 
-function screenPosition(point, cameraBasis) {
+function screenPosition(point, cameraPosition, cameraBasis) {
+    point = addVectors(point, scaleVector(cameraPosition, -1))
     var converted = multiplyMatrixVector(cameraBasis, point)
-    console.log("Matrix: " + converted)
     if (converted[2] < 0) {
         return [-10000, -10000]
-    }
+    }7
     var distanceScale = 1 - converted[2]*.01
-    return [distanceScale*converted[0], distanceScale*converted[1]]
+    var x = converted[0]
+    var y = converted[1]
+    return [distanceScale*x + SCREENWIDTH/2, distanceScale*y + SCREENHEIGHT/2]
 }
 
 function multiplyMatrixVector(matrix, vector) {
@@ -200,6 +200,46 @@ function renderScreen(pixels) {
         output += "\n"
     });
     return output
+}
+
+// GEOMETRY
+
+// Represents a geometric face in 3D Cartesian space
+class Face {
+    // constructor taking in the color of the face and its 3D points
+    constructor(color, points) {
+        this.color = color
+        this.points = points
+    }
+
+    // Returns an array of the face points mapped onto the screen in the form [x, y]
+    screenPoints(cameraPosition, cameraBasis) {
+        var converted = []
+        for (value of this.points) {
+            converted.push(screenPosition(value, cameraPosition, cameraBasis))
+        }
+        return converted
+    }
+
+    // Returns an SVG polygon HTML element as the face should be rendered 
+    htmlScreenPolygon(cameraPosition, cameraBasis) {
+        var points = ""
+        for (value of this.screenPoints(cameraPosition, cameraBasis)) {
+            points += value[0] + "," + value[1] + " "
+
+            if (value[0] < 0 || value[0] >= SCREENWIDTH ||
+                value[1] < 0 || value[1] >= SCREENHEIGHT) {
+                points = ""
+                break;
+            }
+        }
+
+        var polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
+        polygon.setAttribute("points", points)
+        polygon.setAttribute("style", "fill:" + this.color +";stroke:black;stroke-width:1;fill-rule:evenodd;")
+
+        return polygon
+    }
 }
 
 loop()

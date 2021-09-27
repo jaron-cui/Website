@@ -10,8 +10,6 @@ async function loop() {
     var points = [[100, 0, 0], [100, 20, 0], [80, -30, 30]]
     
     for(n = 0; n < 1000; n += 1) {
-        await sleep(50)
-
         var cameraBasis = invertMatrix([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector])
 
         var screen = blankScreen()
@@ -28,6 +26,7 @@ async function loop() {
         for (n = 0; n < points.length; n += 1) {
             points[n][0] -= 2
         }
+        await sleep(50)
     }
     /*var screen = blankScreen()
     screen[9][9] = "&#9608"//9617, 9618, 9619

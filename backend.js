@@ -7,22 +7,27 @@ function sleep(ms) {
 async function loop() {
     var angle = 0
     var cameraVector = [1, 0, 0]
-    var point = [2, 0, 0]
+    var points = [[100, 0, 0], [100, 20, 0], [80, -30, 30]]
     
     for(n = 0; n < 1000; n += 1) {
-        point[1] += 1
         await sleep(50)
 
         var cameraBasis = invertMatrix([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector])
-        console.log("Basis: " + cameraBasis)
-        var screenPos = screenPosition(point, cameraBasis)
-        console.log(screenPos)
+
         var screen = blankScreen()
-        var x = Math.ceil(screenPos[0]) + 14
-        var y = Math.ceil(screenPos[1]) + 9
-        console.log("Screenpos: " + x + " " + y)
-        screen[y][x] = "&#9608"
+        for (n = 0; n < points.length; n += 1) {
+            var screenPos = screenPosition(points[n], cameraBasis)
+            var x = Math.ceil(screenPos[0]*.2) + 14
+            var y = Math.ceil(screenPos[1]*.2) + 9
+            if (x < 30 && x >= 0 && y >= 0 && y < 20) {
+                screen[y][x] = "&#9608"
+            }
+        }
         document.getElementById("display").innerHTML = renderScreen(screen)
+
+        for (n = 0; n < points.length; n += 1) {
+            points[n][0] -= 2
+        }
     }
     /*var screen = blankScreen()
     screen[9][9] = "&#9608"//9617, 9618, 9619
@@ -32,7 +37,10 @@ async function loop() {
 function screenPosition(point, cameraBasis) {
     var converted = multiplyMatrixVector(cameraBasis, point)
     console.log("Matrix: " + converted)
-    var distanceScale = converted[2]*.1
+    if (converted[2] < 0) {
+        return [-10000, -10000]
+    }
+    var distanceScale = 1 - converted[2]*.01
     return [distanceScale*converted[0], distanceScale*converted[1]]
 }
 

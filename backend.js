@@ -75,7 +75,7 @@ async function loop() {
         [new Cube([600, 100, 100], "green", 100)]
     var display = document.getElementById("display")
     
-    for (n = 0; n < 1000; n += 1) {
+    while (!keys.has("Escape")) {
         //console.log("CUBE: " + geometries[1].getFaces()[0].points)
         var cameraBasis = invertMatrix([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector])
         display.innerHTML = ""

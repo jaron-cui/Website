@@ -2,6 +2,66 @@
 
 SCREENWIDTH = 600
 SCREENHEIGHT = 400
+MOVESPEED = 1
+PANSPEED = 1
+
+var keys = new Set()
+
+document.addEventListener("keydown", key => keys.add(key["key"]))
+document.addEventListener("keyup", key => keys.delete(key["key"]))
+
+var cameraActions = new Map()
+var pitch = 0
+var yaw = 0
+
+cameraActions.set("w", (pos, vec) => [addVectors(pos, vec), vec])
+cameraActions.set("a", (pos, vec) => [addVectors(pos, scaleVector(screenXVector(vec), -1)), vec])
+cameraActions.set("s", (pos, vec) => [addVectors(pos, scaleVector(vec, -1)), vec])
+cameraActions.set("d", (pos, vec) => [addVectors(pos, screenXVector(vec)), vec])
+cameraActions.set("ArrowUp", (pos, vec) => {
+    pitch += PANSPEED
+    return [pos, recalculateCameraVector()]
+})
+cameraActions.set("ArrowDown", (pos, vec) => {
+    pitch -= PANSPEED
+    return [pos, recalculateCameraVector()]
+})
+cameraActions.set("ArrowLeft", (pos, vec) => {
+    yaw -= PANSPEED
+    return [pos, recalculateCameraVector()]
+})
+cameraActions.set("ArrowRight", (pos, vec) => {
+    yaw += PANSPEED
+    return [pos, recalculateCameraVector()]
+})
+
+function toRadians(degrees) {
+    return degrees / 180 * Math.PI
+}
+
+function recalculateCameraVector() {
+    var radPitch = toRadians(pitch)
+    var radYaw = toRadians(yaw)
+    var horizontalComponent = Math.abs(Math.cos(radPitch))
+
+    var xComponent = horizontalComponent*Math.cos(radYaw)
+    var yComponent = horizontalComponent*Math.sin(radYaw)
+    var zComponent = Math.sin(radPitch)
+
+    return [xComponent, yComponent, zComponent]
+}
+
+function handleCameraMovement(cameraPosition, cameraVector) {
+    var acc = [cameraPosition.slice(), cameraVector.slice()]
+    for (var key of keys) {
+        if (cameraActions.has(key)) {
+            acc = cameraActions.get(key)(acc[0], acc[1])
+        } else {
+            console.log(key)
+        }
+    }
+    return acc
+}
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -11,11 +71,12 @@ async function loop() {
     var angle = 0
     var cameraVector = [1, 0, 0]
     var cameraPosition = [0, 0, 0]
-    var geometries = [new Geometry([0, 0, 0], [new Face("red", [[100, -300, -200], [100, 200, -100], [80, 200, 150]])]),
-        new Cube([400, "green", 100])]
-    var display = document.getElementById("display2")
+    var geometries = //[new Geometry([0, 0, 0], [new Face("red", [[100, -300, -200], [100, 200, -100], [80, 200, 150]])]),
+        [new Cube([600, 100, 100], "green", 100)]
+    var display = document.getElementById("display")
     
     for (n = 0; n < 1000; n += 1) {
+        //console.log("CUBE: " + geometries[1].getFaces()[0].points)
         var cameraBasis = invertMatrix([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector])
         display.innerHTML = ""
         var faces = []
@@ -23,15 +84,15 @@ async function loop() {
         for (group of geometries.map(g => g.getFaces())) {
             faces = faces.concat(group)
         }
-        console.log("face#: " + sortFaces(faces, cameraPosition).length)
         for (var face of sortFaces(faces, cameraPosition)) {
             var polygon = face.htmlScreenPolygon(cameraPosition, cameraBasis)
             display.appendChild(polygon)
-            console.log(display.innerHTML)
         }
 
-        cameraPosition[0] += .1
-        await sleep(5)
+        var newCam = handleCameraMovement(cameraPosition, cameraVector)
+        cameraPosition = newCam[0]
+        cameraVector = newCam[1]
+        await sleep(10)
     }
     /*var screen = blankScreen()
     screen[9][9] = "&#9608"//9617, 9618, 9619
@@ -53,12 +114,12 @@ function sortFaces(faces, cameraPosition) {
         while (current[1] < current[0].length && other[1] < other[0].length) {
             var currentFace = current[0][current[1]]
             var otherFace = other[0][other[1]]
-            if (currentFace[0] > otherFace[0]) {
+            if (currentFace[0] <= otherFace[0]) {
                 var temp = current
                 current = other
                 other = temp
             }
-            merged.push(currentFace)
+            merged.push(current[0][current[1]])
             current[1] += 1
         }
         for (var taggedFace of other[1] == other[0].length ? current[0] : other[0]) {
@@ -92,11 +153,12 @@ function screenPosition(point, cameraPosition, cameraBasis) {
     var converted = multiplyMatrixVector(cameraBasis, point)
     if (converted[2] < 0) {
         return [-10000, -10000]
-    }7
-    var distanceScale = 1 - converted[2]*.01
+    }
+    var distanceScale = 600/converted[2]
     var x = converted[0]
     var y = converted[1]
-    return [distanceScale*x + SCREENWIDTH/2, distanceScale*y + SCREENHEIGHT/2]
+    //console.log("distscale: " + distanceScale*x)
+    return [distanceScale*x + SCREENWIDTH/2, SCREENHEIGHT/2 - distanceScale*y]
 }
 
 function multiplyMatrixVector(matrix, vector) {
@@ -121,7 +183,8 @@ function screenYVector(vector) {
     var x = vector[0]
     var y = vector[1]
     var z = vector[2]
-    return unitVector([-x*z, -y*z, (x*x + y*y)])
+    var direction = unitVector([-x*z, -y*z, (x*x + y*y)])
+    return direction[2] < 0 ? scaleVector(direction, -1) : direction
 }
 
 function addVectors(vector1, vector2) {
@@ -152,7 +215,7 @@ function invertMatrix(matrix) {
     // Orders the rows so that the first element of the first row is nonzero,
     // the second element of the second row is nonzero, and the third of
     // the third row is nonzero.
-    var rows = [[0, matrix[0]], [1, matrix[1]], [2, matrix[2]]]
+    var rows = [[0, matrix[0].slice()], [1, matrix[1].slice()], [2, matrix[2].slice()]]
     var ordering = []
 
     for (i = 0; i < 3; i += 1) {
@@ -302,11 +365,11 @@ class Face {
         for (var point of this.screenPoints(cameraPosition, cameraBasis)) {
             points += point[0] + "," + point[1] + " "
 
-            if (point[0] < 0 || point[0] >= SCREENWIDTH ||
+            /*if (point[0] < 0 || point[0] >= SCREENWIDTH ||
                 point[1] < 0 || point[1] >= SCREENHEIGHT) {
                 points = ""
                 break;
-            }
+            }*/
         }
 
         var polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
@@ -332,11 +395,11 @@ class Geometry {
 class Cube extends Geometry {
     constructor(position, color, scale) {
         var w = scale / 2
-        var points = [[-w, -w, -w], [-w, -w, w], [-w, w, w], [-w, w, -w],
+        var corners = [[-w, -w, -w], [-w, -w, w], [-w, w, w], [-w, w, -w],
                  [w, -w, -w], [w, -w, w], [w, w, w], [w, w, -w]]
-        var facesPoints = [[0, 1, 2, 3], [0, 1, 4, 5], [0, 4, 3, 7], 
-                           [2, 6, 3, 7], [1, 5, 2, 6], [4, 5, 6, 7]]
-        super(position, facesPoints.map(indices => new Face(color, indices.map(i => points[i]))))
+        var facesPoints = [[0, 1, 2, 3], [0, 1, 5, 4], [0, 4, 7, 3], 
+                           [2, 6, 7, 3], [1, 5, 6, 2], [4, 5, 6, 7]]
+        super(position, facesPoints.map(indices => new Face(color, indices.map(i => corners[i]))))
     }
 }
 

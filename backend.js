@@ -11,28 +11,84 @@ async function loop() {
     var angle = 0
     var cameraVector = [1, 0, 0]
     var cameraPosition = [0, 0, 0]
-    var faces = [new Face("red", [[100, -300, -200], [100, 200, -100], [80, 200, 150]])]
+    var geometries = [new Geometry([0, 0, 0], [new Face("red", [[100, -300, -200], [100, 200, -100], [80, 200, 150]])]),
+        new Cube([400, "green", 100])]
     var display = document.getElementById("display2")
     
-    for(n = 0; n < 1000; n += 1) {
+    for (n = 0; n < 1000; n += 1) {
         var cameraBasis = invertMatrix([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector])
-
         display.innerHTML = ""
-        for (value of faces) {
-            var polygon = value.htmlScreenPolygon(cameraPosition, cameraBasis)
+        var faces = []
+        // Collect the faces of all geometries (recorded in global coordinates)
+        for (group of geometries.map(g => g.getFaces())) {
+            faces = faces.concat(group)
+        }
+        console.log("face#: " + sortFaces(faces, cameraPosition).length)
+        for (var face of sortFaces(faces, cameraPosition)) {
+            var polygon = face.htmlScreenPolygon(cameraPosition, cameraBasis)
             display.appendChild(polygon)
+            console.log(display.innerHTML)
         }
 
-        cameraPosition[0] += 1
-        await sleep(50)
+        cameraPosition[0] += .1
+        await sleep(5)
     }
     /*var screen = blankScreen()
     screen[9][9] = "&#9608"//9617, 9618, 9619
     document.getElementById("display").innerHTML = renderScreen(screen)*/
 }
 
+function sortFaces(faces, cameraPosition) {
+    var tagged = []
+    for (var face of faces) {
+        tagged.push([distance(cameraPosition, face.center), face])
+    }
+
+    return mergeSort(tagged).map(x => x[1])
+
+    function merge(facesA, facesB) {
+        var merged = []
+        var current = [facesA, 0]
+        var other = [facesB, 0]
+        while (current[1] < current[0].length && other[1] < other[0].length) {
+            var currentFace = current[0][current[1]]
+            var otherFace = other[0][other[1]]
+            if (currentFace[0] > otherFace[0]) {
+                var temp = current
+                current = other
+                other = temp
+            }
+            merged.push(currentFace)
+            current[1] += 1
+        }
+        for (var taggedFace of other[1] == other[0].length ? current[0] : other[0]) {
+            merged.push(taggedFace)
+        }
+        return merged
+    }
+
+    function mergeSort(taggedFaces) {
+        if (taggedFaces.length <= 1) {
+            return taggedFaces
+        }
+        var split = Math.floor(taggedFaces.length / 2)
+        var firstHalf = mergeSort(taggedFaces.slice(0, split))
+        var secondHalf = mergeSort(taggedFaces.slice(split, taggedFaces.length))
+        return merge(firstHalf, secondHalf)
+    }
+}
+
+function distance(a, b) {
+    var delta = addVectors(a, scaleVector(b, -1))
+    var total = 0
+    for (var component of delta) {
+        total += component*component
+    }
+    return Math.sqrt(total)
+}
+
 function screenPosition(point, cameraPosition, cameraBasis) {
-    point = addVectors(point, scaleVector(cameraPosition, -1))
+    var point = addVectors(point, scaleVector(cameraPosition, -1))
     var converted = multiplyMatrixVector(cameraBasis, point)
     if (converted[2] < 0) {
         return [-10000, -10000]
@@ -181,9 +237,9 @@ function vectorToString(vector) {
 
 function blankScreen() {
     var output = []
-    for(y = 0; y < 20; y += 1) {
+    for (y = 0; y < 20; y += 1) {
         var row = []
-        for(x = 0; x < 30; x += 1) {
+        for (x = 0; x < 30; x += 1) {
             row[x] = "&nbsp&nbsp&nbsp"
         }
         output[y] = row
@@ -204,19 +260,38 @@ function renderScreen(pixels) {
 
 // GEOMETRY
 
+function pointAverage(points) {
+    var temp = points.slice()
+    function recurse(rest) {
+        if (rest.length > 1) {
+            return addVectors(rest.pop(), recurse(rest))
+        } else {
+            return rest[0]
+        }
+    }
+    var n = temp.length
+    return scaleVector(addVectors(temp.pop(), recurse(temp)), 1/n)
+}
+
 // Represents a geometric face in 3D Cartesian space
 class Face {
     // constructor taking in the color of the face and its 3D points
     constructor(color, points) {
         this.color = color
-        this.points = points
+        this.points = points.slice()
+        this.center = pointAverage(points)
+    }
+
+    // Returns a translated copy of this face
+    translate(delta) {
+        return new Face(this.color, this.points.map(point => addVectors(point, delta)))
     }
 
     // Returns an array of the face points mapped onto the screen in the form [x, y]
     screenPoints(cameraPosition, cameraBasis) {
         var converted = []
-        for (value of this.points) {
-            converted.push(screenPosition(value, cameraPosition, cameraBasis))
+        for (var point of this.points) {
+            converted.push(screenPosition(point, cameraPosition, cameraBasis))
         }
         return converted
     }
@@ -224,11 +299,11 @@ class Face {
     // Returns an SVG polygon HTML element as the face should be rendered 
     htmlScreenPolygon(cameraPosition, cameraBasis) {
         var points = ""
-        for (value of this.screenPoints(cameraPosition, cameraBasis)) {
-            points += value[0] + "," + value[1] + " "
+        for (var point of this.screenPoints(cameraPosition, cameraBasis)) {
+            points += point[0] + "," + point[1] + " "
 
-            if (value[0] < 0 || value[0] >= SCREENWIDTH ||
-                value[1] < 0 || value[1] >= SCREENHEIGHT) {
+            if (point[0] < 0 || point[0] >= SCREENWIDTH ||
+                point[1] < 0 || point[1] >= SCREENHEIGHT) {
                 points = ""
                 break;
             }
@@ -239,6 +314,29 @@ class Face {
         polygon.setAttribute("style", "fill:" + this.color +";stroke:black;stroke-width:1;fill-rule:evenodd;")
 
         return polygon
+    }
+}
+
+// Represents a 3D geometry
+class Geometry {
+    constructor(position, faces) {
+        this.position = position
+        this.faces = faces
+    }
+
+    getFaces() {
+        return this.faces.map(face => face.translate(this.position))
+    }
+}
+
+class Cube extends Geometry {
+    constructor(position, color, scale) {
+        var w = scale / 2
+        var points = [[-w, -w, -w], [-w, -w, w], [-w, w, w], [-w, w, -w],
+                 [w, -w, -w], [w, -w, w], [w, w, w], [w, w, -w]]
+        var facesPoints = [[0, 1, 2, 3], [0, 1, 4, 5], [0, 4, 3, 7], 
+                           [2, 6, 3, 7], [1, 5, 2, 6], [4, 5, 6, 7]]
+        super(position, facesPoints.map(indices => new Face(color, indices.map(i => points[i]))))
     }
 }
 

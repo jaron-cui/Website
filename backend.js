@@ -4,7 +4,7 @@ SCREENWIDTH = 600
 SCREENHEIGHT = 400
 MOVESPEED = 2
 PANSPEED = .8
-PANLIMIT = 50
+PANLIMIT = 90
 
 var keys = new Set()
 
@@ -93,6 +93,14 @@ async function loop() {
                 var polygon = face.htmlScreenPolygon(cameraPosition, cameraBasis)
                 display.appendChild(polygon)
             }
+            // Crosshair
+            display.appendChild(htmlBar([SCREENWIDTH / 2, SCREENHEIGHT / 2], 20))
+            display.appendChild(htmlPole([SCREENWIDTH / 2, SCREENHEIGHT / 2], 20))
+
+            // Angular indicators
+            display.appendChild(htmlBar([SCREENWIDTH / 2, pitch * SCREENHEIGHT / 180 + SCREENHEIGHT / 2], 10))
+            var yawIndicatorPos = (Math.abs(yaw) % 360 < 180 ? 0 : Math.sign(yaw) * 360) - yaw % 360
+            display.appendChild(htmlPole([yawIndicatorPos * SCREENWIDTH / 360 + SCREENWIDTH / 2, SCREENHEIGHT / 2], 10))
             needsUpdate = false
         }
 
@@ -106,6 +114,26 @@ async function loop() {
 
         await sleep(10)
     }
+}
+
+function htmlLine(center, x1, y1, x2, y2) {
+    var line = document.createElementNS("http://www.w3.org/2000/svg","line");
+    line.setAttribute("x1", (x1 + center[0]).toString());
+    line.setAttribute("y1", (y1 + center[1]).toString());
+    line.setAttribute("x2", (x2 + center[0]).toString());
+    line.setAttribute("y2", (y2 + center[1]).toString());
+    line.setAttribute("stroke", "black")
+    return line
+}
+
+function htmlBar(center, length) {
+    var lineRad = length / 2
+    return htmlLine(center, -lineRad, 0, lineRad, 0)
+}
+
+function htmlPole(center, length) {
+    var lineRad = length / 2
+    return htmlLine(center, 0, -lineRad, 0, lineRad)
 }
 
 function sortFaces(faces, cameraPosition) {
@@ -174,7 +202,7 @@ function screenPosition(point, cameraPosition, cameraBasis) {
     var point = addVectors(point, scaleVector(cameraPosition, -1))
     var converted = multiplyMatrixVector(cameraBasis, point)
     if (converted[2] < 0) {
-        return [-10000, -10000]
+        return [null, null]
     }
     var distanceScale = 600/converted[2]
     var x = converted[0]
@@ -205,8 +233,9 @@ function multiplyMatrices(matrixA, matrixB) {
 }
 
 function screenXVector(vector) {
-    var x = vector[0]
-    var y = vector[1]
+    var radYaw = toRadians(yaw)
+    var x = Math.cos(radYaw)
+    var y = Math.sin(radYaw)
     return [-y, x, 0]
 }
 
@@ -215,7 +244,7 @@ function screenYVector(vector) {
     var y = vector[1]
     var z = vector[2]
     var direction = unitVector([-x*z, -y*z, (x*x + y*y)])
-    return direction[2] < 0 ? scaleVector(direction, -1) : direction
+    return direction
 }
 
 function rotationMatrixX(theta) {

@@ -58,6 +58,7 @@ function handleCameraMovement(cameraPosition, cameraVector) {
     for (var key of keys) {
         if (cameraActions.has(key)) {
             acc = cameraActions.get(key)(acc[0], acc[1])
+            needsUpdate = true
         }
     }
     return acc
@@ -68,46 +69,42 @@ function sleep(ms) {
 }
 
 var pointMap = new Map()
+needsUpdate = true
 async function loop() {
     var cameraVector = [1, 0, 0]
     var cameraPosition = [0, 0, 0]
-    var geometries = //[new Geometry([0, 0, 0], [new Face("red", [[100, -300, -200], [100, 200, -100], [80, 200, 150]])]),
-        [new Cube([600, 0, 0], "green", 100)]
+    var geometries = [new Geometry([400, 120, 0], [new Face("red", [[10, -30, -20], [50, 70, -50], [80, 100, 150]])]),
+        new Cube([600, 0, 0], "green", 100), new Cube([500, -50, 100], "purple", 69), new Cube([80, -30, -20], "blue", 30)]
     var display = document.getElementById("display")
     
     while (!keys.has("Escape")) {
-        //console.log("CUBE: " + geometries[1].getFaces()[0].points)
-        var cameraBasis = invertMatrix(transpose([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector]))
-        display.innerHTML = ""
-        var faces = []
-        // Collect the faces of all geometries (recorded in global coordinates)
-        for (group of geometries.map(g => g.getFaces())) {
+        if (needsUpdate) {
+            console.log("UPDATED")
+            pointMap.clear()
+            display.innerHTML = ""
+            var cameraBasis = invertMatrix(transpose([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector]))
+            var faces = []
+            // Collect the faces of all geometries (recorded in global coordinates)
+            for (group of geometries.map(g => g.getFaces())) {
             faces = faces.concat(group)
-        }
-        var check = true
-        for (var face of sortFaces(faces, cameraPosition)) {
-            if (check) {
-                check = false
-                //console.log("Center: " + vectorToString(multiplyMatrixVector(cameraBasis, face.points[0])))
             }
-            var polygon = face.htmlScreenPolygon(cameraPosition, cameraBasis)
-            display.appendChild(polygon)
+            for (var face of sortFaces(faces, cameraPosition)) {
+                var polygon = face.htmlScreenPolygon(cameraPosition, cameraBasis)
+                display.appendChild(polygon)
+            }
+            needsUpdate = false
         }
 
+        geometries[1].rotate(0, 0, 1)
+        geometries[0].rotate(.1, .2, 0)
+        geometries[2].rotate(.05, 0, .1)
+        geometries[3].rotate(0, 0, -.025)
         var newCam = handleCameraMovement(cameraPosition, cameraVector)
         cameraPosition = newCam[0]
         cameraVector = newCam[1]
-        /*console.log("Screen Position: " + vectorToString(multiplyMatrixVector(cameraBasis, [100, 0, 0])))
-        console.log("Basis:\n" + matrixToString(cameraBasis))
-        console.log("X Axis: " + vectorToString(screenXVector(cameraVector)))
-        console.log("Product:\n" + matrixToString(multiplyMatrices([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector], cameraBasis)))
-        console.log("-------------------------------------------")*/
-        pointMap.clear()
+
         await sleep(10)
     }
-    /*var screen = blankScreen()
-    screen[9][9] = "&#9608"//9617, 9618, 9619
-    document.getElementById("display").innerHTML = renderScreen(screen)*/
 }
 
 function sortFaces(faces, cameraPosition) {
@@ -183,7 +180,6 @@ function screenPosition(point, cameraPosition, cameraBasis) {
     var y = converted[1]
     var screenPos = [distanceScale*x + SCREENWIDTH/2, SCREENHEIGHT/2 - distanceScale*y]
     pointMap.set(key, screenPos)
-    console.log(pointMap.size)
     return screenPos
 }
 
@@ -219,6 +215,18 @@ function screenYVector(vector) {
     var z = vector[2]
     var direction = unitVector([-x*z, -y*z, (x*x + y*y)])
     return direction[2] < 0 ? scaleVector(direction, -1) : direction
+}
+
+function rotationMatrixX(theta) {
+    return [[1, 0, 0], [0, Math.cos(theta), -Math.sin(theta)], [0, Math.sin(theta), Math.cos(theta)]]
+}
+
+function rotationMatrixY(theta) {
+    return [[Math.cos(theta), 0, Math.sin(theta)], [0, 1, 0], [-Math.sin(theta), 0, Math.cos(theta)]]
+}
+
+function rotationMatrixZ(theta) {
+    return [[Math.cos(theta), -Math.sin(theta), 0], [Math.sin(theta), Math.cos(theta), 0], [0, 0, 1]]
 }
 
 function addVectors(vector1, vector2) {
@@ -423,6 +431,10 @@ class Face {
         return new Face(this.color, this.points.map(point => addVectors(point, delta)))
     }
 
+    transformPoints(matrix) {
+        return new Face(this.color, this.points.map(point => multiplyMatrixVector(matrix, point)))
+    }
+
     // Returns an array of the face points mapped onto the screen in the form [x, y]
     screenPoints(cameraPosition, cameraBasis) {
         var converted = []
@@ -458,10 +470,24 @@ class Geometry {
     constructor(position, faces) {
         this.position = position
         this.faces = faces
+        this.rotation = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     }
 
     getFaces() {
-        return this.faces.map(face => face.translate(this.position))
+        return this.faces.map(face => face.transformPoints(this.rotation).translate(this.position))
+    }
+
+    rotate(x, y, z) {
+        var transforms = [x, y, z]
+        var matrixGenerators = [rotationMatrixX, rotationMatrixY, rotationMatrixZ]
+        for (i = 0; i < 3; i += 1) {
+            if (transforms[i] == 0) {
+                continue
+            } else {
+                this.rotation = multiplyMatrices(this.rotation, matrixGenerators[i](toRadians(transforms[i])))
+                needsUpdate = true
+            }
+        }
     }
 }
 

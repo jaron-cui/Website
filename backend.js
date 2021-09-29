@@ -1,8 +1,8 @@
 
-
+// Constants
 SCREENWIDTH = 600
 SCREENHEIGHT = 400
-MOVESPEED = 1.4
+MOVESPEED = 2
 PANSPEED = .8
 
 var keys = new Set()
@@ -24,10 +24,15 @@ function panCamera(yawScale, pitchScale) {
         return [pos, recalculateCameraVector()]
     }
 }
+// Camera-level movement controls
 cameraActions.set("w", (pos, vec) => moveCamera(pos, vec, vec, 1))
 cameraActions.set("a", (pos, vec) => moveCamera(pos, vec, screenXVector(vec), -1))
 cameraActions.set("s", (pos, vec) => moveCamera(pos, vec, vec, -1))
 cameraActions.set("d", (pos, vec) => moveCamera(pos, vec, screenXVector(vec), 1))
+// Camera-vertical movement controls
+cameraActions.set("e", (pos, vec) => moveCamera(pos, vec, screenYVector(vec), 1))
+cameraActions.set("q", (pos, vec) => moveCamera(pos, vec, screenYVector(vec), -1))
+// Camera panning controls
 cameraActions.set("i", panCamera(0, 1))
 cameraActions.set("k", panCamera(0, -1))
 cameraActions.set("j", panCamera(-1, 0))
@@ -45,7 +50,6 @@ function recalculateCameraVector() {
     var xComponent = horizontalComponent*Math.cos(radYaw)
     var yComponent = horizontalComponent*Math.sin(radYaw)
     var zComponent = Math.sin(radPitch)
-    //console.log("Pitch: " + pitch + " Yaw: " + yaw)
     return [xComponent, yComponent, zComponent]
 }
 
@@ -54,8 +58,6 @@ function handleCameraMovement(cameraPosition, cameraVector) {
     for (var key of keys) {
         if (cameraActions.has(key)) {
             acc = cameraActions.get(key)(acc[0], acc[1])
-        } else {
-            //console.log(key)
         }
     }
     return acc
@@ -65,8 +67,8 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+var pointMap = new Map()
 async function loop() {
-    var angle = 0
     var cameraVector = [1, 0, 0]
     var cameraPosition = [0, 0, 0]
     var geometries = //[new Geometry([0, 0, 0], [new Face("red", [[100, -300, -200], [100, 200, -100], [80, 200, 150]])]),
@@ -100,6 +102,7 @@ async function loop() {
         console.log("X Axis: " + vectorToString(screenXVector(cameraVector)))
         console.log("Product:\n" + matrixToString(multiplyMatrices([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector], cameraBasis)))
         console.log("-------------------------------------------")*/
+        pointMap.clear()
         await sleep(10)
     }
     /*var screen = blankScreen()
@@ -156,7 +159,20 @@ function distance(a, b) {
     return Math.sqrt(total)
 }
 
+function roundTo(number, places) {
+    var factor = Math.pow(10, places)
+    return Math.round(number * factor) / factor
+}
+
+function roundVector(vector) {
+    return vector.map(x => Math.round(x))
+}
+
 function screenPosition(point, cameraPosition, cameraBasis) {
+    var key = String(roundVector(point))
+    if (pointMap.has(key)) {
+        return pointMap.get(key)
+    }
     var point = addVectors(point, scaleVector(cameraPosition, -1))
     var converted = multiplyMatrixVector(cameraBasis, point)
     if (converted[2] < 0) {
@@ -165,7 +181,10 @@ function screenPosition(point, cameraPosition, cameraBasis) {
     var distanceScale = 600/converted[2]
     var x = converted[0]
     var y = converted[1]
-    return [distanceScale*x + SCREENWIDTH/2, SCREENHEIGHT/2 - distanceScale*y]
+    var screenPos = [distanceScale*x + SCREENWIDTH/2, SCREENHEIGHT/2 - distanceScale*y]
+    pointMap.set(key, screenPos)
+    console.log(pointMap.size)
+    return screenPos
 }
 
 function multiplyMatrixVector(matrix, vector) {

@@ -2,8 +2,8 @@
 
 SCREENWIDTH = 600
 SCREENHEIGHT = 400
-MOVESPEED = 1
-PANSPEED = 1
+MOVESPEED = 1.4
+PANSPEED = .8
 
 var keys = new Set()
 
@@ -14,26 +14,24 @@ var cameraActions = new Map()
 var pitch = 0
 var yaw = 0
 
-cameraActions.set("w", (pos, vec) => [addVectors(pos, vec), vec])
-cameraActions.set("a", (pos, vec) => [addVectors(pos, scaleVector(screenXVector(vec), -1)), vec])
-cameraActions.set("s", (pos, vec) => [addVectors(pos, scaleVector(vec, -1)), vec])
-cameraActions.set("d", (pos, vec) => [addVectors(pos, screenXVector(vec)), vec])
-cameraActions.set("ArrowUp", (pos, vec) => {
-    pitch += PANSPEED
-    return [pos, recalculateCameraVector()]
-})
-cameraActions.set("ArrowDown", (pos, vec) => {
-    pitch -= PANSPEED
-    return [pos, recalculateCameraVector()]
-})
-cameraActions.set("ArrowLeft", (pos, vec) => {
-    yaw -= PANSPEED
-    return [pos, recalculateCameraVector()]
-})
-cameraActions.set("ArrowRight", (pos, vec) => {
-    yaw += PANSPEED
-    return [pos, recalculateCameraVector()]
-})
+function moveCamera(pos, vec, direction, scale) {
+    return [addVectors(pos, scaleVector(direction, scale * MOVESPEED)), vec]
+}
+function panCamera(yawScale, pitchScale) {
+    return (pos, vec) => {
+        pitch += pitchScale * PANSPEED
+        yaw += yawScale * PANSPEED
+        return [pos, recalculateCameraVector()]
+    }
+}
+cameraActions.set("w", (pos, vec) => moveCamera(pos, vec, vec, 1))
+cameraActions.set("a", (pos, vec) => moveCamera(pos, vec, screenXVector(vec), -1))
+cameraActions.set("s", (pos, vec) => moveCamera(pos, vec, vec, -1))
+cameraActions.set("d", (pos, vec) => moveCamera(pos, vec, screenXVector(vec), 1))
+cameraActions.set("i", panCamera(0, 1))
+cameraActions.set("k", panCamera(0, -1))
+cameraActions.set("j", panCamera(-1, 0))
+cameraActions.set("l", panCamera(1, 0))
 
 function toRadians(degrees) {
     return degrees / 180 * Math.PI
@@ -47,7 +45,7 @@ function recalculateCameraVector() {
     var xComponent = horizontalComponent*Math.cos(radYaw)
     var yComponent = horizontalComponent*Math.sin(radYaw)
     var zComponent = Math.sin(radPitch)
-
+    //console.log("Pitch: " + pitch + " Yaw: " + yaw)
     return [xComponent, yComponent, zComponent]
 }
 
@@ -57,7 +55,7 @@ function handleCameraMovement(cameraPosition, cameraVector) {
         if (cameraActions.has(key)) {
             acc = cameraActions.get(key)(acc[0], acc[1])
         } else {
-            console.log(key)
+            //console.log(key)
         }
     }
     return acc
@@ -72,19 +70,24 @@ async function loop() {
     var cameraVector = [1, 0, 0]
     var cameraPosition = [0, 0, 0]
     var geometries = //[new Geometry([0, 0, 0], [new Face("red", [[100, -300, -200], [100, 200, -100], [80, 200, 150]])]),
-        [new Cube([600, 100, 100], "green", 100)]
+        [new Cube([600, 0, 0], "green", 100)]
     var display = document.getElementById("display")
     
     while (!keys.has("Escape")) {
         //console.log("CUBE: " + geometries[1].getFaces()[0].points)
-        var cameraBasis = invertMatrix([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector])
+        var cameraBasis = invertMatrix(transpose([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector]))
         display.innerHTML = ""
         var faces = []
         // Collect the faces of all geometries (recorded in global coordinates)
         for (group of geometries.map(g => g.getFaces())) {
             faces = faces.concat(group)
         }
+        var check = true
         for (var face of sortFaces(faces, cameraPosition)) {
+            if (check) {
+                check = false
+                //console.log("Center: " + vectorToString(multiplyMatrixVector(cameraBasis, face.points[0])))
+            }
             var polygon = face.htmlScreenPolygon(cameraPosition, cameraBasis)
             display.appendChild(polygon)
         }
@@ -92,6 +95,11 @@ async function loop() {
         var newCam = handleCameraMovement(cameraPosition, cameraVector)
         cameraPosition = newCam[0]
         cameraVector = newCam[1]
+        /*console.log("Screen Position: " + vectorToString(multiplyMatrixVector(cameraBasis, [100, 0, 0])))
+        console.log("Basis:\n" + matrixToString(cameraBasis))
+        console.log("X Axis: " + vectorToString(screenXVector(cameraVector)))
+        console.log("Product:\n" + matrixToString(multiplyMatrices([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector], cameraBasis)))
+        console.log("-------------------------------------------")*/
         await sleep(10)
     }
     /*var screen = blankScreen()
@@ -122,7 +130,7 @@ function sortFaces(faces, cameraPosition) {
             merged.push(current[0][current[1]])
             current[1] += 1
         }
-        for (var taggedFace of other[1] == other[0].length ? current[0] : other[0]) {
+        for (var taggedFace of other[1] == other[0].length ? current[0].slice(current[1]) : other[0].slice(other[1])) {
             merged.push(taggedFace)
         }
         return merged
@@ -157,7 +165,6 @@ function screenPosition(point, cameraPosition, cameraBasis) {
     var distanceScale = 600/converted[2]
     var x = converted[0]
     var y = converted[1]
-    //console.log("distscale: " + distanceScale*x)
     return [distanceScale*x + SCREENWIDTH/2, SCREENHEIGHT/2 - distanceScale*y]
 }
 
@@ -171,6 +178,14 @@ function multiplyMatrixVector(matrix, vector) {
         output[y] = element
     }
     return output
+}
+
+function multiplyMatrices(matrixA, matrixB) {
+    var products = []
+    for (column of transpose(matrixB)) {
+        products.push(multiplyMatrixVector(matrixA, column))
+    }
+    return transpose(products)
 }
 
 function screenXVector(vector) {
@@ -209,39 +224,59 @@ function scaleVector(vector, factor) {
     return [factor*x, factor*y, factor*z]
 }
 
+function transpose(matrix) {
+    var transposed = []
+    for (var y = 0; y < matrix[0].length; y += 1) {
+        var row = []
+        for (var x = 0; x < matrix.length; x += 1) {
+            row.push(matrix[x][y])
+        }
+        transposed.push(row)
+    }
+    return transposed
+}
+
 function invertMatrix(matrix) {
     var row1, row2, row3
+    var inv1, inv2, inv3
     
     // Orders the rows so that the first element of the first row is nonzero,
     // the second element of the second row is nonzero, and the third of
     // the third row is nonzero.
-    var rows = [[0, matrix[0].slice()], [1, matrix[1].slice()], [2, matrix[2].slice()]]
+    var rows = [matrix[0].slice(), matrix[1].slice(), matrix[2].slice()]
+    var identityRows = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     var ordering = []
 
     for (i = 0; i < 3; i += 1) {
-        if (rows[i][1][0] != 0) {
-            ordering[0] = rows[i][0]
-            row1 = rows[i][1]
-            rows.splice(i, 1)
+        if (rows[i][0] != 0) {
+            var others = [0, 1, 2].filter(x => x != i)
+            if (rows[others[0]][2] != 0 && rows[others[1]][1] != 0) {
+                var temp = others[0]
+                others[0] = others[1]
+                others[1] = temp
+            } else if (rows[others[0]][1] == 0 || rows[others[1]][2] == 0) {
+                continue
+            }
+            ordering[0] = i
+            ordering[1] = others[0]
+            ordering[2] = others[1]
+            row1 = rows[i]
+            row2 = rows[others[0]]
+            row3 = rows[others[1]]
+            inv1 = identityRows[i]
+            inv2 = identityRows[others[0]]
+            inv3 = identityRows[others[1]]
             break
         }
     }
-    row2 = rows[1][1][1] != 0 ? rows.pop() : rows.shift()
-    ordering[1] = row2[0]
-    row2 = row2[1]
-
-    ordering[2] = rows[0][0]
-    row3 = rows.pop()[1]
+    // BUG ORIGINATES HERE - I HYPOTHESIZE THAT THIS DOESN'T ALWAYS ORDER CORRECTLY
 
     // If this cannot be done, the matrix has no inverse.
-    if (rows.length != 0) {
+    if (ordering.length == 0) {
         return null
     }
 
     var scale
-    var inv1 = [1, 0, 0]
-    var inv2 = [0, 1, 0]
-    var inv3 = [0, 0, 1]
 
     // Scales the first row so that the first element is 1. [1, b, c]
     scale = 1/row1[0]
@@ -285,17 +320,36 @@ function invertMatrix(matrix) {
     inv1 = addVectors(inv1, scaleVector(inv3, scale))
 
     var output = []
-    output[ordering[0]] = inv1
-    output[ordering[1]] = inv2
-    output[ordering[2]] = inv3
+    output[0] = inv1
+    output[1] = inv2
+    output[2] = inv3
     return output
 }
 
 function vectorToString(vector) {
-    var x = vector[0]
-    var y = vector[1]
-    var z = vector[2]
-    return "<" + x + ", " + y + ", " + z + ">"
+    var copy = vector.slice()
+    if (copy.length == 0) {
+        return "<>"
+    }
+    var output = "<"
+    var last = copy.pop()
+    for (component of copy) {
+        output += (Math.round(component * 100) / 100) + ", "
+    }
+    return output + (Math.round(last * 100) / 100) + ">"
+}
+
+function matrixToString(matrix) {
+    var copy = matrix.slice()
+    if (copy.length == 0) {
+        return "<>"
+    }
+    var output = "<"
+    var last = copy.pop()
+    for (row of copy) {
+        output += vectorToString(row) + "\n "
+    }
+    return output + vectorToString(last) + ">"
 }
 
 function blankScreen() {

@@ -4,6 +4,7 @@ SCREENWIDTH = 600
 SCREENHEIGHT = 400
 MOVESPEED = 2
 PANSPEED = .8
+PANLIMIT = 50
 
 var keys = new Set()
 
@@ -19,7 +20,7 @@ function moveCamera(pos, vec, direction, scale) {
 }
 function panCamera(yawScale, pitchScale) {
     return (pos, vec) => {
-        pitch += pitchScale * PANSPEED
+        pitch = Math.max(Math.min(pitch + pitchScale * PANSPEED, PANLIMIT), -PANLIMIT)
         yaw += yawScale * PANSPEED
         return [pos, recalculateCameraVector()]
     }

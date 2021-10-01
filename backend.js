@@ -4,7 +4,7 @@ SCREENWIDTH = 600
 SCREENHEIGHT = 400
 MOVESPEED = 2
 PANSPEED = .8
-PANLIMIT = 90
+PANLIMIT = 89
 
 var keys = new Set()
 
@@ -302,7 +302,6 @@ function invertMatrix(matrix) {
     // the third row is nonzero.
     var rows = [matrix[0].slice(), matrix[1].slice(), matrix[2].slice()]
     var identityRows = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    var ordering = []
 
     for (i = 0; i < 3; i += 1) {
         if (rows[i][0] != 0) {
@@ -314,9 +313,6 @@ function invertMatrix(matrix) {
             } else if (rows[others[0]][1] == 0 || rows[others[1]][2] == 0) {
                 continue
             }
-            ordering[0] = i
-            ordering[1] = others[0]
-            ordering[2] = others[1]
             row1 = rows[i]
             row2 = rows[others[0]]
             row3 = rows[others[1]]
@@ -329,7 +325,7 @@ function invertMatrix(matrix) {
     // BUG ORIGINATES HERE - I HYPOTHESIZE THAT THIS DOESN'T ALWAYS ORDER CORRECTLY
 
     // If this cannot be done, the matrix has no inverse.
-    if (ordering.length == 0) {
+    if (inv1 == null) {
         return null
     }
 

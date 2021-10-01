@@ -1,0 +1,30 @@
+body {
+    margin: 0;
+}
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #444444;
+}
+li {
+    float: left;
+}
+li a {
+    display: block;
+    color: white;
+    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    text-decoration: none;
+    text-align: center;
+    padding: 8px 12px;
+}
+li a:hover:not(.active) {
+    background-color: #646464;
+}
+.active {
+    background-color: #323232;
+}
+.main {
+    margin: 10px;
+}

@@ -1,17 +1,17 @@
 body {
     margin: 0;
 }
-ul {
+ul.navbar {
     list-style-type: none;
     margin: 0;
     padding: 0;
     overflow: hidden;
     background-color: #444444;
 }
-li {
+ul.navbar li {
     float: left;
 }
-li a {
+ul.navbar li a {
     display: block;
     color: white;
     font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
@@ -19,8 +19,11 @@ li a {
     text-align: center;
     padding: 8px 12px;
 }
-li a:hover:not(.active) {
+ul.navbar li a:hover:not(.active) {
     background-color: #646464;
+}
+ul.entries {
+    list-style: none;
 }
 .active {
     background-color: #323232;

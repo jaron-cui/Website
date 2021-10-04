@@ -5,8 +5,8 @@
         <title>
             Jaron's Incredible Website | Projects
         </title>
-        <ul>
-            <li><a href="index.html">Home</a></li>
+        <ul class="navbar">
+            <li><a href="jaron-cui.github.io">Home</a></li>
             <li><a class="active" href="#">Projects</a></li>
             <li><a href="resume.html">Resume</a></li>
         </ul>
@@ -16,7 +16,54 @@
         <div class="main">
             <h1>Under Construction!</h1>
 
-            <p>This is where I will document my personal and interesting academic projects.</p>
+            <p>This is where I will document my personal and academic projects.</p>
+            
+            <ul class="entries">
+                <li>
+                    <h2>Minecraft in Racket</h2>
+                    <h3>September 2021 | Racket</h3>
+
+                    <p>
+                        Minecraft in Racket is a clone of the popular game <i>Minecraft</i>,
+                        written in the Intermediate Student Language with Lambda (ISL) version
+                        of Racket. The following are some of the features I've implemented:
+                        <ul>
+                            <li>3D graphics</li>
+                            <li>Infinite, procedurally-generated terrain</li>
+                            <li>Breakable and placeable blocks</li>
+                            <li>Box-bounded collision and movement physics</li>
+                        </ul>
+                    </p>
+
+                    <iframe width="384" height="216" src="https://youtu.be/n3Io4oBeCn0"></iframe>
+
+                    <p>
+                        I started this project because I thought it would be interesting to implement a very
+                        object-oriented program in a functional programming language.
+                    </p>
+                    <p>
+                        Some of the notable differences between ISL and Java (the language that the
+                        original game is implemented in) include ISL's lack of mutation, classes, and
+                        static typing. On the other hand, ISL features first-class functions, which
+                        Java lacks.
+                    </p>
+                    <p>
+                        These distinctions meant that I did not have access to convenient data
+                        structures such as arrays, maps, and other constant-time access storage.
+                        So, in the process of designing the project, I had to implement
+                        immutable analogues. One example of this would be my replacement for Java's
+                        HashMap: A tree structure bundled along with a comparison function, which
+                        could on average retrieve key/value pairs in better than linear time.
+                    </p>
+                </li>
+
+                <li>
+                    <h2>Math Worksheet Generator</h2>
+                    <h3>August 2021 | Python, LaTeX</h3>
+
+                    <p>... to be added ...</p>
+                </li>
+            </ul>
         </div>
     </body>
 </html>

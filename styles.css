@@ -1,12 +1,17 @@
 body {
-    margin: 0;
+    margin: 20px 20px;
+    margin-top: 50px;
 }
 ul.navbar {
     list-style-type: none;
+    width: 100%;
     margin: 0;
     padding: 0;
     overflow: hidden;
     background-color: #444444;
+    position: fixed;
+    top: 0;
+    left: 0;
 }
 ul.navbar li {
     float: left;
@@ -24,6 +29,10 @@ ul.navbar li a:hover:not(.active) {
 }
 ul.entries {
     list-style: none;
+    padding-left: 0;
+}
+ul.entries > li {
+    margin-bottom: 60px;
 }
 .active {
     background-color: #323232;

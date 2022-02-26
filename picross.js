@@ -6,7 +6,7 @@ const incorrect = "incorrect";
 
 const colorMap = {unknown: "white", correct: "green", incorrect: "red"};
 
-const size = 10;
+const size = 30;
 const scale = 20;
 const margin = scale * Math.ceil(size / 2) + scale;
 const displayGrid = Array(size).fill(Array(size).fill(unknown));

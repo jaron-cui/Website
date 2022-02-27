@@ -6,9 +6,9 @@ const incorrect = "incorrect";
 
 const colorMap = {unknown: "white", correct: "green", incorrect: "red"};
 
-const size = 80;
-const scale = 8;
-const margin = 3 * scale * Math.sqrt(size) + scale;
+const size = 20;
+const scale = 20;
+const margin = 2 * scale * Math.sqrt(size) + scale;
 const displayGrid = Array(size).fill(Array(size).fill(unknown));
 const answerGrid = generateGrid();
 
@@ -17,7 +17,7 @@ function generateGrid() {
     for (var x = 0; x < size; x += 1) {
         var row = [];
         for (var y = 0; y < size; y += 1) {
-            row.push(Math.random() < 0.99);
+            row.push(Math.random() < 0.8);
         }
         grid.push(row);
     }

@@ -6,9 +6,9 @@ const incorrect = "incorrect";
 
 const colorMap = {unknown: "white", correct: "green", incorrect: "red"};
 
-const size = 30;
-const scale = 20;
-const margin = scale * Math.ceil(size / 2) + scale;
+const size = 80;
+const scale = 8;
+const margin = 3 * scale * Math.sqrt(size) + scale;
 const displayGrid = Array(size).fill(Array(size).fill(unknown));
 const answerGrid = generateGrid();
 
@@ -91,6 +91,7 @@ function buildText(x, y, string) {
     var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
     text.setAttribute("x", x);
     text.setAttribute("y", y);
+    text.setAttribute("font-size", scale);
     text.appendChild(document.createTextNode(string));
     return text;
 }

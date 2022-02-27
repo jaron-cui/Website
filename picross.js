@@ -17,7 +17,7 @@ function generateGrid() {
     for (var x = 0; x < size; x += 1) {
         var row = [];
         for (var y = 0; y < size; y += 1) {
-            row.push(Math.random() < 0.5);
+            row.push(Math.random() < 0.02);
         }
         grid.push(row);
     }

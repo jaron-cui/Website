@@ -1,0 +1,73 @@
+[
+  {
+    "title": "Minecraft in Racket",
+    "date": "2021-09-01",
+    "technologies": [
+      "Racket (Intermediate Student Language)"
+    ],
+    "features": [
+      "3D vector graphics",
+      "Infinite procedurally-generated terrain",
+      "Breakable and placeable blocks",
+      "Box-bounded collision and movement physics"
+    ],
+    "paragraphs": [
+      "I started this project because I thought it would be interesting to implement a game suited to object-oriented programming in a heavily restricted functional programming language.",
+
+      "Some of the notable differences between ISL and Java (the language that the original game is implemented in) are ISL's lack of mutation, classes, and static typing. On the other hand, ISL includes first-class functions.",
+
+      "These distinctions meant that I did not have access to convenient data structures such as arrays, maps, and other constant-time access storage. So, in the process of designing the project, I had to implement immutable analogues. My replacement for Java's HashMap, for example, was tree structure bundled along with a comparison function, which could on average retrieve key/value pairs with a binary search."
+    ]
+  }, {
+    "title": "Curricular Worksheet Generator",
+    "date": "2021-08-20",
+    "technologies": ["Python", "LaTeX"],
+    "features": [
+      "Randomized problem generation in PDF format",
+      "Integer, decimal, and fractional addition, multiplication, and exponents",
+      "Answer key",
+      "Improved performance in school of younger sister",
+      "Complaints from younger sister"
+    ],
+    "paragraphs": [
+      "This worksheet generator is flexible and extendable. The process of adding new types of problems simply entails implementing a function which can produce randomized prompts and answers. Any number of these can be given to the worksheet generator, which itself will randomly choose one of these generators for each problem.",
+      
+      "The program uses LaTeX to handle formatting. Since I found the existing LaTeX packages for Python to be unintuitive, I designed my own utilities for handling LaTeX document creation. These utilities have both generalized methods for ubiquitous document elements, such as headers, page numbers, paragraphs, and alignment, but also the ability to include raw LaTeX script and packages.",
+
+      "I have currently configured the program to generate math problems for the 6th grade level. I can add more types of problems and remove certain types as needed, and generate unlimited PDFs of unique worksheets without further modification."
+    ]
+  }, {
+    "title": "Photolithographic Mask Layout Generator",
+    "date": "2021-06-24",
+    "technologies": ["Python", "KLayout"],
+    "features": [
+      "GDSII format",
+      "Parameterizeable dimension constraints",
+      "Numbered mask grid layout generation",
+      "Multiple design variations within a single layout"
+    ],
+    "paragraphs": [
+      "Over the summer of 2021, I joined a Binghamton University research project investigating a new type of nanoscale microphone. The project used the Cornell Nanoscale Facility in the prototyping and testing stage of the process, with the primary fabrication methods including photolithography, material deposition, and etching.",
+
+      "Photolithography is a process that uses ultraviolet light and patterned masks on silicon wafers to produce nanostructures. A mask is a glass plane that has been processed to have transparent and opaque sections, a scaled-up version of the desired pattern. By shining ultraviolet light through a lens onto a prepared silicon wafer, sections of the surface are chemically stabilized and the wafer can be moved to a chemical bath which removes layers from unexposed regions. The final result is a consistently reproducible silicon structure of a greatly reduced scale in relation to the original pattern mask.",
+
+      "In order to create a photolithographic mask, we must first design a layout digitally. However, since many variants of the nanostructures are needed for thorough testing of the properties of the design, the team was repeatedly manually adjusting the vertices and dimensions. This was a tedious and time-consuming process, so I took the initiative to implement a program which could parameterize the design.",
+
+      "This program allowed for adjustments to be made to the primary dimensions, such as lengths or quantities of features. Then, repeated sections and minor dimensions would be automatically recalculated and used to easily generate a new design layout.",
+
+      "The program outputs files in the GDSII (Graphic Design System) format, a file format commonly used for integrated circuit design. However, one of my team members is currently working to extend the program to output CAD files which can be used to simulate the physical design prior to real-world fabrication."
+    ]
+  }, {
+    "title": "",
+    "date": "",
+    "technologies": [],
+    "features": [],
+    "paragraphs": []
+  }, {
+    "title": "",
+    "date": "",
+    "technologies": [],
+    "features": [],
+    "paragraphs": []
+  }
+]

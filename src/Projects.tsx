@@ -1,31 +1,42 @@
+import { Button, Collapse, Icon, IconButton, InputAdornment, makeStyles, TextField } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { Collapse } from 'react-bootstrap';
-import projects from './projects.json';
+import { DEFAULT_FONT } from './constants';
+import Clip from './Clip';
+import { ProjectInfo, PROJECTS, wrapContent } from './util';
+import { BoxArrowUpRight } from 'react-bootstrap-icons';
 
-type Project = {
-  title: string;
-  date: string;
-  technologies: string[];
-  features: string[];
-  paragraphs: string[];
-}
-
-type ProjectComponentProps = Project & {
+type ProjectComponentProps = ProjectInfo & {
   open: boolean;
   setOpen: (value: boolean) => void;
 }
 
+const BUTTON_STYLE = {
+  borderRadius: '3px',
+  backgroundColor: '#EEEEEE',
+  '&:hover': {
+    backgroundColor: '#CCCCCC'
+  }
+}
+
+function dateToString(date: string) {
+  return new Date(date).toLocaleString('default', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
 function searchFor(search: string) {
-  return function matchProject(project: Project) {
+  return function matchProject(project: ProjectInfo) {
     if (!project.title) {
       return false;
     }
 
     const strings: string[] = [
+      dateToString(project.date),
       project.title,
       ...project.technologies,
-      ...project.features,
-      ...project.paragraphs
+      ...project.features
     ];
 
     for (const string of strings) {
@@ -38,26 +49,70 @@ function searchFor(search: string) {
   }
 }
 
-function ProjectComponent(props: ProjectComponentProps) {
+function ProjectEntryButton(props: ProjectComponentProps) {
   return (
-    <div>
-      <button key='title' onClick={() => props.setOpen(!props.open)} style={{
-        width: '100%',
-        textAlign: 'left'
-      }}>
-        <h2>{props.title} | {props.date}</h2>
+    <Button onClick={() => props.setOpen(!props.open)} sx={{
+      ...DEFAULT_FONT,
+      ...BUTTON_STYLE,
+      color: 'black',
+      textAlign: 'left',
+      textTransform: 'unset !important',
+      width: '100%',
+      justifyContent: 'flex-start'
+    }}>
+      <span style={{width: '100%'}}>
+        <span style={{
+          display: 'flex',
+          justifyContent: 'space-between'
+        }}>
+          <span>{props.title}</span>
+          <i>{dateToString(props.date)}</i>
+        </span>
         <p>{props.technologies.join(', ')}</p>
-      </button>
-      <Collapse in={props.open}>
-        <div>
-          <h4>Features</h4>
-          <ul style={{
-            //marginLeft: '20px'
+      </span>
+    </Button>
+  );
+}
+
+function ProjectEntry(props: ProjectComponentProps) {
+  return (
+    <div style={{
+      ...DEFAULT_FONT,
+      paddingTop: '4px',
+      paddingBottom: '4px'
+      }}>
+      <div style={{display: 'flex', flexDirection: 'row'}}>
+        <ProjectEntryButton {...props} />
+        <div style={{margin: '8px'}}>
+          <IconButton 
+            href={`/projects/${props.id}`}
+            target='_blank'
+            rel='noreferrer noopener'
+            sx={{
+              ...BUTTON_STYLE,
+              color: '#777777',
+              '&:hover': {
+                color: 'black'
+              }
           }}>
-            {props.features.map((feature, i) => <li key={i}>{feature}</li>)}
-          </ul>
-          <h4>Description</h4>
-          {props.paragraphs.map((paragraph, i) => <p key={i}>{paragraph}</p>)}
+            <BoxArrowUpRight size='15px'/>
+          </IconButton>
+        </div>
+      </div>
+      <Collapse in={props.open}>
+        <div style={{padding: '20px'}}>
+          <div>
+            <h4>Features</h4>
+            <ul>
+              {props.features.map((feature, i) => <li key={i}>{feature}</li>)}
+            </ul>
+          </div>
+          {props.video && wrapContent(<iframe width="768" height="432" src={props.video}></iframe>)}
+          {props.clip && wrapContent(<Clip link={props.clip}/>)}
+          <div style={{paddingTop: '10px'}}>
+            <h4>Description</h4>
+            {props.paragraphs.map((paragraph, i) => <p key={i}>{paragraph}</p>)}
+          </div>
         </div>
       </Collapse>
     </div>
@@ -66,11 +121,11 @@ function ProjectComponent(props: ProjectComponentProps) {
 
 export default function Projects() {
   const [search, setSearch] = useState<string>('');
-  const [displayed, setDisplayed] = useState<Project[]>(projects.filter(project => project.title));
+  const [displayed, setDisplayed] = useState<ProjectInfo[]>([]);
   const [opened, setOpened] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    setDisplayed(projects.filter(searchFor(search)).sort((p1, p2) => (p2.date.localeCompare(p1.date))));
+    setDisplayed(PROJECTS.filter(searchFor(search)).sort((p1, p2) => (p2.date.localeCompare(p1.date))));
   }, [search])
 
   return (
@@ -78,14 +133,20 @@ export default function Projects() {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'left',
-      marginRight: '100px',
-      marginLeft: '100px',
-      marginBottom: '300px'
+      marginTop: '40px'
     }}>
-      <input type='text' onChange={event => setSearch(event.target.value)} /> {
+      <TextField
+        label="Search Projects"
+        onChange={event => setSearch(event.target.value)}
+        inputProps={{style: DEFAULT_FONT}}
+        InputLabelProps={{style: DEFAULT_FONT}}
+        style={{
+          paddingBottom: '20px'
+        }}
+      /> {
         displayed.map(project => (
           <div key={project.date}>
-            <ProjectComponent {...{
+            <ProjectEntry {...{
               ...project,
               open: opened.has(project.title),
               setOpen: value => {

@@ -1,14 +1,50 @@
-import { Navbar, Container, Nav } from "react-bootstrap";
+import { useEffect, useState } from 'react';
+import { Navbar, Container, Nav } from 'react-bootstrap';
+import { Envelope, EnvelopePaper, Github, Linkedin } from 'react-bootstrap-icons';
+import { DEFAULT_FONT } from './constants';
 
 export default function Navigation() {
+  const currentPath = window.location.pathname;
+
+  function section(title: string, path: string) {
+    return <Nav.Link key={title} href={path} active={path===currentPath}>{title}</Nav.Link>
+  }
+
+  function Social(props: {link: string, normal: any, hover: any}) {
+    const [hovering, setHovering] = useState<boolean>(false);
+    
+    return (
+      <Navbar.Brand
+        href={props.link}
+        target='_blank'
+        rel='noreferrer noopener'
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+        onClick={() => setHovering(true)}>
+        {hovering ? props.hover : props.normal}
+      </Navbar.Brand>
+    )
+  }
+
   return (
-    <Navbar bg="dark" variant="dark">
+    <Navbar bg='dark' variant='dark' style={DEFAULT_FONT}>
       <Container>
-        <Navbar.Brand href="/">Navbar</Navbar.Brand>
-        <Nav className="me-auto">
-          <Nav.Link href="/">Home</Nav.Link>
-          <Nav.Link href="/projects">Projects</Nav.Link>
+        <Navbar.Brand href='/'>Jaron Cui</Navbar.Brand>
+        <Nav className='me-auto'>
+          {[
+            section('Home', '/'),
+            section('Projects', '/projects'),
+            section('Experience', '/experience')
+          ]}
         </Nav>
+        <Social link='mailto:cui.ja@northeastern.edu'
+          normal={<Envelope color='#DDDDDD'/>}
+          hover={<EnvelopePaper />}/>
+        <Social link='https://linkedin.com/in/jaron-cui'
+          normal={<Linkedin color='#DDDDDD'/>}
+          hover={<Linkedin />}/>
+        <Social link='https://github.com/jaron-cui'
+          normal={<Github color='#DDDDDD'/>} hover={<Github />}/>
       </Container>
     </Navbar>
   );

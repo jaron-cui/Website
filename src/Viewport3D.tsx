@@ -510,7 +510,7 @@ export default function Viewport3D() {
 
   useEffect(() => {
     if (display && needsUpdate) {
-      console.log("UPDATED")
+      //console.log("UPDATED")
       pointMap.clear();
       display.current.innerHTML = '';
       let cameraBasis = invertMatrix(transpose([screenXVector(cameraVector), screenYVector(cameraVector), cameraVector]))
@@ -546,9 +546,6 @@ export default function Viewport3D() {
   }, [update]);
   
   return (
-    <>
-      <svg id="display" width="600" height="400" ref={display}></svg>
-      <p><b>Source code <a href="https://github.com/jaron-cui/jaron-cui.github.io">here</a></b></p>
-    </>
+    <svg id="display" width="600" height="400" ref={display}></svg>
   );
 }

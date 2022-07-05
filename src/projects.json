@@ -1,5 +1,6 @@
 [
   {
+    "id": "minecraft-in-racket",
     "title": "Minecraft in Racket",
     "date": "2021-09-01",
     "technologies": [
@@ -17,8 +18,10 @@
       "Some of the notable differences between ISL and Java (the language that the original game is implemented in) are ISL's lack of mutation, classes, and static typing. On the other hand, ISL includes first-class functions.",
 
       "These distinctions meant that I did not have access to convenient data structures such as arrays, maps, and other constant-time access storage. So, in the process of designing the project, I had to implement immutable analogues. My replacement for Java's HashMap, for example, was tree structure bundled along with a comparison function, which could on average retrieve key/value pairs with a binary search."
-    ]
+    ],
+    "video": "https://youtube.com/embed/n3Io4oBeCn0?rel=0"
   }, {
+    "id": "worksheet-generator",
     "title": "Curricular Worksheet Generator",
     "date": "2021-08-20",
     "technologies": ["Python", "LaTeX"],
@@ -26,7 +29,7 @@
       "Randomized problem generation in PDF format",
       "Integer, decimal, and fractional addition, multiplication, and exponents",
       "Answer key",
-      "Improved performance in school of younger sister",
+      "Increased academic achievement by younger sister",
       "Complaints from younger sister"
     ],
     "paragraphs": [
@@ -37,6 +40,7 @@
       "I have currently configured the program to generate math problems for the 6th grade level. I can add more types of problems and remove certain types as needed, and generate unlimited PDFs of unique worksheets without further modification."
     ]
   }, {
+    "id": "mask-layout-generator",
     "title": "Photolithographic Mask Layout Generator",
     "date": "2021-06-24",
     "technologies": ["Python", "KLayout"],
@@ -58,16 +62,137 @@
       "The program outputs files in the GDSII (Graphic Design System) format, a file format commonly used for integrated circuit design. However, one of my team members is currently working to extend the program to output CAD files which can be used to simulate the physical design prior to real-world fabrication."
     ]
   }, {
-    "title": "",
-    "date": "",
-    "technologies": [],
-    "features": [],
-    "paragraphs": []
+    "id": "rust-physics",
+    "title": "Circular-Entity Physics Simulator",
+    "date": "2022-03-06",
+    "technologies": ["Rust", "Nannou"],
+    "clip": "https://drive.google.com/uc?export=download&id=14uJ6_58N_Oi3TRHTWGL-zIMZR6YP8dl8",
+    "features": [
+      "Algebraically-resolved collisions",
+      "Gravity",
+      "Unlimited entity cap",
+      "Animated rendering"
+    ],
+    "paragraphs": [
+      "I have always been intrigued by computer simulation. Previously, I've explored rectangular-bounded collisions with a variety of resolution methods. Here, I wanted to make a 'perfectly accurate' simulation free of the bugs commonly seen in physics simulations, such as clipping or unintuitive interactions.",
+      
+      "The simplest form of collision resolution subsumes incrementing the positions of objects, and then applying deflective collision forces on intersecting pairs. However, there are several unwanted behaviors that can emerge from this approach.",
+      
+      "First, when the objects involved in what should be imminent collisions have a high relative velocity in comparison to their thickness, the collision may be missed altogether when there is no intersection during the frames preceding or following the hypothetical moment of collision.",
+
+      "Second, even during properly detected collisions, there is inaccuracy in the positions of the objects after collision, since in reality, most collisions do not occur exactly between two frames. If we simulated collisions continuously, they would occur at some point during a given frame.",
+
+      "Third, when a body collides several times between two frames, only the first collision will be accounted for.",
+
+      "The primary goal of this project is to avoid all of these inaccuracies and bugs. I selected circles over rectangles because of their directional symmetry. They would also serve well in a potential future project of simulating soft bodies composed of many rigid subunits.",
+
+      "To prevent the first and second issues, I decided to solve collisions algebraically. So, we can calculate the specific proportion of the frame at which a collision occurs. With this information, we can do frame-by-frame timesteps, but pretend as though we have infinite timesteps - we 'apply' the collision forces at the moment of impact and then increment the positions of the bodies accurate to the remaining time left in the frame.",
+
+      "For the third issue, we can run multiple collision checks per frame. In order to maximize the efficiency of this operation while ensuring all subframe collisions are accounted for, we only check for collisions for bodies that collided in the previous check. We repeat the check and resolution cycle until a check involves 0 bodies. (We should also add checks to safeguard against stable cycles of collisions, such as if a body is stuck oscillating between two other colliders)",
+
+      "With this line of deliberation, I am confident, as of now, that I have addressed all sources of simulation mistakes for 2D collisions."
+    ]
   }, {
-    "title": "",
-    "date": "",
-    "technologies": [],
-    "features": [],
-    "paragraphs": []
+    "id": "frog-games",
+    "title": "Frames! (Frog-Games) Game Site - In Progress!",
+    "date": "2022-04-03",
+    "technologies": ["Java", "TypeScript", "React", "Node", "Spring Boot", "Maven", "Websocket"],
+    "features": [
+      "Real-time multiplayer games with friends",
+      "REST and websocket frontend-backend communication",
+      "Polished in-game animations",
+      "Player statistics"
+    ],
+    "paragraphs": [
+      "It is not uncommon for my friends and I to want to play short multiplayer games with each other. However, sometimes there are no good options for particular games online - they might demand money or be covered in ads, if they exist at all. The only free option we could find online for Mancala is text-based!",
+      "So, fine, I'll do it myself!",
+      "We'll make Mancala, and checkers, minesweeper but competitive, connect X=?, and whatever else we feel like playing!",
+      "Coming soon... eventually!"
+    ]
+  }, {
+    "id": "image-editor",
+    "title": "Image Editor Application",
+    "date": "2021-06-07",
+    "technologies": ["Java", "Swing"],
+    "features": [
+      "Command-line operation",
+      "GUI mode",
+      "Scriptable operations",
+      "Transparency",
+      "Filter and linear image transformations",
+      "Resizing",
+      "Image layers",
+      "Project save and load",
+      "File export"
+    ],
+    "paragraphs": [
+      "An assignment from the course CS3500: 'Object-Oriented Design'.",
+      
+      "This image editor has both a CLI and a GUI mode, both of which grant the user access to all image and project operations. These include image scaling and layering, color manipulation including grayscaling, saturation/brightness adjustment, and themed color scales. There are also filter operations such as sharpening and blurring.",
+
+      "Since we had already implemented a CLI, we also added scripting capabilities for which scripts can be stored in text files and executed. Repetitive or complex actions can thus be recorded for straightforward reuse."
+    ]
+  }, {
+    "id": "maze-generator",
+    "title": "Maze Generator and Visualizer",
+    "date": "2021-04-15",
+    "technologies": ["Java"],
+    "clip": "https://drive.google.com/uc?export=download&id=1jYfMvI46QrOYmRXe764Nlq3pmSBrfTjS",
+    "features": [
+      "Orthogonal maze generation",
+      "Hexagonal maze generation",
+      "Start/end distance color gradient option",
+      "Breadth-first and depth-first maze solver",
+      "Interactable game mode",
+      "Dynamic directional controls with angular tolerance"
+    ],
+    "paragraphs": [
+      "An assignment from the course CS2510: 'Fundamentals of Computer Science II (Accelerated)'.",
+
+      "Mazes can either be composed of traditional square segments, where corridors and turns are orthogonal, or with hexagonal tiles resembling a beehive where each node could connect to a maximum of 6 others. We generate a maze with a single correct path using Prim's algorithm.",
+
+      "Maze generation and automatic solving can both be animated step-by-step. In the case of manual solving, where the user controls a 'player' that sits on a particular node, navigation can be done with the WEADZX keys (note that these keys form a hexagon around the 'S' key, which correspond to their intending direction of movement).",
+
+      "When the user presses one of the movement keys, then if there is an open pathway within an angular threshhold of the intended direction, they will move to the node at the end of that pathway. This allows the same control scheme to be compatible with both the square and hexagon-tiled mazes, as well as variations such as ones that give a randomized offset to each node."
+    ]
+  }, {
+    "id": "seam-carver",
+    "title": "Image Seam Carver",
+    "date": "2021-03-24",
+    "technologies": ["Java"],
+    "clip": "https://drive.google.com/uc?export=download&id=1rM-qhn94SdljSHCZszBRe20AeS5wjC2P",
+    "features": [
+      "Vertical and horizontal seam carving",
+      "Image import/export",
+      "Animated seam carving",
+      "Carve pausing",
+      "Carve undo/reversal"
+    ],
+    "paragraphs": [
+      "An assignment from the course CS2510: 'Fundamentals of Computer Science II (Accelerated)'.",
+
+      "A simple image seam-carving application for scaling down images in a way that attempts to preserve the most important features."
+    ]
+  }, {
+    "id": "get-rect",
+    "title": "get_rect(): 2D Sandbox Duel!",
+    "date": "1600-01-01",
+    "technologies": ["Python", "pygame"],
+    "features": [
+      "2D box-bounded physics",
+      "Destructible grid-based terrain",
+      "Animated entities",
+      "Ranged and melee weapons",
+      "Explosions!",
+      "Sound effects!",
+      "Logically following, fireworks and dynamite!"
+    ],
+    "paragraphs": [
+      "My first game development project in Python, using pygame for the main game loop logic and custom implementations for all game mechanics.",
+
+      "The name of the game comes from an essential function included with pygame, 'get_rect()', which retrieves the bounding box of a rendered image. I thought this would be a fun reference to the then-popular taunt, 'Get wrecked!'.",
+
+      "This was one of my earlier experiments with 2D physics, toying with simple box-bounded intersection collisions. All entities in the game have a mass and velocity, and can therefore be knocked around by players and explosions, which I think makes the game quite enjoyable even without the PVP aspect."
+    ]
   }
 ]

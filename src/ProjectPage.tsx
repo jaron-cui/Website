@@ -23,9 +23,9 @@ function Project(props: ProjectInfo) {
   );
 }
 
-export default function ProjectPage() {
-  const { project } = useParams() || '';
-  const projectInfo = PROJECT_MAP[project as string];
+export default function ProjectPage({ project }: { project: string }) {
+  const projectInfo = PROJECT_MAP[project];
+
   return (
     projectInfo ?
       <Project {...projectInfo}/> :

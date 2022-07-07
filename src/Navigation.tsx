@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Navbar, Container, Nav } from 'react-bootstrap';
 import { Envelope, EnvelopePaper, Github, Linkedin } from 'react-bootstrap-icons';
+import { useLocation } from 'react-router-dom';
 import { DEFAULT_FONT } from './constants';
 
-export default function Navigation() {
-  const currentPath = window.location.pathname;
-
-  function section(title: string, path: string) {
-    return <Nav.Link key={title} href={path} active={path===currentPath}>{title}</Nav.Link>
+export default function Navigation({ currentPath }: { currentPath: string }) {
+  function Section({ title, path, current }: { title: string, path: string, current: string }) {
+    return <Nav.Link key={title} href={path} active={path===current}>{title}</Nav.Link>
   }
 
   function Social(props: {link: string, normal: any, hover: any}) {
@@ -31,11 +30,9 @@ export default function Navigation() {
       <Container>
         <Navbar.Brand href='/'>Jaron Cui</Navbar.Brand>
         <Nav className='me-auto'>
-          {[
-            section('Home', '/'),
-            section('Projects', '/projects'),
-            section('Experience', '/experience')
-          ]}
+          <Section title='Home' path='/' current={currentPath}/>
+          <Section title='Projects' path='/#/projects' current={currentPath}/>
+          <Section title='Experience' path='/#/experience' current={currentPath}/>
         </Nav>
         <Social link='mailto:cui.ja@northeastern.edu'
           normal={<Envelope color='#DDDDDD'/>}

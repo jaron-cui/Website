@@ -1,5 +1,5 @@
 import { Button, Collapse, Icon, IconButton, InputAdornment, makeStyles, TextField } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DEFAULT_FONT } from './constants';
 import Clip from './Clip';
 import { ProjectInfo, PROJECTS, wrapContent } from './util';
@@ -75,6 +75,16 @@ function ProjectEntryButton(props: ProjectComponentProps) {
 }
 
 function ProjectEntry(props: ProjectComponentProps) {
+  const [content, setContent] = useState<any>();
+
+  useEffect(() => {
+    if (props.open && props.clip && !content) {
+      setContent(
+        <Clip link={props.clip}/>
+      );
+    }
+  }, [props.open]);
+  
   return (
     <div style={{
       ...DEFAULT_FONT,
@@ -85,7 +95,7 @@ function ProjectEntry(props: ProjectComponentProps) {
         <ProjectEntryButton {...props} />
         <div style={{margin: '8px'}}>
           <IconButton 
-            href={`/projects/${props.id}`}
+            href={`/#/projects/${props.id}`}
             target='_blank'
             rel='noreferrer noopener'
             sx={{
@@ -108,7 +118,7 @@ function ProjectEntry(props: ProjectComponentProps) {
             </ul>
           </div>
           {props.video && wrapContent(<iframe width="768" height="432" src={props.video}></iframe>)}
-          {props.clip && wrapContent(<Clip link={props.clip}/>)}
+          {props.clip && wrapContent(content)}
           <div style={{paddingTop: '10px'}}>
             <h4>Description</h4>
             {props.paragraphs.map((paragraph, i) => <p key={i}>{paragraph}</p>)}

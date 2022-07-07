@@ -22,7 +22,7 @@ export default function Home() {
           I am a rising third-year student at the Khoury College of Computer Sciences,
           pursuing a Bachelor's in Computer Science and a minor in Mechanical Engineering.
           I have professional experience in software development and am an avid coder in my free time.
-          Check out my <a href='/projects'>projects</a> to see what I have experience working with!
+          Check out my <a href='/#/projects'>projects</a> to see what I have experience working with!
           </p>
           <img src='./portrait.jpg' alt='Portrait' style={{
             width: '300px', margin: '20px'

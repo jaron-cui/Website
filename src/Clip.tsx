@@ -8,7 +8,7 @@ export default function Clip(props: {link: string}) {
   return (
     <>
       {loaded || <CircularProgress />}
-      <video autoPlay loop muted id='video'
+      <video playsInline autoPlay loop muted id='video'
         ref={video}
         onLoadedData={() => setLoaded(true)}
         style={{

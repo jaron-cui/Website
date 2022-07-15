@@ -2,7 +2,7 @@ import { Button, Collapse, IconButton } from '@mui/material';
 import { useState, useEffect } from "react";
 import { BoxArrowUpRight } from "react-bootstrap-icons";
 import Clip from "../../Clip";
-import { DEFAULT_FONT, BUTTON_STYLE } from "../../util/constants";
+import { DEFAULT_FONT, BUTTON_STYLE, TRUNCATE_TEXT } from "../../util/constants";
 import { ProjectInfo, dateToString, wrapContent } from "../../util/util";
 
 type ProjectEntryProps = ProjectInfo & {
@@ -26,10 +26,12 @@ function ProjectEntryButton(props: ProjectEntryProps) {
           display: 'flex',
           justifyContent: 'space-between'
         }}>
-          <span>{props.title}</span>
+          <span style={{ width: 'calc(100% - 120px)' }}>
+            <h5 style={TRUNCATE_TEXT}>{props.title}</h5>
+            <p style={TRUNCATE_TEXT}>{props.technologies.join(', ')}</p>
+          </span>
           <i>{dateToString(props.date)}</i>
         </span>
-        <p>{props.technologies.join(', ')}</p>
       </span>
     </Button>
   );

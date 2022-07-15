@@ -15,3 +15,9 @@ export const BUTTON_STYLE = {
     backgroundColor: '#CCCCCC'
   }
 }
+
+export const TRUNCATE_TEXT: any = {
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis'
+}

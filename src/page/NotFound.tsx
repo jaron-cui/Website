@@ -1,4 +1,4 @@
-import { DEFAULT_FONT } from "../util/constants";
+import { DEFAULT_FONT } from "../util/styles";
 
 export default function NotFound(props: { message: string }) {
   return (

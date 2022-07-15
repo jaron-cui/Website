@@ -2,8 +2,9 @@ import { Button, Collapse, IconButton } from '@mui/material';
 import { useState, useEffect } from "react";
 import { BoxArrowUpRight } from "react-bootstrap-icons";
 import Clip from "../../Clip";
-import { DEFAULT_FONT, BUTTON_STYLE, TRUNCATE_TEXT } from "../../util/constants";
-import { ProjectInfo, dateToString, wrapContent } from "../../util/util";
+import { DEFAULT_FONT, BUTTON_STYLE, TRUNCATE_TEXT } from "../../util/styles";
+import { ProjectInfo } from '../../util/types';
+import { dateToString, wrapContent } from "../../util/util";
 
 type ProjectEntryProps = ProjectInfo & {
   open: boolean;

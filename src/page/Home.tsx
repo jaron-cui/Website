@@ -1,5 +1,5 @@
 import Viewport3D from "../Viewport3D"
-import { CENTERED_VERTICAL, DEFAULT_FONT } from '../util/constants';
+import { CENTERED_VERTICAL, DEFAULT_FONT } from '../util/styles';
 import Clip from "../Clip";
 
 export default function Home() {

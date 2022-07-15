@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navbar, Container, Nav } from 'react-bootstrap';
 import { Envelope, EnvelopePaper, Github, Linkedin } from 'react-bootstrap-icons';
-import { DEFAULT_FONT } from '../../util/constants';
+import { DEFAULT_FONT } from '../../util/styles';
 
 function Social(props: {link: string, normal: any, hover: any}) {
   const [hovering, setHovering] = useState<boolean>(false);

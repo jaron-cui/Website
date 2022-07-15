@@ -1,4 +1,6 @@
-import { ExperienceInfo, EXPERIENCES, formatTimeframe, isSemesterTimeframe, semesterToDate, Timeframe } from "../util/util";
+import { EXPERIENCES } from "../util/constants";
+import { ExperienceInfo, Timeframe } from "../util/types";
+import { formatTimeframe, isSemesterTimeframe, semesterToDate } from "../util/util";
 import SearchableEntries from "./component/SearchableEntries";
 
 function ExperienceEntry({ title, organization, timeframe, paragraphs, projects }: ExperienceInfo) {

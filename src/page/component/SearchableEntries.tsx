@@ -1,6 +1,6 @@
 import { TextField } from "@mui/material";
 import { useState, useEffect } from "react";
-import { DEFAULT_FONT } from "../../util/constants";
+import { DEFAULT_FONT } from "../../util/styles";
 
 type EntryFields = {
   id: string;

@@ -1,8 +1,9 @@
-import { useParams } from "react-router-dom";
 import Clip from "../Clip";
-import { DEFAULT_FONT } from "../util/constants";
+import { DEFAULT_FONT } from "../util/styles";
 import NotFound from "./NotFound";
-import { ProjectInfo, PROJECTS, PROJECT_MAP, wrapContent } from "../util/util";
+import { wrapContent } from "../util/util";
+import { ProjectInfo } from "../util/types";
+import { PROJECT_MAP } from "../util/constants";
 
 function Project(props: ProjectInfo) {
   return (

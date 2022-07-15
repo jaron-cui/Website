@@ -1,4 +1,6 @@
-import { dateToString, ProjectInfo, PROJECTS } from '../util/util';
+import { PROJECTS } from '../util/constants';
+import { ProjectInfo } from '../util/types';
+import { dateToString } from '../util/util';
 import ProjectEntry from './component/ProjectEntry';
 import SearchableEntries from './component/SearchableEntries';
 

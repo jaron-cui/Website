@@ -1,23 +1,12 @@
-export const CENTERED_VERTICAL: any = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center'
-}
+import { ExperienceInfo, ProjectInfo } from "./types";
+import projects from '../data/projects.json';
+import experiences from '../data/experiences.json';
 
-export const DEFAULT_FONT = {
-  fontFamily: 'Cambria, Cochin, Georgia, Times, \'Times New Roman\', serif'
-};
+export const PROJECTS: ProjectInfo[] = projects;
 
-export const BUTTON_STYLE = {
-  borderRadius: '3px',
-  backgroundColor: '#EEEEEE',
-  '&:hover': {
-    backgroundColor: '#CCCCCC'
-  }
-}
+const projectMap: {[key in string]: ProjectInfo} = {};
+projects.forEach(project => projectMap[project.id] = project);
 
-export const TRUNCATE_TEXT: any = {
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis'
-}
+export const PROJECT_MAP = projectMap;
+
+export const EXPERIENCES: ExperienceInfo[] = experiences as ExperienceInfo[];

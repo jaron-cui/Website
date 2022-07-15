@@ -1,3 +1,4 @@
+import { TECH_SYNONYMS, TECH_DEPENDENCIES } from './constants';
 import { Timeframe, Semesters, Semester, Season } from './types';
 
 export function wrapContent(content: any) {
@@ -51,4 +52,44 @@ export function semesterToDate(semester: Semester) {
   return `${year}-${SEASON_TO_DATE[season as Season]}`;
 }
 
-console.log('loaded resources');
+export function getRelatedStrings(input: string) {
+  const related: string[] = [];
+  const tech: string[] = [];
+  Object.keys(TECH_SYNONYMS).forEach(technology => {
+    if (stringsContain([technology, ...TECH_SYNONYMS[technology]], input)) {
+      tech.push(technology);
+      related.push(technology, ...TECH_SYNONYMS[technology]);
+    }
+  });
+
+  tech.forEach(technology => {
+    TECH_DEPENDENCIES[technology]?.forEach(dependency => {
+      related.push(dependency, ...getRelatedStrings(dependency));
+    });
+  });
+
+  return Array.from(new Set(related));
+}
+
+export function getRelatedTech(technologies: string[]): string[] {
+  const related: string[] = [];
+  technologies.forEach(technology => {
+    related.push(technology);
+    const dependencies = TECH_DEPENDENCIES[technology];
+    if (dependencies) {
+      related.push(...getRelatedTech(dependencies));
+    }
+  });
+
+  return Array.prototype.concat(...related.map(tech => [tech, ...(TECH_SYNONYMS[tech] || [])]));
+}
+
+export function stringsContain(strings: string[], substring: string) {
+  for (const string of strings) {
+    if (string.toLowerCase().includes(substring.toLowerCase())) {
+      return true;
+    }
+  }
+
+  return false;
+}

@@ -1,6 +1,6 @@
 import { PROJECTS } from '../util/constants';
 import { ProjectInfo } from '../util/types';
-import { dateToString } from '../util/util';
+import { dateToString, getRelatedTech, stringsContain } from '../util/util';
 import ProjectEntry from './component/ProjectEntry';
 import SearchableEntries from './component/SearchableEntries';
 
@@ -21,16 +21,10 @@ function searchFor(search: string) {
     const strings: string[] = [
       dateToString(project.date),
       project.title,
-      ...project.technologies,
+      ...getRelatedTech(project.technologies),
       ...project.features
     ];
 
-    for (const string of strings) {
-      if (string.toLowerCase().includes(search.toLowerCase())) {
-        return true;
-      }
-    }
-
-    return false;
+    return stringsContain(strings, search);
   }
 }

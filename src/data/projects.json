@@ -96,7 +96,7 @@
     "id": "frog-games",
     "title": "Frames! (Frog-Games) Game Site - In Progress!",
     "date": "2022-04-03",
-    "technologies": ["Java", "TypeScript", "React", "Node", "Spring Boot", "Maven", "Websocket"],
+    "technologies": ["TypeScript", "React", "Spring Boot", "Websocket"],
     "features": [
       "Real-time multiplayer games with friends",
       "REST and websocket frontend-backend communication",

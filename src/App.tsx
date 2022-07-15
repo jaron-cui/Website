@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
-import logo from './logo.svg';
 import './App.css';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import Home from './page/Home';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Navigation from './page/component/Navigation';
@@ -33,7 +31,12 @@ function App() {
   return (
     <>
       <Navigation currentPath={currentPath}/>
-      <div className='margin'>
+      <div style={{
+        marginTop: '40px',
+        marginLeft: '8%',
+        marginRight: '8%',
+        marginBottom: '200px'
+      }}>
         {getPage()}
       </div>
     </>

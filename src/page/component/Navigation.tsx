@@ -40,7 +40,8 @@ export default function Navigation({ currentPath }: { currentPath: string }) {
           normal={<Linkedin color='#DDDDDD'/>}
           hover={<Linkedin />}/>
         <Social link='https://github.com/jaron-cui'
-          normal={<Github color='#DDDDDD'/>} hover={<Github />}/>
+          normal={<Github color='#DDDDDD'/>}
+          hover={<Github />}/>
       </Container>
     </Navbar>
   );

@@ -1,6 +1,5 @@
-import { DEFAULT_FONT } from "../util/constants";
-import NotFound from "./NotFound";
-import { dateToString, ExperienceInfo, EXPERIENCES, formatTimeframe, isSemesterTimeframe, semesterToDate, Timeframe } from "../util/util";
+import { ExperienceInfo, EXPERIENCES, formatTimeframe, isSemesterTimeframe, semesterToDate, Timeframe } from "../util/util";
+import SearchableEntries from "./component/SearchableEntries";
 
 function ExperienceEntry({ title, organization, timeframe, paragraphs, projects }: ExperienceInfo) {
   return (
@@ -25,10 +24,33 @@ function compareByDate(a: ExperienceInfo, b: ExperienceInfo) {
   return asStartDate(b.timeframe).localeCompare(asStartDate(a.timeframe));
 }
 
+function searchFor(search: string) {
+  return function matchExperience(experience: ExperienceInfo) {
+    const strings = [
+      experience.id,
+      experience.title,
+      experience.organization,
+      ...(experience.projects ? experience.projects : [])
+    ];
+
+    for (const string of strings) {
+      if (string.toLowerCase().includes(search.toLowerCase())) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+}
+
 export default function Experience() {
   return (
-    <div style={DEFAULT_FONT}>
-      {EXPERIENCES.sort(compareByDate).map(experience => <ExperienceEntry {...experience}/>)}
-    </div>
+    <SearchableEntries<ExperienceInfo>
+      title='Search experiences (e.g. "teaching assistant")'
+      entries={EXPERIENCES}
+      sort={compareByDate}
+      searchFor={searchFor}
+      Entry={ExperienceEntry}
+    />
   );
 }

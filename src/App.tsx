@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import { Route, Routes, useLocation } from 'react-router-dom';
-import Home from './Home';
+import Home from './page/Home';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import Navigation from './Navigation';
-import Projects from './Projects';
-import ProjectPage from './ProjectPage';
-import Experience from './Experience';
-import NotFound from './NotFound';
+import Navigation from './page/component/Navigation';
+import Projects from './page/Projects';
+import ProjectPage from './page/Project';
+import Experience from './page/Experience';
+import NotFound from './page/NotFound';
 
 function App() {
   const { pathname, hash } = useLocation();

@@ -1,12 +1,13 @@
 import { useParams } from "react-router-dom";
-import Clip from "./Clip";
-import { DEFAULT_FONT } from "./constants";
+import Clip from "../Clip";
+import { DEFAULT_FONT } from "../util/constants";
 import NotFound from "./NotFound";
-import { ProjectInfo, PROJECTS, PROJECT_MAP, wrapContent } from "./util";
+import { ProjectInfo, PROJECTS, PROJECT_MAP, wrapContent } from "../util/util";
 
 function Project(props: ProjectInfo) {
   return (
     <div style={{...DEFAULT_FONT, marginTop:'30px'}}>
+      <h2>{props.title}</h2>
       <div>
         <h4>Features</h4>
         <ul>

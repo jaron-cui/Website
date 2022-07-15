@@ -1,12 +1,6 @@
-import Viewport3D from "./Viewport3D"
-import { DEFAULT_FONT } from './constants';
-import Clip from "./Clip";
-
-const FORMATTING: any = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center'
-}
+import Viewport3D from "../Viewport3D"
+import { CENTERED_VERTICAL, DEFAULT_FONT } from '../util/constants';
+import Clip from "../Clip";
 
 export default function Home() {
   return (
@@ -14,10 +8,10 @@ export default function Home() {
       ...DEFAULT_FONT,
       marginTop: '40px'
     }}>
-      <span style={FORMATTING}>
+      <span style={CENTERED_VERTICAL}>
         <h1>Jaron Cui</h1>
         <h2>Northeastern University</h2>
-        <figure style={{...FORMATTING, marginTop: '20px', marginBottom: '20px'}}>
+        <figure style={{...CENTERED_VERTICAL, marginTop: '20px', marginBottom: '20px'}}>
           <p>
           I am a rising third-year student at the Khoury College of Computer Sciences,
           pursuing a Bachelor's in Computer Science and a minor in Mechanical Engineering.
@@ -33,15 +27,14 @@ export default function Home() {
 
       <h3 style={{marginBottom: '20px'}}>Making Cool Things!</h3>
 
-      <span style={FORMATTING}>
+      <span style={CENTERED_VERTICAL}>
         <p>
-          For practicality and maintainability and a whole slew of other reasons, programmers tend to avoid 'reinventing the wheel'. But sometimes,
+          For efficiency and maintainability and a whole slew of other reasons, programmers tend to avoid 'reinventing the wheel'. But sometimes,
           doing so can be a lot of fun!
         </p>
         <p>
           An example of a task that has already been 'solved' is 3D digital
-          rendering. The overwhelming majority of programmers who work with the field will use existing implementations,
-          which is the practical thing to do. However, I was always intrigued with figuring out how to build one from
+          rendering. The practical thing to do would be to use an existing implementation. However, I was always intrigued with figuring out how to build one from
           scratch.
         </p>
         <p>
@@ -50,7 +43,7 @@ export default function Home() {
         </p>
 
         <figure style={{
-          ...FORMATTING,
+          ...CENTERED_VERTICAL,
           marginBottom: '40px'
         }}>
           <figcaption><i>Minecraft in Racket</i></figcaption>
@@ -66,7 +59,7 @@ export default function Home() {
           oddly exaggerated 'curving' of the viewport at the edges.
         </p>
 
-        <figure style={FORMATTING}>
+        <figure style={CENTERED_VERTICAL}>
           <figcaption><i>Press the 'WASD' keys to move and 'IJKL' to pan!</i></figcaption>
           <Viewport3D />
         </figure>

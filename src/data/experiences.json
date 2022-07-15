@@ -1,0 +1,45 @@
+[
+  {
+    "id": "ta-cs2500",
+    "title": "Teaching Assistant for CS2500 (Accelerated)",
+    "organization": "Northeastern University",
+    "timeframe": {
+      "semesters": ["Fall 2021"]
+    },
+    "paragraphs": [
+      "My first teaching assistant position at Northeastern. For the course CS2500 (Fundamentals of Computer Science I Accelerated), taught by Amal Ahmed and Benjamin Lerner."
+    ]
+  }, {
+    "id": "ta-cs3000",
+    "title": "Teaching Assistant for CS3000",
+    "organization": "Northeastern University",
+    "timeframe": {
+      "semesters": ["Summer II 2022"]
+    },
+    "paragraphs": [
+      "A position as one of three teaching assistants for CS3000 (Algorithms and Data Structures), taught by Greg Aloupis."
+    ]
+  }, {
+    "id": "coop-poweradvocate",
+    "title": "Software Development Co-op",
+    "organization": "Wood Mackenzie (PowerAdvocate)",
+    "timeframe": {
+      "start": "2022-01-04",
+      "end": "2022-07-01"
+    },
+    "projects": ["poweradvocate-api", "poweradvocate-energy-product"],
+    "paragraphs": [
+      "Wood Mackenzie develops products and services focused on data analytics and forecasting for energy markets. During this co-op, I gained a professional level of expertise working with TypeScript, Node, React, and Java.",
+
+      "I first worked on a team of 7 focused on addressing dependency vulnerabilities in a large Java codebase. This later shifted to migrating the database from OracleDB to PostgreSQL, which we did by porting the schema and modifying SQL using the AWS Schema Conversion Tool.",
+
+      "Next, I joined a newly formed team tasked with building an API for an existing service, the purpose of which was to serve large datasets accessible through the main customer platform. The API was to include typical request-response REST endpoints of limited size as well as a set of endpoints for asynchronously retrieving data exceeding 100,000 rows. My responsibility was to build the API backend itself. We selected the Spring framework for this task, which we used to implement endpoints under the OData v4.0 Protocol. I paired with several full-time employee to design and code the backend.",
+
+      "Throughout development, we had regular code reviews with the other members of the team and solidifed the deliverability requirements with our product owner. For example, we wrote tests in Node and automated them using GitLab Pipelines and Docker.",
+
+      "After we finished reviewing and deploying the finished product via Docker, I joined a team in a different business unit developing an infrastructure project management platform. We wrote the frontend in React and TypeScript, which interacted with a GraphQL backend. I worked on creating new pages and adding functionality to the backend as required. I often did this in pairs with other developers. We commonly held refinement meetings to review and prioritize the project requirements, and underwent retroactive evaluations to improve our workflow moving forward.",
+
+      "Overall, this was an excellent co-op experience. I felt welcomed and trusted in the development process and team bonding activities likewise. I contributed to the development of currently-deployed products and influenced many choices made during the process. Looking forward, along with the major upgrade to my skillset, I've gained many personal connections which I value greatly."
+    ]
+  }
+]

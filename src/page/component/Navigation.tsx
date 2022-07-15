@@ -1,28 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Navbar, Container, Nav } from 'react-bootstrap';
 import { Envelope, EnvelopePaper, Github, Linkedin } from 'react-bootstrap-icons';
-import { useLocation } from 'react-router-dom';
-import { DEFAULT_FONT } from './constants';
+import { DEFAULT_FONT } from '../../util/constants';
+
+function Social(props: {link: string, normal: any, hover: any}) {
+  const [hovering, setHovering] = useState<boolean>(false);
+  
+  return (
+    <Navbar.Brand
+      href={props.link}
+      target='_blank'
+      rel='noreferrer noopener'
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+      onClick={() => setHovering(true)}>
+      {hovering ? props.hover : props.normal}
+    </Navbar.Brand>
+  )
+}
 
 export default function Navigation({ currentPath }: { currentPath: string }) {
   function Section({ title, path, current }: { title: string, path: string, current: string }) {
     return <Nav.Link key={title} href={path} active={path===current}>{title}</Nav.Link>
-  }
-
-  function Social(props: {link: string, normal: any, hover: any}) {
-    const [hovering, setHovering] = useState<boolean>(false);
-    
-    return (
-      <Navbar.Brand
-        href={props.link}
-        target='_blank'
-        rel='noreferrer noopener'
-        onMouseEnter={() => setHovering(true)}
-        onMouseLeave={() => setHovering(false)}
-        onClick={() => setHovering(true)}>
-        {hovering ? props.hover : props.normal}
-      </Navbar.Brand>
-    )
   }
 
   return (

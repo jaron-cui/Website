@@ -1,29 +1,13 @@
 import { Button, Collapse, Icon, IconButton, InputAdornment, makeStyles, TextField } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
-import { DEFAULT_FONT } from './constants';
-import Clip from './Clip';
-import { ProjectInfo, PROJECTS, wrapContent } from './util';
+import { BUTTON_STYLE, DEFAULT_FONT } from '../util/constants';
+import Clip from '../Clip';
+import { dateToString, ProjectInfo, PROJECTS, wrapContent } from '../util/util';
 import { BoxArrowUpRight } from 'react-bootstrap-icons';
 
 type ProjectComponentProps = ProjectInfo & {
   open: boolean;
   setOpen: (value: boolean) => void;
-}
-
-const BUTTON_STYLE = {
-  borderRadius: '3px',
-  backgroundColor: '#EEEEEE',
-  '&:hover': {
-    backgroundColor: '#CCCCCC'
-  }
-}
-
-function dateToString(date: string) {
-  return new Date(date).toLocaleString('default', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
 }
 
 function searchFor(search: string) {
@@ -140,20 +124,31 @@ export default function Projects() {
 
   return (
     <div style={{
+      ...DEFAULT_FONT,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'left',
       marginTop: '40px'
     }}>
-      <TextField
-        label="Search Projects"
-        onChange={event => setSearch(event.target.value)}
-        inputProps={{style: DEFAULT_FONT}}
-        InputLabelProps={{style: DEFAULT_FONT}}
-        style={{
-          paddingBottom: '20px'
-        }}
-      /> {
+      <span style={{
+            paddingBottom: '20px',
+            height: '80px'
+          }}>
+        <TextField
+          label="Search Projects"
+          onChange={event => setSearch(event.target.value)}
+          inputProps={{style: DEFAULT_FONT}}
+          InputLabelProps={{style: DEFAULT_FONT}}
+          style={{
+            width: '100%'
+          }}
+        />
+        {
+          search && <i style={{color: '#6A6A6A'}}>
+            Showing {displayed.length} result{displayed.length !== 1 && 's'} for '{search}'
+          </i>
+        }
+      </span>{
         displayed.map(project => (
           <div key={project.date}>
             <ProjectEntry {...{

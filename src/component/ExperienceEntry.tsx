@@ -1,5 +1,5 @@
-import { ExperienceInfo } from "../../util/types";
-import { formatTimeframe } from "../../util/util";
+import { ExperienceInfo } from "../util/types";
+import { formatTimeframe } from "../util/util";
 
 export default function ExperienceEntry({ title, organization, timeframe, paragraphs, projects }: ExperienceInfo) {
   return (

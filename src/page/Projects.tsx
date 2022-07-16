@@ -1,10 +1,10 @@
 import { PROJECTS } from '../util/constants';
 import { ProjectInfo } from '../util/types';
 import { dateToString, getRelatedTech, stringsContain } from '../util/util';
-import ProjectEntry from './component/ProjectEntry';
-import SearchableEntries from './component/SearchableEntries';
+import ProjectEntry from '../component/ProjectEntry';
+import SearchableEntries from '../component/SearchableEntries';
 
-export default function Projects() {
+export default function Projects({ initialSearch }: { initialSearch?: string }) {
   return (
     <SearchableEntries<ProjectInfo>
       title='Search projects (e.g. "java", "physics")'
@@ -12,6 +12,7 @@ export default function Projects() {
       sort={(e1, e2) => (e2.date.localeCompare(e1.date))}
       searchFor={searchFor}
       Entry={ProjectEntry}
+      initialSearch={initialSearch}
     />
   );
 }

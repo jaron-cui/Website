@@ -1,6 +1,6 @@
 import { TextField } from "@mui/material";
 import { useState, useEffect } from "react";
-import { DEFAULT_FONT } from "../../util/styles";
+import { DEFAULT_FONT } from "../util/styles";
 
 type EntryFields = {
   id: string;
@@ -15,12 +15,13 @@ type SearchableEntriesProps<EntryProps extends EntryFields> = {
     open: boolean;
     setOpen: (value: boolean) => void
   }) => React.ReactElement;
+  initialSearch?: string;
 }
 
 export default function SearchableEntries<EntryProps extends EntryFields>(
-  { title, entries, sort, searchFor, Entry }: SearchableEntriesProps<EntryProps>
+  { title, entries, sort, searchFor, Entry, initialSearch }: SearchableEntriesProps<EntryProps>
 ) {
-  const [search, setSearch] = useState<string>('');
+  const [search, setSearch] = useState<string>(initialSearch || '');
   const [displayed, setDisplayed] = useState<EntryProps[]>([]);
   const [opened, setOpened] = useState<Set<string>>(new Set());
 
@@ -41,6 +42,7 @@ export default function SearchableEntries<EntryProps extends EntryFields>(
           }}>
         <TextField
           label={title}
+          defaultValue={initialSearch}
           onChange={event => setSearch(event.target.value)}
           inputProps={{style: DEFAULT_FONT}}
           InputLabelProps={{style: DEFAULT_FONT}}

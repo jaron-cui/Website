@@ -1,8 +1,8 @@
 import { EXPERIENCES } from "../util/constants";
 import { ExperienceInfo, Timeframe } from "../util/types";
 import { isSemesterTimeframe, semesterToDate, stringsContain } from "../util/util";
-import ExperienceEntry from "./component/ExperienceEntry";
-import SearchableEntries from "./component/SearchableEntries";
+import ExperienceEntry from "../component/ExperienceEntry";
+import SearchableEntries from "../component/SearchableEntries";
 
 export default function Experience() {
   return (

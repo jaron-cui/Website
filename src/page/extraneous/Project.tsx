@@ -1,9 +1,9 @@
-import Clip from "../Clip";
-import { DEFAULT_FONT } from "../util/styles";
-import NotFound from "./NotFound";
-import { wrapContent } from "../util/util";
-import { ProjectInfo } from "../util/types";
-import { PROJECT_MAP } from "../util/constants";
+import Clip from "../../Clip";
+import { DEFAULT_FONT } from "../../util/styles";
+import NotFound from "../NotFound";
+import { wrapContent } from "../../util/util";
+import { ProjectInfo } from "../../util/types";
+import { PROJECT_MAP } from "../../util/constants";
 
 function Project(props: ProjectInfo) {
   return (

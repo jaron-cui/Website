@@ -4,7 +4,7 @@ import Home from './page/Home';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Navigation from './page/component/Navigation';
 import Projects from './page/Projects';
-import ProjectPage from './page/Project';
+import ProjectPage from './page/extraneous/Project';
 import Experience from './page/Experience';
 import NotFound from './page/NotFound';
 

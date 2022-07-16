@@ -1,15 +1,18 @@
 import { EXPERIENCES } from "../util/constants";
 import { ExperienceInfo, Timeframe } from "../util/types";
-import { formatTimeframe, isSemesterTimeframe, semesterToDate } from "../util/util";
+import { isSemesterTimeframe, semesterToDate, stringsContain } from "../util/util";
+import ExperienceEntry from "./component/ExperienceEntry";
 import SearchableEntries from "./component/SearchableEntries";
 
-function ExperienceEntry({ title, organization, timeframe, paragraphs, projects }: ExperienceInfo) {
+export default function Experience() {
   return (
-    <div>
-      <h4>{title} | {organization}</h4>
-      <h6>{formatTimeframe(timeframe)}</h6>
-      <div>{paragraphs.map(paragraph => <p>{paragraph}</p>)}</div>
-    </div>
+    <SearchableEntries<ExperienceInfo>
+      title='Search experiences (e.g. "teaching assistant")'
+      entries={EXPERIENCES}
+      sort={compareByDate}
+      searchFor={searchFor}
+      Entry={ExperienceEntry}
+    />
   );
 }
 
@@ -35,24 +38,6 @@ function searchFor(search: string) {
       ...(experience.projects ? experience.projects : [])
     ];
 
-    for (const string of strings) {
-      if (string.toLowerCase().includes(search.toLowerCase())) {
-        return true;
-      }
-    }
-
-    return false;
+    return stringsContain(strings, search);
   }
-}
-
-export default function Experience() {
-  return (
-    <SearchableEntries<ExperienceInfo>
-      title='Search experiences (e.g. "teaching assistant")'
-      entries={EXPERIENCES}
-      sort={compareByDate}
-      searchFor={searchFor}
-      Entry={ExperienceEntry}
-    />
-  );
 }

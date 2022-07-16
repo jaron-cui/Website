@@ -1,6 +1,9 @@
 import { ExperienceInfo, ProjectInfo } from "./types";
+import links from '../data/links.json';
 import projects from '../data/projects.json';
 import experiences from '../data/experiences.json';
+
+export const LINKS = links;
 
 export const PROJECTS: ProjectInfo[] = projects;
 

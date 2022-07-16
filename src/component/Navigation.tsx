@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navbar, Container, Nav } from 'react-bootstrap';
 import { Envelope, EnvelopePaper, Github, Linkedin } from 'react-bootstrap-icons';
+import { LINKS } from '../util/constants';
 import { DEFAULT_FONT } from '../util/styles';
 
 function Social(props: {link: string, normal: any, hover: any}) {
@@ -34,13 +35,13 @@ export default function Navigation({ currentPath }: { currentPath: string }) {
           <Section title='Experience' path='/#/experience' current={currentPath}/>
           <Section title='Contact' path='/#/contact' current={currentPath}/>
         </Nav>
-        <Social link='mailto:cui.ja@northeastern.edu'
+        <Social link={`mailto:${LINKS.email}`}
           normal={<Envelope color='#DDDDDD'/>}
           hover={<EnvelopePaper />}/>
-        <Social link='https://linkedin.com/in/jaron-cui'
+        <Social link={LINKS.linkedin}
           normal={<Linkedin color='#DDDDDD'/>}
           hover={<Linkedin />}/>
-        <Social link='https://github.com/jaron-cui'
+        <Social link={LINKS.github}
           normal={<Github color='#DDDDDD'/>}
           hover={<Github />}/>
       </Container>

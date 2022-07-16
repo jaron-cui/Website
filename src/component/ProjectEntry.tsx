@@ -5,6 +5,7 @@ import Clip from "../Clip";
 import { DEFAULT_FONT, BUTTON_STYLE, TRUNCATE_TEXT } from "../util/styles";
 import { ProjectInfo } from '../util/types';
 import { dateToString, wrapContent } from "../util/util";
+import { LinkButton } from './Buttons';
 
 type ProjectEntryProps = ProjectInfo & {
   open: boolean;
@@ -58,19 +59,7 @@ export default function ProjectEntry(props: ProjectEntryProps) {
       <div style={{display: 'flex', flexDirection: 'row'}}>
         <ProjectEntryButton {...props} />
         <div style={{margin: '8px'}}>
-          <IconButton 
-            href={`/#/projects/${props.id}`}
-            target='_blank'
-            rel='noreferrer noopener'
-            sx={{
-              ...BUTTON_STYLE,
-              color: '#777777',
-              '&:hover': {
-                color: 'black'
-              }
-          }}>
-            <BoxArrowUpRight size='15px'/>
-          </IconButton>
+          <LinkButton link={`/#/projects/${props.id}`}/>
         </div>
       </div>
       <Collapse in={props.open}>

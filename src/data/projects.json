@@ -206,7 +206,7 @@
     "paragraphs": [
       "An exploratory experiment that borrows basic physics logic from my previous project in Rust, the eventual goal being the simulation of larger-scale materials that may be liquids, gases, or solids which will be able to 'react' to form different compounds.",
 
-      "An important concept in this simulation will be 'bonds', which I'm implementing to behave akin to physical springs attached at points on atomic surfaces. Since I much prefer experimenting to reading dense articles explaining physics, I've simply taken the basic Hooke's law of springs where F = -kx and applied it to the stretching, bending, and deviant rotation of imaginary 'springs' to achieve a visually appealing result. I'm not sure if this is accurate to the behavior of real springs, though.",
+      "An important concept in this simulation will be 'bonds', which I'm implementing to behave akin to physical springs attached at points on atomic surfaces. Since I much prefer experimenting to reading dense articles explaining physics, I've simply taken Hooke's law of springs where F = -kx and applied it to the stretching, bending, and deviant rotation of imaginary 'springs' to achieve a visually appealing result. I'm not certain if this application is accurate to the behavior of real springs, though.",
 
       "You can see the very early progress I've achieved above, where the GREEN 'atoms' have their rotational axes indicated with RED lines extending from their centers, and bonded atom pairs are connected with BLUE lines.",
       

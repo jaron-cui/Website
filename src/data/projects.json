@@ -212,5 +212,22 @@
       
       "Eventually, the presence of, absense of, and the properties of these bonds will distinguish the physical phases of materials. Other than this, I will also be able to use these bonds to simulate threads and soft bodies."
     ]
+  }, {
+    "id": "finite-state-automata",
+    "title": "State Machine Simulator",
+    "date": "2022-07-24",
+    "technologies": ["Python", "Graphviz"],
+    "features": [
+      "Determinate Finite State Machines",
+      "Nondeterminate Finite State Machines",
+      "NFA to DFA conversion",
+      "State machine simplification",
+      "Graphviz rendering of state machine diagrams"
+    ],
+    "paragraphs": [
+      "My 2022 Summer 2 semester courses include Theory of Computation, where one of the topics covered is state machines/automata. I'm learning about determinate and nondeterminate finite state automata, pushdown automata, and Turing machines.",
+
+      "This project is to put into implementation some of the concepts I've learned about, including NFA to DFA conversion, state machine unions, and regular expression equivalency."
+    ]
   }
 ]

@@ -4,11 +4,14 @@ import NotFound from "../NotFound";
 import { processParagraph, wrapContent } from "../../util/util";
 import { ProjectInfo } from "../../util/types";
 import { PROJECT_MAP } from "../../util/constants";
+import { Github } from "react-bootstrap-icons";
+import { LinkButton } from "../../component/Buttons";
+import ProjectEntry from "../../component/ProjectEntry";
 
 function Project(props: ProjectInfo) {
   return (
     <div style={{...DEFAULT_FONT, marginTop:'30px'}}>
-      <h2>{props.title}</h2>
+      <h2>{props.title}<LinkButton link={props.repository} Img={Github} label='View on GitHub'/></h2>
       <div>
         <h4>Features</h4>
         <ul>
@@ -30,7 +33,7 @@ export default function ProjectPage({ project }: { project: string }) {
 
   return (
     projectInfo ?
-      <Project {...projectInfo}/> :
+      <ProjectEntry open={true} locked={true} setOpen={()=>0} {...projectInfo}/> :
       <NotFound message='This project page does not exist! Check the projects page in case it was moved.'/>
   );
 }

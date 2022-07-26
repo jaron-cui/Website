@@ -24,11 +24,12 @@ type ProjectEntryProps = ProjectInfo & {
   setOpen: (value: boolean) => void;
 }
 
-function ProjectEntryButton(props: ProjectEntryProps) {
+function ProjectEntryButton(props: ProjectEntryProps & { locked?: boolean }) {
   return (
-    <Button onClick={() => props.setOpen(!props.open)} sx={{
+    <Button disableRipple={props.locked} onClick={() => props.setOpen(!props.open)} sx={{
       ...DEFAULT_FONT,
       ...BUTTON_STYLE,
+      '&:hover': props.locked ? {backgroundColor: BUTTON_STYLE.backgroundColor} : BUTTON_STYLE['&:hover'],
       color: 'black',
       textAlign: 'left',
       textTransform: 'unset !important',
@@ -65,7 +66,7 @@ function ProjectEntryButton(props: ProjectEntryProps) {
   );
 }
 
-export default function ProjectEntry(props: ProjectEntryProps) {
+export default function ProjectEntry(props: ProjectEntryProps & { locked?: boolean }) {
   const [content, setContent] = useState<any>();
 
   useEffect(() => {

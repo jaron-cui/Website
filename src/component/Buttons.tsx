@@ -3,19 +3,21 @@ import { useState } from "react";
 import { BoxArrowUpRight, Clipboard, ClipboardCheck, Icon } from "react-bootstrap-icons";
 import { BUTTON_STYLE } from "../util/styles";
 
-export function LinkButton({ link, Img }: { link: string, Img?: Icon }) {
+export function LinkButton({ link, Img, label }: { link?: string, Img?: Icon, label?: string }) {
   const Icon = Img || BoxArrowUpRight;
   return (
-    <Tooltip title='Open in new tab'>
+    <Tooltip title={label || ''} placement='right'>
       <IconButton 
-        href={link}
+        href={link || ''}
+        disabled={!link}
         target='_blank'
         rel='noreferrer noopener'
         sx={{
           ...BUTTON_STYLE,
-          color: '#777777',
+          margin: '2px',
+          color: 'black',
           '&:hover': {
-            color: 'black'
+            color: '#777777'
           }
       }}>
         <Icon size='15px'/>

@@ -1,5 +1,6 @@
 import { Button, Collapse, IconButton } from '@mui/material';
 import { useState, useEffect } from "react";
+import { Github } from 'react-bootstrap-icons';
 import Clip from "../Clip";
 import { DEFAULT_FONT, BUTTON_STYLE, TRUNCATE_TEXT, CENTERED_VERTICAL } from "../util/styles";
 import { ProjectInfo } from '../util/types';
@@ -84,7 +85,8 @@ export default function ProjectEntry(props: ProjectEntryProps) {
       <div style={{display: 'flex', flexDirection: 'row'}}>
         <ProjectEntryButton {...props} />
         <span style={{margin: '8px'}}>
-          <LinkButton link={`/#/projects/${props.id}`}/>
+          <LinkButton link={`/#/projects/${props.id}`} label='Open in new tab'/>
+          <LinkButton link={props.repository} Img={Github} label='View on GitHub'/>
         </span>
       </div>
       <Collapse in={props.open}>

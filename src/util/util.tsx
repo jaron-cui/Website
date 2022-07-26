@@ -93,3 +93,25 @@ export function stringsContain(strings: string[], substring: string) {
 
   return false;
 }
+
+export function processParagraph(paragraph: string) {
+  if (/^=.+=$/.test(paragraph)) {
+    // insert headers
+    const header = paragraph.match(/=(.+)=/) || [];
+    return <h5 key={header[1]}>{header[1]}</h5>
+  } else if (/^- .+$/.test(paragraph)) {
+    // insert bullets
+    const bullet = paragraph.match(/- (.+)/) || [];
+    return <ul key={bullet[1]}><li>{bullet[1]}</li></ul>
+  } else {
+    // insert links
+    return <p>{paragraph.split(/(\([^\)]+\)\[[^\]]+\])/).map(segment => {
+      if (/\([^\)]+\)\[[^\]]+\]/.test(segment)) {
+        const text = segment.match(/\(([^\)]+)\)/) || [];
+        const link = segment.match(/\[([^\]]+)\]/) || [];
+        return <a href={link[1]}>{text[1]}</a>;
+      }
+      return segment;
+    })}</p>
+  }
+}

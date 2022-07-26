@@ -1,8 +1,10 @@
 [
   {
     "id": "minecraft-in-racket",
+    "repository": "https://github.com/jaron-cui/Minecraft-in-Racket",
     "title": "Minecraft in Racket",
     "date": "2021-09-01",
+    "status": "COMPLETED",
     "technologies": [
       "Racket (Intermediate Student Language)"
     ],
@@ -22,8 +24,10 @@
     "video": "https://youtube.com/embed/n3Io4oBeCn0?rel=0"
   }, {
     "id": "worksheet-generator",
+    "repository": "https://github.com/jaron-cui/MathWorksheetGenerator",
     "title": "Curricular Worksheet Generator",
     "date": "2021-08-20",
+    "status": "COMPLETED",
     "technologies": ["Python", "LaTeX"],
     "features": [
       "Randomized problem generation in PDF format",
@@ -43,6 +47,7 @@
     "id": "mask-layout-generator",
     "title": "Photolithographic Mask Layout Generator",
     "date": "2021-06-24",
+    "status": "COMPLETED",
     "technologies": ["Python", "KLayout"],
     "features": [
       "GDSII format",
@@ -63,8 +68,10 @@
     ]
   }, {
     "id": "rust-physics",
+    "repository": "https://github.com/jaron-cui/rust-physics",
     "title": "Circular-Entity Physics Simulator",
     "date": "2022-03-06",
+    "status": "COMPLETED",
     "technologies": ["Rust", "Nannou"],
     "clip": "https://drive.google.com/uc?export=download&id=14uJ6_58N_Oi3TRHTWGL-zIMZR6YP8dl8",
     "features": [
@@ -75,6 +82,8 @@
     ],
     "paragraphs": [
       "I have always been intrigued by computer simulation. Previously, I've explored rectangular-bounded collisions with a variety of resolution methods. Here, I wanted to make a 'perfectly accurate' simulation free of the bugs commonly seen in physics simulations, such as clipping or unintuitive interactions.",
+
+      "=Typical Flaws of Simulated Collisions=",
       
       "The simplest form of collision resolution subsumes incrementing the positions of objects, and then applying deflective collision forces on intersecting pairs. However, there are several unwanted behaviors that can emerge from this approach.",
       
@@ -83,6 +92,8 @@
       "Second, even during properly detected collisions, there is inaccuracy in the positions of the objects after collision, since in reality, most collisions do not occur exactly between two frames. If we simulated collisions continuously, they would occur at some point during a given frame.",
 
       "Third, when a body collides several times between two frames, only the first collision will be accounted for.",
+
+      "=Addressing These Flaws=",
 
       "The primary goal of this project is to avoid all of these inaccuracies and bugs. I selected circles over rectangles because of their directional symmetry. They would also serve well in a potential future project of simulating soft bodies composed of many rigid subunits.",
 
@@ -94,8 +105,10 @@
     ]
   }, {
     "id": "frog-games",
+    "repository": "https://github.com/jaron-cui/frames-backend",
     "title": "Multiplayer Game Site",
     "date": "2022-04-03",
+    "status": "ON_HOLD",
     "technologies": ["TypeScript", "React", "Spring Boot", "Websocket"],
     "features": [
       "Real-time multiplayer games with friends",
@@ -111,8 +124,10 @@
     ]
   }, {
     "id": "image-editor",
+    "repository": "https://github.com/jaron-cui/CS3500-HW5",
     "title": "Image Editor Application",
     "date": "2021-06-07",
+    "status": "COMPLETED",
     "technologies": ["Java", "Swing"],
     "features": [
       "Command-line operation",
@@ -136,6 +151,7 @@
     "id": "maze-generator",
     "title": "Maze Generator and Visualizer",
     "date": "2021-04-15",
+    "status": "COMPLETED",
     "technologies": ["Java"],
     "clip": "https://drive.google.com/uc?export=download&id=1jYfMvI46QrOYmRXe764Nlq3pmSBrfTjS",
     "features": [
@@ -159,6 +175,7 @@
     "id": "seam-carver",
     "title": "Image Seam Carver",
     "date": "2021-03-24",
+    "status": "COMPLETED",
     "technologies": ["Java"],
     "clip": "https://drive.google.com/uc?export=download&id=1rM-qhn94SdljSHCZszBRe20AeS5wjC2P",
     "features": [
@@ -177,6 +194,7 @@
     "id": "get-rect",
     "title": "get_rect(): 2D Sandbox Duel!",
     "date": "1600-01-01",
+    "status": "COMPLETED",
     "technologies": ["Python", "pygame"],
     "features": [
       "2D box-bounded physics",
@@ -198,6 +216,7 @@
     "id": "allchemical",
     "title": "Allchemical",
     "date": "2022-07-17",
+    "status": "ACTIVE",
     "technologies": ["C++", "SFML"],
     "clip": "https://drive.google.com/uc?export=download&id=1ReWX4WrXyg7f0TGS8U7dbxFbKpKYp-zA",
     "features": [
@@ -214,8 +233,10 @@
     ]
   }, {
     "id": "finite-state-automata",
+    "repository": "https://github.com/jaron-cui/finite-state-automata",
     "title": "State Machine Simulator",
     "date": "2022-07-24",
+    "status": "ACTIVE",
     "technologies": ["Python", "Graphviz"],
     "features": [
       "Determinate Finite State Machines",

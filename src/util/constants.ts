@@ -5,10 +5,10 @@ import experiences from '../data/experiences.json';
 
 export const LINKS = links;
 
-export const PROJECTS: ProjectInfo[] = projects;
+export const PROJECTS: ProjectInfo[] = projects as ProjectInfo[];
 
 const projectMap: {[key in string]: ProjectInfo} = {};
-projects.forEach(project => projectMap[project.id] = project);
+PROJECTS.forEach(project => projectMap[project.id] = project);
 
 export const PROJECT_MAP = projectMap;
 

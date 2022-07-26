@@ -1,11 +1,22 @@
 import { Button, Collapse, IconButton } from '@mui/material';
 import { useState, useEffect } from "react";
-import { BoxArrowUpRight } from "react-bootstrap-icons";
 import Clip from "../Clip";
-import { DEFAULT_FONT, BUTTON_STYLE, TRUNCATE_TEXT } from "../util/styles";
+import { DEFAULT_FONT, BUTTON_STYLE, TRUNCATE_TEXT, CENTERED_VERTICAL } from "../util/styles";
 import { ProjectInfo } from '../util/types';
-import { dateToString, wrapContent } from "../util/util";
+import { dateToString, processParagraph, wrapContent } from "../util/util";
 import { LinkButton } from './Buttons';
+
+const STATUS_COLORS = {
+  COMPLETED: '#447744',
+  ON_HOLD: '#886675',
+  ACTIVE: '#55BB44'
+}
+
+const STATUS_LABELS = {
+  COMPLETED: 'Completed',
+  ON_HOLD: 'On Hold',
+  ACTIVE: 'Active'
+}
 
 type ProjectEntryProps = ProjectInfo & {
   open: boolean;
@@ -21,18 +32,32 @@ function ProjectEntryButton(props: ProjectEntryProps) {
       textAlign: 'left',
       textTransform: 'unset !important',
       width: '100%',
-      justifyContent: 'flex-start'
+      justifyContent: 'flex-start',
+      minWidth: '360px'
     }}>
       <span style={{width: '100%'}}>
         <span style={{
           display: 'flex',
           justifyContent: 'space-between'
         }}>
-          <span style={{ width: 'calc(100% - 120px)' }}>
+          <span style={{ width: 'calc(100% - 160px)' }}>
             <h5 style={TRUNCATE_TEXT}>{props.title}</h5>
             <p style={TRUNCATE_TEXT}>{props.technologies.join(', ')}</p>
           </span>
-          <i>{dateToString(props.date)}</i>
+          <span style={{display: 'flex', flexDirection: 'row'}}>
+            <div className='vr'></div>
+            <span style={{ ...CENTERED_VERTICAL, width: '120px', marginLeft: '10px', marginRight: '10px'}}>
+              <i>{dateToString(props.date)}</i>
+              <div style={{
+                width: '80px',
+                borderRadius: '3px',
+                backgroundColor: STATUS_COLORS[props.status],
+                margin: '10px',
+                color: 'white',
+                textAlign: 'center'
+              }}>{STATUS_LABELS[props.status]}</div>
+            </span>
+          </span>
         </span>
       </span>
     </Button>
@@ -58,9 +83,9 @@ export default function ProjectEntry(props: ProjectEntryProps) {
       }}>
       <div style={{display: 'flex', flexDirection: 'row'}}>
         <ProjectEntryButton {...props} />
-        <div style={{margin: '8px'}}>
+        <span style={{margin: '8px'}}>
           <LinkButton link={`/#/projects/${props.id}`}/>
-        </div>
+        </span>
       </div>
       <Collapse in={props.open}>
         <div style={{padding: '20px'}}>
@@ -74,7 +99,7 @@ export default function ProjectEntry(props: ProjectEntryProps) {
           {props.clip && wrapContent(content)}
           <div style={{paddingTop: '10px'}}>
             <h4>Description</h4>
-            {props.paragraphs.map((paragraph, i) => <p key={i}>{paragraph}</p>)}
+            {props.paragraphs.map(processParagraph)}
           </div>
         </div>
       </Collapse>

@@ -2,14 +2,18 @@ export type ProjectInfo = {
   id: string;
   title: string;
   date: string;
+  status: ProjectStatus;
   technologies: string[];
   features: string[];
   paragraphs: string[];
+  repository?: string;
   video?: string;
   clip?: string;
 };
 
-export type Season = 'Spring' | 'Summer I' | 'Summer II' | 'Fall'
+export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'ON_HOLD';
+
+export type Season = 'Spring' | 'Summer I' | 'Summer II' | 'Fall';
 
 export type Semester = `${Season} ${number}`;
 

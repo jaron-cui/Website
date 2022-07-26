@@ -1,7 +1,7 @@
 import Clip from "../../Clip";
 import { DEFAULT_FONT } from "../../util/styles";
 import NotFound from "../NotFound";
-import { wrapContent } from "../../util/util";
+import { processParagraph, wrapContent } from "../../util/util";
 import { ProjectInfo } from "../../util/types";
 import { PROJECT_MAP } from "../../util/constants";
 
@@ -19,7 +19,7 @@ function Project(props: ProjectInfo) {
       {props.clip && wrapContent(<Clip link={props.clip}/>)}
       <div style={{paddingTop: '10px'}}>
         <h4>Description</h4>
-        {props.paragraphs.map((paragraph, i) => <p key={i}>{paragraph}</p>)}
+        {props.paragraphs.map(processParagraph)}
       </div>
     </div>
   );

@@ -55,28 +55,23 @@ export function CopyButton({ text }: { text: string }) {
 
 export function SideButton({ direction, label, onClick }: { direction: 'left' | 'right', label?: string, onClick: () => void }) {
   const [Arrow, ArrowClicked] = direction == 'left' ? [CaretLeft, CaretLeftFill] : [CaretRight, CaretRightFill];
-  const [Icon, setIcon] = useState<Icon>(Arrow);
-
-  useEffect(() => {
-    setTimeout(() => {
-      setIcon(Arrow);
-    }, 50)
-  }, [Icon]);
+  const [hover, setHover] = useState<boolean>(false);
+  
+  const Icon = hover ? ArrowClicked : Arrow;
 
   return (
     <Tooltip title={label || ''} placement={direction == 'left' ? 'right' : 'left'}>
       <IconButton
-        onClick={() => {
-          setIcon(ArrowClicked);
-          onClick();
-        }}
+        onClick={onClick}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
         sx={{
           ...BUTTON_STYLE,
           height: '100%',
           width: '60px',
           backgroundColor: '#DDDDDD'
       }}>
-        <Icon size='15px/'/>
+        <Icon />
       </IconButton>
     </Tooltip>
   )

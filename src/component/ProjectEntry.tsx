@@ -1,11 +1,12 @@
-import { Button, Collapse, IconButton } from '@mui/material';
-import { useState, useEffect } from "react";
+import { Button, Collapse, IconButton, Tooltip } from '@mui/material';
+import { useState, useEffect, SetStateAction, useRef } from "react";
+import { Carousel, Image } from 'react-bootstrap';
 import { Github } from 'react-bootstrap-icons';
 import Clip from "../Clip";
 import { DEFAULT_FONT, BUTTON_STYLE, TRUNCATE_TEXT, CENTERED_VERTICAL } from "../util/styles";
-import { ProjectInfo } from '../util/types';
-import { dateToString, processParagraph, wrapContent } from "../util/util";
-import { LinkButton } from './Buttons';
+import { Media, ProjectInfo } from '../util/types';
+import { dateToString, mod, processParagraph, toDownloadLink, wrapContent } from "../util/util";
+import { LinkButton, SideButton } from './Buttons';
 
 const STATUS_COLORS = {
   COMPLETED: '#447744',
@@ -66,6 +67,28 @@ function ProjectEntryButton(props: ProjectEntryProps & { locked?: boolean }) {
   );
 }
 
+function ProjectGallery({ media } : { media: Media[] }) {
+  const [index, setIndex] = useState(0);
+  const cachedMedia = useRef<JSX.Element[]>(
+    media.map(item => <img src={toDownloadLink(item.link)} style={{height: '100%', width: '100%', objectFit: 'contain'}}/>
+  ));
+
+  const changeImage = (increment: number) => () => {
+    const newIndex = mod(index + increment, media.length); 
+    setIndex(newIndex);
+  };
+
+  return (
+    <div style={{height: '300px', width: '100%', display: 'flex', justifyContent: 'center'}}>
+      <SideButton direction='left' onClick={changeImage(-1)}/>
+      <Tooltip title={media[index].description}>
+        <div style={{backgroundColor: '#999999', height: '100%', width: '50%'}}>{cachedMedia.current[index]}</div>
+      </Tooltip>
+      <SideButton direction='right' onClick={changeImage(1)}/>
+    </div>
+  );
+}
+
 export default function ProjectEntry(props: ProjectEntryProps & { locked?: boolean }) {
   const [content, setContent] = useState<any>();
 
@@ -98,6 +121,7 @@ export default function ProjectEntry(props: ProjectEntryProps & { locked?: boole
               {props.features.map((feature, i) => <li key={i}>{feature}</li>)}
             </ul>
           </div>
+          {props.gallery && wrapContent(<ProjectGallery media={props.gallery}/>)}
           {props.video && wrapContent(<iframe width="768" height="432" src={props.video}></iframe>)}
           {props.clip && wrapContent(content)}
           <div style={{paddingTop: '10px'}}>

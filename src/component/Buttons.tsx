@@ -1,6 +1,6 @@
 import { IconButton, Tooltip } from "@mui/material";
-import { useState } from "react";
-import { BoxArrowUpRight, Clipboard, ClipboardCheck, Icon } from "react-bootstrap-icons";
+import { useEffect, useState } from "react";
+import { BoxArrowUpRight, CaretLeft, CaretLeftFill, CaretRight, CaretRightFill, Clipboard, ClipboardCheck, Icon } from "react-bootstrap-icons";
 import { BUTTON_STYLE } from "../util/styles";
 
 export function LinkButton({ link, Img, label }: { link?: string, Img?: Icon, label?: string }) {
@@ -48,6 +48,35 @@ export function CopyButton({ text }: { text: string }) {
           }
       }}>
         <Icon size='15px'/>
+      </IconButton>
+    </Tooltip>
+  )
+}
+
+export function SideButton({ direction, label, onClick }: { direction: 'left' | 'right', label?: string, onClick: () => void }) {
+  const [Arrow, ArrowClicked] = direction == 'left' ? [CaretLeft, CaretLeftFill] : [CaretRight, CaretRightFill];
+  const [Icon, setIcon] = useState<Icon>(Arrow);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setIcon(Arrow);
+    }, 50)
+  }, [Icon]);
+
+  return (
+    <Tooltip title={label || ''} placement={direction == 'left' ? 'right' : 'left'}>
+      <IconButton
+        onClick={() => {
+          setIcon(ArrowClicked);
+          onClick();
+        }}
+        sx={{
+          ...BUTTON_STYLE,
+          height: '100%',
+          width: '60px',
+          backgroundColor: '#DDDDDD'
+      }}>
+        <Icon size='15px/'/>
       </IconButton>
     </Tooltip>
   )

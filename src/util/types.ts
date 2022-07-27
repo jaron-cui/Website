@@ -9,6 +9,7 @@ export type ProjectInfo = {
   repository?: string;
   video?: string;
   clip?: string;
+  gallery?: Media[];
 };
 
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'ON_HOLD';
@@ -35,4 +36,12 @@ export type ExperienceInfo = {
   timeframe: Timeframe;
   paragraphs: string[];
   projects?: string[];
+}
+
+export type MediaType = 'image' | 'video';
+
+export type Media = {
+  type: MediaType;
+  description: string;
+  link: string;
 }

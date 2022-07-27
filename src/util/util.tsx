@@ -115,3 +115,12 @@ export function processParagraph(paragraph: string) {
     })}</p>
   }
 }
+
+export function toDownloadLink(link: string) {
+  const parts = link.match(/\/d\/([^\/]+)\/view/) as string[];
+  return 'https://drive.google.com/uc?export=download&id=FILEID'.replace('FILEID', parts[1]);
+}
+
+export function mod(n: number, m: number) {
+  return ((n % m) + m) % m;
+}

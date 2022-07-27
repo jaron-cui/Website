@@ -249,6 +249,21 @@
       "My 2022 Summer 2 semester courses include Theory of Computation, where one of the topics covered is state machines/automata. I'm learning about determinate and nondeterminate finite state automata, pushdown automata, and Turing machines.",
 
       "This project is to put into implementation some of the concepts I've learned about, including NFA to DFA conversion, state machine unions, and regular expression equivalency."
+    ],
+    "gallery": [
+      {
+        "type": "image",
+        "description": "Instantiating an NFA, then converting it to an equivalent DFA",
+        "link": "https://drive.google.com/file/d/1QMB-Dw8Lf-U1raDzSS_p_09l71cFe7V2/view?usp=sharing"
+      }, {
+        "type": "image",
+        "description": "The NFA produced and rendered by the code in the previous slide",
+        "link": "https://drive.google.com/file/d/1C3buexJpl88BUvV1sMR7vK5Mr4xXAiP4/view?usp=sharing"
+      }, {
+        "type": "image",
+        "description": "The DFA produced from running '.to_dfa()' on the NFA",
+        "link": "https://drive.google.com/file/d/1PUpvptGBBxC7oxMV2jympMRiGiOhVyT7/view?usp=sharing"
+      }
     ]
   }
 ]

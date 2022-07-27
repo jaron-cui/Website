@@ -31,8 +31,7 @@ function LabelContainer({ children, locked, onClick }: { children: JSX.Element, 
       textAlign: 'left',
       textTransform: 'unset !important',
       width: '100%',
-      justifyContent: 'flex-start',
-      minWidth: '360px'
+      justifyContent: 'flex-start'
     }}>
       {children}
     </Button>
@@ -99,7 +98,7 @@ function NarrowProjectEntryLabel(props: ProjectEntryProps & { locked?: boolean }
     <LabelContainer locked={!!(props.locked)} onClick={() => props.setOpen(!props.open)}>
       <span style={{width: '100%'}}>
         <Header title={props.title} technologies={props.technologies}/>
-          <hr style={{ height: '2px'}}/>
+        <hr style={{ height: '2px'}}/>
         <span style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
           <Date date={props.date}/>
           <StatusIndicator status={props.status}/>

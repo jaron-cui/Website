@@ -26,7 +26,9 @@ export default function ProjectEntry(props: ProjectEntryProps & { locked?: boole
       paddingBottom: '4px'
       }}>
       <div style={{display: 'flex', flexDirection: 'row'}}>
-        <ProjectEntryLabel {...props} />
+        <span style={{width: 'calc(100% - 30px)'}}>
+          <ProjectEntryLabel {...props} />
+        </span>
         <span style={{margin: '8px'}}>
           <LinkButton link={`/#/projects/${props.id}`} label='Open in new tab'/>
           <LinkButton link={props.repository} Img={Github} label='View on GitHub'/>

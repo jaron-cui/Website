@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Navbar, Container, Nav } from 'react-bootstrap';
+import { Navbar, Container, Nav, NavDropdown } from 'react-bootstrap';
 import { Envelope, EnvelopePaper, Github, Linkedin } from 'react-bootstrap-icons';
 import { LINKS } from '../util/constants';
 import { DEFAULT_FONT } from '../util/styles';
+import WidthSwitch from './WidthSwitch';
 
 function Social(props: {link: string, normal: any, hover: any}) {
   const [hovering, setHovering] = useState<boolean>(false);
@@ -20,7 +21,57 @@ function Social(props: {link: string, normal: any, hover: any}) {
   )
 }
 
-export default function Navigation({ currentPath }: { currentPath: string }) {
+function NarrowNavigation({ currentPath }: { currentPath: string }) {
+  const sectionNames: {[key in string]: string} = {
+    '/': 'Home',
+    '/#/projects': 'Projects',
+    '/#/experience': 'Experience',
+    '/#/contact': 'Contact'
+  };
+
+  function Section({ path, current }: { path: string, current: string }) {
+    return (
+      <NavDropdown.Item key={path} href={path} active={path===current} style={
+        path==current ? {backgroundColor: '#707577', width: '100%'} : { width:'100%' }
+      }>
+        {sectionNames[path]}
+      </NavDropdown.Item>
+    );
+  }
+
+  function Bar() {
+    return <div className='vr' style={{backgroundColor: 'white', width: '2px'}}></div>;
+  }
+  
+  return (
+    <Navbar bg='dark' variant='dark' style={DEFAULT_FONT}>
+      <Container>
+        <Navbar.Brand href='/'>Jaron Cui</Navbar.Brand>
+        <Nav className='me-auto' style={{width:'150px'}}>
+          <Bar />
+          <NavDropdown title={sectionNames[currentPath]} style={{width: '100%'}} menuVariant='dark'>
+            <Section path='/' current={currentPath}/>
+            <Section path='/#/projects' current={currentPath}/>
+            <Section path='/#/experience' current={currentPath}/>
+            <Section path='/#/contact' current={currentPath}/>
+          </NavDropdown>
+          <Bar />
+        </Nav>
+        <Social link={`mailto:${LINKS.email}`}
+          normal={<Envelope color='#DDDDDD'/>}
+          hover={<EnvelopePaper />}/>
+        <Social link={LINKS.linkedin}
+          normal={<Linkedin color='#DDDDDD'/>}
+          hover={<Linkedin />}/>
+        <Social link={LINKS.github}
+          normal={<Github color='#DDDDDD'/>}
+          hover={<Github />}/>
+      </Container>
+    </Navbar>
+  );
+}
+
+function WideNavigation({ currentPath }: { currentPath: string }) {
   function Section({ title, path, current }: { title: string, path: string, current: string }) {
     return <Nav.Link key={title} href={path} active={path===current}>{title}</Nav.Link>
   }
@@ -47,4 +98,8 @@ export default function Navigation({ currentPath }: { currentPath: string }) {
       </Container>
     </Navbar>
   );
+}
+
+export default function Navigation(props: { currentPath: string }) {
+  return <WidthSwitch breakpoint={600} Narrow={NarrowNavigation} Wide={WideNavigation} props={props} />
 }

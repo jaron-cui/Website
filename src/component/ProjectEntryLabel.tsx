@@ -70,7 +70,7 @@ function StatusIndicator({ status } : { status: ProjectStatus }) {
 function WideProjectEntryLabel(props: ProjectEntryProps & { locked?: boolean }) {
   return (
     <LabelContainer locked={!!(props.locked)} onClick={() => props.setOpen(!props.open)}>
-      <span style={{width: '100%'}}>
+      <span style={{width: '100%', maxWidth: '100%'}}>
         <span style={{
           display: 'flex',
           justifyContent: 'space-between'

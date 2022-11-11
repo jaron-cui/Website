@@ -7,8 +7,9 @@ import Projects from './page/Projects';
 import ProjectPage from './page/extraneous/Project';
 import Experience from './page/Experience';
 import NotFound from './page/NotFound';
-import { useEffect, useState } from 'react';
 import Contact from './page/Contact';
+import ViewportPage from './page/extraneous/ViewportPage';
+import DisplayTestCode from './experiments/displayTest';
 
 const paths = [
   ['/', () => <Home />],
@@ -16,7 +17,9 @@ const paths = [
   ['/#/projects\\?search={}', ([ search ]: string[]) => <Projects initialSearch={search}/>],
   ['/#/projects/{}', ([ project ]: string[]) => <ProjectPage project={project}/>],
   ['/#/experience', () => <Experience />],
-  ['/#/contact', () => <Contact />]
+  ['/#/contact', () => <Contact />],
+  ['/#/3DViewport', () => <ViewportPage />],
+  ['/#/scouttrek-schema-demo', () => <DisplayTestCode />]
 ]
 
 function App() {

@@ -10,6 +10,8 @@ import NotFound from './page/NotFound';
 import Contact from './page/Contact';
 import ViewportPage from './page/extraneous/ViewportPage';
 import DisplayTestCode from './experiments/displayTest';
+import { StringUtil } from './page/extraneous/StringManipulation';
+import WordlePage from './page/extraneous/Wordle';
 
 const paths = [
   ['/', () => <Home />],
@@ -19,7 +21,10 @@ const paths = [
   ['/#/experience', () => <Experience />],
   ['/#/contact', () => <Contact />],
   ['/#/3DViewport', () => <ViewportPage />],
-  ['/#/scouttrek-schema-demo', () => <DisplayTestCode />]
+  ['/#/scouttrek-schema-demo', () => <DisplayTestCode />],
+  ['/#/strings', () => <StringUtil />],
+  ['/#/wordle', () => <WordlePage />],
+  ['/#/wordle/{}', ([ cipher ]: string[]) => <WordlePage cipherText={cipher}/>]
 ]
 
 function App() {

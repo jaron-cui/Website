@@ -40,6 +40,7 @@ function evaluateGuess(guess: string, answer: string): Color[] {
 
   for (let i = 0; i < colors.length; i += 1) {
     if (colors[i] === 'gray' && answerLetterCounts[guess[i]]) {
+      decrementLetter(guess[i]);
       colors[i] = 'yellow';
     }
   }

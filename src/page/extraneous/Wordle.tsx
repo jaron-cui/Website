@@ -1,5 +1,6 @@
 import { Button, Input } from '@mui/material';
 import { useEffect, useState } from 'react';
+import Confetti from 'react-confetti';
 import { CopyButton } from '../../component/Buttons';
 import { CENTERED_VERTICAL } from '../../util/styles';
 import { decrypt, encrypt } from '../../util/util';
@@ -225,6 +226,7 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
       <div style={{...CENTERED_VERTICAL}}>
         <h4>{message}</h4>
         <div>Share result: <CopyButton text={formatResultString(answer, gameResult, results)}/></div>
+        <Confetti width={window.innerWidth * .9} height={window.innerHeight * .9} />
       </div>
     );
   }
@@ -233,7 +235,6 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
 
   return (
     <div style={{...CENTERED_VERTICAL}}>
-        <h2>Guesses</h2>
       <div>
         <div>
           {range(guesses.length).map(i => (
@@ -256,7 +257,6 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
           window.location.reload();
         }}>New Game</Button>
       </div>
-        <h2>Share</h2>
       <div>
         {displayGameResult()}
       </div>

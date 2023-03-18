@@ -1,5 +1,6 @@
 import { Button, Input } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { CopyButton } from '../../component/Buttons';
 import { decrypt, encrypt } from '../../util/util';
 import POSSIBLE_ANSWERS from './wordle-answers.json';
 import VALID_WORDS from './wordle-words.json';
@@ -12,30 +13,34 @@ function generateWord(): string {
 
 type Color = 'gray' | 'green' | 'yellow';
 
+type GameResult = 'won' | 'lost';
+
 function evaluateGuess(guess: string, answer: string): Color[] {
   const answerLetterCounts = getLetterCounts(answer);
   const colors: Color[] = [];
 
-  for (let i = 0; i < answer.length; i += 1) {
-    // check for match
-    let match: Color | undefined = undefined
-    if (guess[i] === answer[i]) {
-      match = 'green';
-    } else
-    // check for yellow and update letter counts if applicable
-    if (answerLetterCounts[guess[i]] !== undefined) {
-      match = 'yellow';
-    }
-    if (match) {
-      colors.push(match);
-      answerLetterCounts[guess[i]] -= 1;
-      if (answerLetterCounts[guess[i]] === 0) {
-        delete answerLetterCounts[guess[i]];
+  function decrementLetter(letter: string): void {
+      answerLetterCounts[letter] -= 1;
+      if (answerLetterCounts[letter] === 0) {
+        delete answerLetterCounts[letter];
       }
-      continue;
+  }
+
+  for (let i = 0; i < answer.length; i += 1) {
+    console.log(JSON.stringify(answerLetterCounts))
+    // check for match
+    if (guess[i] === answer[i]) {
+      decrementLetter(guess[i]);
+      colors.push('green');
+    } else {
+      colors.push('gray');
     }
-    // no match at all
-    colors.push('gray');
+  }
+
+  for (let i = 0; i < colors.length; i += 1) {
+    if (colors[i] === 'gray' && answerLetterCounts[guess[i]]) {
+      colors[i] = 'yellow';
+    }
   }
 
   return colors;
@@ -57,14 +62,58 @@ function getLetterCounts(word: string): LetterCounts {
   return counts;
 }
 
+const COLOR_CHARACTERS = {
+  'gray': '⬜',
+  'yellow': '🟨',
+  'green': '🟩'
+}
+
+function formatGameURL(answer?: string): string {
+  const ending = answer ? '/' + encrypt(SECRET, answer) : '';
+  return window.location.origin + '/#/wordle' + ending;
+}
+
+function formatEvaluationString(evaluation: Color[]): string {
+  return evaluation.map(color => COLOR_CHARACTERS[color]).join('');
+}
+
+function formatResultString(answer: string, result: GameResult, evaluations: Color[][]): string {
+  const id = encrypt(SECRET, answer);
+  const score = (result === 'won' ? evaluations.length : 'X') + '/6';
+  const boxes = evaluations.map(formatEvaluationString).join('\n');
+  return 'Jardle ' + id + ' ' + score + '\n\n' + boxes + '\n' + formatGameURL(answer);
+}
+
 function range(exclusiveMax: number): number[] {
   return Array.from(Array(exclusiveMax).keys());
+}
+
+const BACKGROUND_COLORS = {
+  'gray': '#BBBBBB',
+  'yellow': '#FFCC33',
+  'green': '#88CC88'
 }
 
 const DisplayGuess = ({ value, evaluation }: { value: string, evaluation: Color[] }) => {
   return (
     <div style={{overflow: 'hidden'}} key={value}>
-      {range(value.length).map(i => <div style={{float: 'left', backgroundColor: evaluation[i], width: 20}} key={i}>{value[i].toUpperCase()}</div>)}
+      {range(value.length).map(i => (
+          <div
+            style={{
+              float: 'left',
+              borderRadius: 5,
+              backgroundColor: BACKGROUND_COLORS[evaluation[i]],
+              height: 40,
+              width: 40,
+              textAlign: 'center',
+              fontSize: 30,
+              fontWeight: 'bold'
+            }}
+            key={i}
+          >
+            {value[i].toUpperCase()}
+          </div>
+        ))}
     </div>
   )
 }
@@ -74,32 +123,33 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
   const [inputValue, setInputValue] = useState<string>('');
   const [results, setResults] = useState<Color[][]>([]);
   const [guesses, setGuesses] = useState<string[]>([]);
-  const [gameIsActive, setGameIsActive] = useState<boolean>(true);
 
+  const [gameResult, setGameResult] = useState<GameResult>();
   useEffect(() => setAnswer(cipherText ? decrypt(SECRET, cipherText) : generateWord()), []); 
 
   function submitGuess() {
-    if (!gameIsActive) {
+    const lastGuess = inputValue;
+    if (gameResult) {
       return;
     }
-    if (guesses.find(guess => guess === inputValue)) {
+    if (guesses.find(guess => guess === lastGuess)) {
       return;
     }
-    if (inputValue.length !== 5) {
+    if (lastGuess.length !== 5) {
       console.log('guess was not the right length');
       return;
     }
-    if (!VALID_WORDS.find(s => s === inputValue)) {
+    if (!VALID_WORDS.find(s => s === lastGuess)) {
       console.log('not a valid guess');
       return;
     }
-    const result = evaluateGuess(inputValue, answer);
+    const result = evaluateGuess(lastGuess, answer);
 
     setResults([...results, result]);
-    setGuesses([...guesses, inputValue]);
+    setGuesses([...guesses, lastGuess]);
     setInputValue('');
 
-    if (inputValue === answer) {
+    if (lastGuess === answer) {
       onGameEnd(true);
     } else if (results.length + 1 === 6) {
       onGameEnd(false);
@@ -109,16 +159,30 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
   function onGameEnd(won: boolean) {
     if (won) {
       console.log('You won! :)');
+      setGameResult('won')
     } else {
-      console.log('You lose... :(');
+      console.log('You lose... :( the word was ' + answer.toUpperCase());
+      setGameResult('lost')
     }
-    setGameIsActive(false);
   }
+
+  function displayGameResult() {
+    if (!gameResult) {
+      return <div>
+        {shareLink}
+        <CopyButton text={shareLink}/>
+      </div>;
+    }
+    const message = gameResult === 'won' ? 'You won!' : 'You\'re kinda bad.';
+    return <div>{message} Share result: <CopyButton text={formatResultString(answer, gameResult, results)}/></div>
+  }
+
+  const shareLink = formatGameURL(answer);
 
   return (
     <div>
       <div>
-        <h1>Guesses</h1>
+        <h2>Guesses</h2>
         <div>
           {range(guesses.length).map(i => (
             <div key={i}>
@@ -129,12 +193,21 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
       </div>
       <Input
         value={inputValue}
-        onChange={event => setInputValue(event.target.value)} 
+        onChange={event => setInputValue(event.target.value.toLowerCase())} 
         autoComplete='off'
         onKeyDown={event => event.key === 'Enter' && submitGuess()}
       />
       <Button variant='text' onClick={submitGuess} size='large'>Guess</Button>
-      <div>Share: jaron-cui.github.io/#/wordle/{encrypt(SECRET, answer)}</div>
+      <div>
+        <Button variant='text' href={'/#/wordle'} onClick={() => {
+          window.location.replace('/#/wordle');
+          window.location.reload();
+        }}>New Game</Button>
+      </div>
+      <div>
+        <h2>Share</h2>
+        {displayGameResult()}
+      </div>
     </div>
   );
 }

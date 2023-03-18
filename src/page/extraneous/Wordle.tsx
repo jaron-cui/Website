@@ -121,6 +121,50 @@ const DisplayGuess = ({ value, evaluation }: { value: string, evaluation: Color[
   )
 }
 
+function title(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+const MEAN_MESSAGES = [
+  ['I can\'t believe you didn\'t know what ', ' meant.'],
+  ['Didn\'t you learn the word \'', '\' in school??'],
+  ['Embarrassing... it was \'', '\'.'],
+  ['Here\'s your hint for the 7th guess: ', '.'],
+  ['You don\'t know. ', ''],
+  ['Bruh. It was ', '.'],
+  ['It was ', '...'],
+  ['\'', '\'.'],
+  ['Suck my ', '.'],
+  ['That\'s kinda sad... it was ', '.'],
+  ['Only hot people guessed ', ' correctly.']
+];
+
+function endsWith(word: string, ...endings: string[]): boolean {
+  for (const ending of endings) {
+    if (ending.length <= word.length && word.slice(word.length - ending.length) === ending) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function getLoseMessage(answer: string): string {
+  if (endsWith(answer, 'er', 'ir', 'or', 'ur')) {
+    return title(answer) + '? I hardly know her!';
+  }
+  if (endsWith(answer, 'im', 'em', 'am', 'um')) {
+    return title(answer) + '? I hardly know him!';
+  }
+  if (endsWith(answer, 'ed')) {
+    return 'I ' + answer + ' your mom.';
+  }
+  if (endsWith(answer, 'an', 'in', 'en', 'un', 'on')) {
+    return 'I am currently ' + answer + ' your mom.';
+  }
+  const [before, after] = MEAN_MESSAGES[Math.floor(Math.random() * MEAN_MESSAGES.length)];
+  return before + answer + after;
+}
+
 const WordlePage = ({ cipherText }: { cipherText?: string }) => {
   const [answer, setAnswer] = useState<string>('');
   const [inputValue, setInputValue] = useState<string>('');
@@ -176,8 +220,13 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
         <CopyButton text={shareLink}/>
       </div>;
     }
-    const message = gameResult === 'won' ? 'You won!' : 'You\'re kinda bad.';
-    return <div>{message} Share result: <CopyButton text={formatResultString(answer, gameResult, results)}/></div>
+    const message = gameResult === 'won' ? 'You won!' : getLoseMessage(answer);
+    return (
+      <div style={{...CENTERED_VERTICAL}}>
+        <h4>{message}</h4>
+        <div>Share result: <CopyButton text={formatResultString(answer, gameResult, results)}/></div>
+      </div>
+    );
   }
 
   const shareLink = formatGameURL(answer);

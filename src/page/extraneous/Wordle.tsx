@@ -109,7 +109,8 @@ const DisplayGuess = ({ value, evaluation }: { value: string, evaluation: Color[
               width: 40,
               textAlign: 'center',
               fontSize: 30,
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              userSelect: 'none'
             }}
             key={i}
           >

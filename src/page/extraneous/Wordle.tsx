@@ -1,6 +1,7 @@
 import { Button, Input } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { CopyButton } from '../../component/Buttons';
+import { CENTERED_VERTICAL } from '../../util/styles';
 import { decrypt, encrypt } from '../../util/util';
 import POSSIBLE_ANSWERS from './wordle-answers.json';
 import VALID_WORDS from './wordle-words.json';
@@ -180,9 +181,9 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
   const shareLink = formatGameURL(answer);
 
   return (
-    <div>
-      <div>
+    <div style={{...CENTERED_VERTICAL}}>
         <h2>Guesses</h2>
+      <div>
         <div>
           {range(guesses.length).map(i => (
             <div key={i}>
@@ -204,8 +205,8 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
           window.location.reload();
         }}>New Game</Button>
       </div>
-      <div>
         <h2>Share</h2>
+      <div>
         {displayGameResult()}
       </div>
     </div>

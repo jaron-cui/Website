@@ -320,7 +320,7 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
       <div>
         {displayGameResult()}
       </div>
-      <div style={{bottom: 0, position: 'fixed', ...CENTERED_VERTICAL}}>
+      <div style={{bottom: 0, position: 'absolute', ...CENTERED_VERTICAL}}>
         <Keyboard onKey={handleInput} colors={keyColors} colorAliases={BACKGROUND_COLORS}/>
       </div>
     </div>

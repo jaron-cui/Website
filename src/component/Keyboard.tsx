@@ -40,7 +40,7 @@ const Key = ({ id, color, onClick }: KeyProps) => {
         borderRadius: 5,
         backgroundColor: color,
         height: 50,
-        width: 15 + 20 * (alias?.width || id.length),
+        width: 14 + 20 * (alias?.width || id.length),
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

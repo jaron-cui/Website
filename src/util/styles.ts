@@ -28,3 +28,9 @@ export const DEFAULT_MARGIN = {
   marginRight: '8%',
   marginBottom: '200px'
 }
+
+export const UNSELECTABLE: any = {
+  userSelect: 'none',
+  WebkitUserSelect: 'none',
+  MozUserSelect: 'none'
+}

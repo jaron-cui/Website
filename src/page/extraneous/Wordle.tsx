@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Confetti from 'react-confetti';
 import { CopyButton } from '../../component/Buttons';
 import Keyboard, { ALL_KEYS, KEYS } from '../../component/Keyboard';
-import { CENTERED_VERTICAL } from '../../util/styles';
+import { CENTERED_VERTICAL, UNSELECTABLE } from '../../util/styles';
 import { decrypt, encrypt } from '../../util/util';
 import POSSIBLE_ANSWERS from './wordle-answers.json';
 import VALID_WORDS from './wordle-words.json';
@@ -109,10 +109,8 @@ const LetterTile = ({ letter, color }: { letter: string, color: string }) => (
       textAlign: 'center',
       fontSize: 30,
       fontWeight: 'bold',
-      userSelect: 'none',
       margin: 2,
-      WebkitUserSelect: 'none',
-      MozUserSelect: 'none'
+      ...UNSELECTABLE
     }}
   >
     {letter.toUpperCase()}
@@ -293,7 +291,7 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
     return (
       <div style={{...CENTERED_VERTICAL}}>
         {/*<h4>{message}</h4>*/}
-        <div>Share result: <CopyButton text={formatResultString(answer, gameResult, results)}/></div>
+        <div style={UNSELECTABLE}>Share result: <CopyButton text={formatResultString(answer, gameResult, results)}/></div>
         <Confetti width={window.innerWidth * .9} height={window.innerHeight * .9} />
       </div>
     );
@@ -322,7 +320,7 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
       <div>
         {displayGameResult()}
       </div>
-      <div style={{bottom: 0, position: 'absolute', ...CENTERED_VERTICAL}}>
+      <div style={{bottom: 0, position: 'fixed', ...CENTERED_VERTICAL}}>
         <Keyboard onKey={handleInput} colors={keyColors} colorAliases={BACKGROUND_COLORS}/>
       </div>
     </div>

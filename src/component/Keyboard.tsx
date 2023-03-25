@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { CENTERED_VERTICAL } from "../util/styles";
+import { CENTERED_VERTICAL, UNSELECTABLE } from "../util/styles";
 
 export const KEYS = [
   'qwertyuiop'.split(''),
@@ -46,11 +46,9 @@ const Key = ({ id, color, onClick }: KeyProps) => {
         justifyContent: 'center',
         fontSize: alias?.fontScale * FONT_SIZE || FONT_SIZE,
         fontWeight: 'bold',
-        userSelect: 'none',
         margin: 2,
         cursor: 'pointer',
-        WebkitUserSelect: 'none',
-        MozUserSelect: 'none'
+        ...UNSELECTABLE
       }}
       key={id}
       onClick={onClick}

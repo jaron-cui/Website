@@ -1,6 +1,6 @@
 import { TextField } from "@mui/material";
 import { useState, useEffect } from "react";
-import { DEFAULT_FONT } from "../util/styles";
+import { DEFAULT_FONT, DEFAULT_MARGIN } from "../util/styles";
 
 type EntryFields = {
   id: string;
@@ -32,6 +32,7 @@ export default function SearchableEntries<EntryProps extends EntryFields>(
   return (
     <div style={{
       ...DEFAULT_FONT,
+      ...DEFAULT_MARGIN,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'left'

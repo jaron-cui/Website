@@ -290,7 +290,7 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
     const message = gameResult === 'won' ? 'You won!' : getLoseMessage(answer);
     return (
       <div style={{...CENTERED_VERTICAL}}>
-        <h4>{message}</h4>
+        {/*<h4>{message}</h4>*/}
         <div>Share result: <CopyButton text={formatResultString(answer, gameResult, results)}/></div>
         <Confetti width={window.innerWidth * .9} height={window.innerHeight * .9} />
       </div>
@@ -300,7 +300,7 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
   const shareLink = formatGameURL(answer);
 
   return (
-    <div style={{...CENTERED_VERTICAL}}>
+    <div style={{...CENTERED_VERTICAL, marginTop: 40}}>
       <div>
         <div>
           {range(guesses.length).map(i => (
@@ -320,7 +320,9 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
       <div>
         {displayGameResult()}
       </div>
-      <Keyboard onKey={handleInput} colors={keyColors} colorAliases={BACKGROUND_COLORS}/>
+      <div style={{bottom: 0, position: 'absolute', ...CENTERED_VERTICAL}}>
+        <Keyboard onKey={handleInput} colors={keyColors} colorAliases={BACKGROUND_COLORS}/>
+      </div>
     </div>
   );
 }

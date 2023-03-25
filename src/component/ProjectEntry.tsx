@@ -2,7 +2,7 @@ import { Collapse } from '@mui/material';
 import { useState, useEffect } from "react";
 import { Github } from 'react-bootstrap-icons';
 import Clip from "../Clip";
-import { DEFAULT_FONT } from "../util/styles";
+import { DEFAULT_FONT, DEFAULT_MARGIN } from "../util/styles";
 import { processParagraph, wrapContent } from "../util/util";
 import { LinkButton } from './Buttons';
 import ProjectEntryGallery from './ProjectEntryGallery';
@@ -22,6 +22,7 @@ export default function ProjectEntry(props: ProjectEntryProps & { locked?: boole
   return (
     <div style={{
       ...DEFAULT_FONT,
+      ...DEFAULT_MARGIN,
       paddingTop: '4px',
       paddingBottom: '4px',
       width: '100%'

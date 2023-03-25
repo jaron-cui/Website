@@ -1,12 +1,13 @@
 import Viewport3D from "../Viewport3D"
-import { CENTERED_VERTICAL, DEFAULT_FONT } from '../util/styles';
+import { CENTERED_VERTICAL, DEFAULT_FONT, DEFAULT_MARGIN } from '../util/styles';
 import Clip from "../Clip";
 import { processParagraph } from "../util/util";
 
 export default function Home() {
   return (
     <div style={{
-      ...DEFAULT_FONT
+      ...DEFAULT_FONT,
+      ...DEFAULT_MARGIN
     }}>
       <span style={CENTERED_VERTICAL}>
         <h1>Jaron Cui</h1>

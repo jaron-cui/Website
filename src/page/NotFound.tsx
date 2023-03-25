@@ -1,9 +1,10 @@
-import { DEFAULT_FONT } from "../util/styles";
+import { DEFAULT_FONT, DEFAULT_MARGIN } from "../util/styles";
 
 export default function NotFound(props: { message: string }) {
   return (
     <div style={{
         ...DEFAULT_FONT,
+        ...DEFAULT_MARGIN,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center'

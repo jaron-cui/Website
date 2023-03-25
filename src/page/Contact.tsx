@@ -1,11 +1,14 @@
 import { Clipboard, Envelope, Github, Icon, Linkedin } from "react-bootstrap-icons";
 import { CopyButton } from "../component/Buttons";
 import { LINKS } from "../util/constants";
-import { DEFAULT_FONT } from "../util/styles";
+import { DEFAULT_FONT, DEFAULT_MARGIN } from "../util/styles";
 
 export default function Contact() {
   return (
-    <span style={DEFAULT_FONT}>
+    <span style={{
+      ...DEFAULT_FONT,
+      ...DEFAULT_MARGIN
+    }}>
       <h4>Contact</h4>
       <div style={{ marginTop: '20px' }}>
         <Item label='Email' text={LINKS.email} link={`mailto:${LINKS.email}`} Img={Envelope}/>

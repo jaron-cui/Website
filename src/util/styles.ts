@@ -21,3 +21,10 @@ export const TRUNCATE_TEXT: any = {
   overflow: 'hidden',
   textOverflow: 'ellipsis'
 }
+
+export const DEFAULT_MARGIN = {
+  marginTop: '40px',
+  marginLeft: '8%',
+  marginRight: '8%',
+  marginBottom: '200px'
+}

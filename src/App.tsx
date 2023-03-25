@@ -44,12 +44,7 @@ function App() {
   return (
     <>
       <Navigation currentPath={currentPath}/>
-      <div style={{
-        marginTop: '40px',
-        marginLeft: '8%',
-        marginRight: '8%',
-        marginBottom: '200px'
-      }}>
+      <div>
         {getPage()}
       </div>
     </>

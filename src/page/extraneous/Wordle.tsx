@@ -2,6 +2,7 @@ import { Button, Input } from '@mui/material';
 import { useEffect, useState } from 'react';
 import Confetti from 'react-confetti';
 import { CopyButton } from '../../component/Buttons';
+import Keyboard, { ALL_KEYS, KEYS } from '../../component/Keyboard';
 import { CENTERED_VERTICAL } from '../../util/styles';
 import { decrypt, encrypt } from '../../util/util';
 import POSSIBLE_ANSWERS from './wordle-answers.json';
@@ -66,7 +67,7 @@ function getLetterCounts(word: string): LetterCounts {
 }
 
 const COLOR_CHARACTERS = {
-  'gray': '⬜',
+  'gray': '⬛',
   'yellow': '🟨',
   'green': '🟩'
 }
@@ -92,31 +93,45 @@ function range(exclusiveMax: number): number[] {
 }
 
 const BACKGROUND_COLORS = {
-  'gray': '#BBBBBB',
-  'yellow': '#FFCC33',
-  'green': '#88CC88'
+  gray: '#BBBBBB',
+  yellow: '#FFCC33',
+  green: '#88CC88'
 }
 
-const DisplayGuess = ({ value, evaluation }: { value: string, evaluation: Color[] }) => {
+const LetterTile = ({ letter, color }: { letter: string, color: string }) => (
+  <div
+    style={{
+      float: 'left',
+      borderRadius: 5,
+      backgroundColor: color,
+      height: 40,
+      width: 40,
+      textAlign: 'center',
+      fontSize: 30,
+      fontWeight: 'bold',
+      userSelect: 'none',
+      margin: 2
+    }}
+  >
+    {letter.toUpperCase()}
+  </div>
+);
+
+const EvaluatedGuess = ({ guess, evaluation }: { guess: string, evaluation: Color[] }) => {
   return (
-    <div style={{overflow: 'hidden'}} key={value}>
-      {range(value.length).map(i => (
-          <div
-            style={{
-              float: 'left',
-              borderRadius: 5,
-              backgroundColor: BACKGROUND_COLORS[evaluation[i]],
-              height: 40,
-              width: 40,
-              textAlign: 'center',
-              fontSize: 30,
-              fontWeight: 'bold',
-              userSelect: 'none'
-            }}
-            key={i}
-          >
-            {value[i].toUpperCase()}
-          </div>
+    <div style={{overflow: 'hidden'}} key={guess}>
+      {range(guess.length).map(i => (
+          <LetterTile letter={guess[i]} color={BACKGROUND_COLORS[evaluation[i]]}/>
+        ))}
+    </div>
+  )
+}
+
+const GuessView = ({ guess }: { guess: string } ) => {
+  return (
+    <div style={{overflow: 'hidden'}} key={guess}>
+      {range(5).map(i => (
+          <LetterTile letter={i < guess.length ? guess[i] : ''} color={'#EEEEEE'}/>
         ))}
     </div>
   )
@@ -150,10 +165,10 @@ function endsWith(word: string, ...endings: string[]): boolean {
 }
 
 function getLoseMessage(answer: string): string {
-  if (endsWith(answer, 'er', 'ir', 'or', 'ur')) {
+  if (endsWith(answer, 'er', 'ir', 'or', 'ur', 'ar')) {
     return title(answer) + '? I hardly know her!';
   }
-  if (endsWith(answer, 'im', 'em', 'am', 'um')) {
+  if (endsWith(answer, 'im', 'em', 'am', 'um', 'om')) {
     return title(answer) + '? I hardly know him!';
   }
   if (endsWith(answer, 'ed')) {
@@ -166,14 +181,35 @@ function getLoseMessage(answer: string): string {
   return before + answer + after;
 }
 
+const GRAY_KEYS: { [key in Color]: Set<string> } = {
+  gray: new Set(),
+  green: new Set(),
+  yellow: new Set()
+}
+
 const WordlePage = ({ cipherText }: { cipherText?: string }) => {
   const [answer, setAnswer] = useState<string>('');
   const [inputValue, setInputValue] = useState<string>('');
   const [results, setResults] = useState<Color[][]>([]);
   const [guesses, setGuesses] = useState<string[]>([]);
+  const [keyColors, setKeyColors] = useState<{ [key in Color]: Set<string> }>(GRAY_KEYS);
 
   const [gameResult, setGameResult] = useState<GameResult>();
   useEffect(() => setAnswer(cipherText ? decrypt(SECRET, cipherText) : generateWord()), []); 
+
+  function handleInput(key: string) {
+    if (!ALL_KEYS.has(key)) {
+      return;
+    }
+
+    if (key === 'enter') {
+      submitGuess();
+    } else if (key === 'backspace') {
+      setInputValue(inputValue.slice(0, inputValue.length - 1));
+    } else if (inputValue.length < 5) {
+      setInputValue(inputValue.slice() + key);
+    }
+  }
 
   function submitGuess() {
     const lastGuess = inputValue;
@@ -192,6 +228,7 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
       return;
     }
     const result = evaluateGuess(lastGuess, answer);
+    updateKeyColors(lastGuess, result);
 
     setResults([...results, result]);
     setGuesses([...guesses, lastGuess]);
@@ -202,6 +239,35 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
     } else if (results.length + 1 === 6) {
       onGameEnd(false);
     }
+  }
+
+  function updateKeyColors(input: string, result: Color[]) {
+    const newKeyColors = {...keyColors};
+    for (let i = 0; i < result.length; i += 1) {
+      const key = input[i];
+      const color = result[i];
+      if (color === 'green') {
+        changeKeyColor(newKeyColors, key, color);
+      } else if (!keyColors.green.has(key)) {
+        if (color === 'yellow') {
+          changeKeyColor(newKeyColors, key, color);
+        } else if (!keyColors.yellow.has(key) && color === 'gray') {
+          changeKeyColor(newKeyColors, key, color);
+        }
+      }
+    }
+    setKeyColors(newKeyColors);
+  }
+
+  function changeKeyColor(keyColors: { [key in Color]: Set<string> }, key: string, color: Color) {
+    const colors: Color[] = ['gray', 'green', 'yellow'];
+    colors.forEach(keyColor => {
+      if (keyColor === color) {
+        keyColors[keyColor].add(key);
+      } else {
+        keyColors[keyColor].delete(key);
+      }
+    });
   }
 
   function onGameEnd(won: boolean) {
@@ -239,18 +305,12 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
         <div>
           {range(guesses.length).map(i => (
             <div key={i}>
-              <DisplayGuess value={guesses[i]} evaluation={results[i]}/>
+              <EvaluatedGuess guess={guesses[i]} evaluation={results[i]}/>
             </div>
           ))}
+          {gameResult ? null : <GuessView guess={inputValue}/>}
         </div>
       </div>
-      <Input
-        value={inputValue}
-        onChange={event => setInputValue(event.target.value.toLowerCase())} 
-        autoComplete='off'
-        onKeyDown={event => event.key === 'Enter' && submitGuess()}
-      />
-      <Button variant='text' onClick={submitGuess} size='large'>Guess</Button>
       <div>
         <Button variant='text' href={'/#/wordle'} onClick={() => {
           window.location.replace('/#/wordle');
@@ -260,6 +320,7 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
       <div>
         {displayGameResult()}
       </div>
+      <Keyboard onKey={handleInput} colors={keyColors} colorAliases={BACKGROUND_COLORS}/>
     </div>
   );
 }

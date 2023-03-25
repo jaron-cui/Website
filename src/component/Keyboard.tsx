@@ -39,7 +39,7 @@ const Key = ({ id, color, onClick }: KeyProps) => {
         float: 'left',
         borderRadius: 5,
         backgroundColor: color,
-        height: 50,
+        height: 54,
         width: 14 + 20 * (alias?.width || id.length),
         display: 'flex',
         alignItems: 'center',
@@ -48,7 +48,9 @@ const Key = ({ id, color, onClick }: KeyProps) => {
         fontWeight: 'bold',
         userSelect: 'none',
         margin: 2,
-        cursor: 'pointer'
+        cursor: 'pointer',
+        WebkitUserSelect: 'none',
+        MozUserSelect: 'none'
       }}
       key={id}
       onClick={onClick}

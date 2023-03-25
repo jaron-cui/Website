@@ -110,7 +110,9 @@ const LetterTile = ({ letter, color }: { letter: string, color: string }) => (
       fontSize: 30,
       fontWeight: 'bold',
       userSelect: 'none',
-      margin: 2
+      margin: 2,
+      WebkitUserSelect: 'none',
+      MozUserSelect: 'none'
     }}
   >
     {letter.toUpperCase()}

@@ -51,7 +51,7 @@ const Key = ({ id, color, onClick }: KeyProps) => {
         ...UNSELECTABLE
       }}
       key={id}
-      onClick={onClick}
+      onMouseDown={onClick}
     >
       {alias?.alias || id.toUpperCase()}
     </div>

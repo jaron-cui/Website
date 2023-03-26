@@ -1,9 +1,9 @@
-import { Button, Input } from '@mui/material';
+import { Button } from '@mui/material';
 import { useEffect, useState } from 'react';
 import Confetti from 'react-confetti';
 import { CopyButton } from '../../component/Buttons';
-import Keyboard, { ALL_KEYS, KEYS } from '../../component/Keyboard';
-import { CENTERED_VERTICAL, UNSELECTABLE } from '../../util/styles';
+import Keyboard, { ALL_KEYS } from '../../component/Keyboard';
+import { CENTERED, CENTERED_VERTICAL, UNSELECTABLE } from '../../util/styles';
 import { decrypt, encrypt } from '../../util/util';
 import POSSIBLE_ANSWERS from './wordle-answers.json';
 import VALID_WORDS from './wordle-words.json';
@@ -106,10 +106,10 @@ const LetterTile = ({ letter, color }: { letter: string, color: string }) => (
       backgroundColor: color,
       height: 40,
       width: 40,
-      textAlign: 'center',
       fontSize: 30,
       fontWeight: 'bold',
       margin: 2,
+      ...CENTERED,
       ...UNSELECTABLE
     }}
   >

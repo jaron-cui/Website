@@ -34,3 +34,9 @@ export const UNSELECTABLE: any = {
   WebkitUserSelect: 'none',
   MozUserSelect: 'none'
 }
+
+export const CENTERED: any = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+}

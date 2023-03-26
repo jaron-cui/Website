@@ -33,6 +33,8 @@ interface KeyProps {
 
 const Key = ({ id, color, onClick }: KeyProps) => {
   const alias = DISPLAY_ALIAS[id];
+  const characterCount = (alias?.width || id.length);
+  const fontSize = alias?.fontScale * FONT_SIZE || FONT_SIZE;
   return (
     <div
       style={{
@@ -40,10 +42,10 @@ const Key = ({ id, color, onClick }: KeyProps) => {
         borderRadius: 5,
         backgroundColor: color,
         height: 54,
-        width: 14 + 20 * (alias?.width || id.length),
-        fontSize: alias?.fontScale * FONT_SIZE || FONT_SIZE,
+        width: 'calc(min(3.5vw, 14px) + min(4.9vw, 24px) * ' + characterCount + ')',
+        fontSize: fontSize,
         fontWeight: 'bold',
-        margin: 2,
+        margin: 'min(0.6vw, 3px)',
         cursor: 'pointer',
         ...CENTERED,
         ...UNSELECTABLE

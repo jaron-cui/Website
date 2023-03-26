@@ -32,7 +32,8 @@ export const DEFAULT_MARGIN = {
 export const UNSELECTABLE: any = {
   userSelect: 'none',
   WebkitUserSelect: 'none',
-  MozUserSelect: 'none'
+  MozUserSelect: 'none',
+  msUserSelect: 'none'
 }
 
 export const CENTERED: any = {

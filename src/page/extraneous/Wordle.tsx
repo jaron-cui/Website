@@ -282,16 +282,16 @@ const WordlePage = ({ cipherText }: { cipherText?: string }) => {
 
   function displayGameResult() {
     if (!gameResult) {
-      return <div>
+      return <div style={UNSELECTABLE} unselectable='on'>
         {shareLink}
         <CopyButton text={shareLink}/>
       </div>;
     }
     const message = gameResult === 'won' ? 'You won!' : getLoseMessage(answer);
     return (
-      <div style={{...CENTERED_VERTICAL}}>
+      <div style={CENTERED_VERTICAL}>
         {/*<h4>{message}</h4>*/}
-        <div style={UNSELECTABLE}>Share result: <CopyButton text={formatResultString(answer, gameResult, results)}/></div>
+        <div style={UNSELECTABLE} unselectable='on'>Share result: <CopyButton text={formatResultString(answer, gameResult, results)}/></div>
         <Confetti width={window.innerWidth * .9} height={window.innerHeight * .9} />
       </div>
     );

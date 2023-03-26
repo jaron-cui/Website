@@ -41,7 +41,7 @@ const Key = ({ id, color, onClick }: KeyProps) => {
         float: 'left',
         borderRadius: 5,
         backgroundColor: color,
-        height: 54,
+        height: 'min(11vw, 54px)',
         width: 'calc(min(3.5vw, 14px) + min(4.9vw, 24px) * ' + characterCount + ')',
         fontSize: fontSize,
         fontWeight: 'bold',

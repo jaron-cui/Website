@@ -22,7 +22,6 @@ export default function ProjectEntry(props: ProjectEntryProps & { locked?: boole
   return (
     <div style={{
       ...DEFAULT_FONT,
-      ...DEFAULT_MARGIN,
       paddingTop: '4px',
       paddingBottom: '4px',
       width: '100%'

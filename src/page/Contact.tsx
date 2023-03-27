@@ -5,7 +5,7 @@ import { DEFAULT_FONT, DEFAULT_MARGIN } from "../util/styles";
 
 export default function Contact() {
   return (
-    <span style={{
+    <div style={{
       ...DEFAULT_FONT,
       ...DEFAULT_MARGIN
     }}>
@@ -15,7 +15,7 @@ export default function Contact() {
         <Item label='LinkedIn' text={LINKS.linkedin} Img={Linkedin}/>
         <Item label='GitHub' text={LINKS.github} Img={Github}/>
       </div>
-    </span>
+    </div>
   );
 }
 

@@ -265,5 +265,49 @@
         "link": "https://drive.google.com/file/d/1PUpvptGBBxC7oxMV2jympMRiGiOhVyT7/view?usp=sharing"
       }
     ]
+  }, {
+    "id": "wordle",
+    "repository": "https://github.com/jaron-cui/jaron-cui.github.io/blob/master/src/page/extraneous/Wordle.tsx",
+    "title": "Serverless Wordle with Unlimited Daily Games",
+    "date": "2023-03-17",
+    "status": "COMPLETED",
+    "technologies": ["TypeScript", "React"],
+    "features": [
+      "Unlimited unique games per day",
+      "Game solution encoded in URL",
+      "Onscreen color-coded keyboard"
+    ],
+    "paragraphs": [
+      "Check it out at https://jaron-cui.github.io/#/wordle",
+
+      "My friends and I will often do NYT daily games and post our scores in the group chat. It's a nice common activity to have even when we're too busy to hang out.",
+
+      "However, Wordle is limited to a single global game each day. I decided to make a version with an unlimited amount of unique games that are still shareable with friends, since the fun comes from seeing who can guess the word in the fewest guesses.",
+
+      "Since creating some kind of database would have been overkill, I instead encoded the solution for each game in the URL, which is unreadable to humans but enables serverless game sharing."
+    ]
+  }, {
+    "id": "minecraft-in-c++",
+    "repository": "https://github.com/jaron-cui/minecraft-in-cplusplus",
+    "title": "Minecraft in C++",
+    "date": "2023-11-18",
+    "status": "ACTIVE",
+    "technologies": ["C++", "OpenGL", "SDL2"],
+    "features": [
+      "OpenGL rendering",
+      "Infinite 3D Perlin noise terrain generation",
+      "Original physics engine",
+      "Day/night cycle"
+    ],
+    "paragraphs": [
+      "My previous Minecraft clone in Racket ISL was a test of my ability to implement a complex project in a highly limited language. This project is an experiment in designing an efficient implementation in a traditional programming language with a developed toolset.",
+
+      "Consequently, the performance, accuracy, power, and feature set of this version far exceeds its predecessor.",
+
+      "With a new physics engine, rendering system, and a sophisticated terrain generation system, this project is an excellent foray into C++ and OpenGL.",
+
+      "Eventually, I hope to add other entities, inventory, and multiplayer to the game."
+    ],
+    "video": "https://youtube.com/embed/H6CSRfh5ud8?rel=0"
   }
 ]

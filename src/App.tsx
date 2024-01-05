@@ -13,7 +13,7 @@ import { StringUtil } from './page/extraneous/StringManipulation';
 import WordlePage from './page/extraneous/Wordle';
 import Tetris from './page/extraneous/Tetris';
 import Groc from './page/extraneous/Grocery';
-import { Rect } from './page/extraneous/Rect';
+import { Rect } from './page/extraneous/rect/Rect';
 
 const paths = [
   ['/', () => <Home />],

@@ -216,7 +216,7 @@
     "id": "allchemical",
     "title": "Allchemical",
     "date": "2022-07-17",
-    "status": "ACTIVE",
+    "status": "ON_HOLD",
     "technologies": ["C++", "SFML"],
     "clip": "https://drive.google.com/uc?export=download&id=1ReWX4WrXyg7f0TGS8U7dbxFbKpKYp-zA",
     "features": [
@@ -236,7 +236,7 @@
     "repository": "https://github.com/jaron-cui/finite-state-automata",
     "title": "State Machine Simulator",
     "date": "2022-07-24",
-    "status": "ACTIVE",
+    "status": "COMPLETED",
     "technologies": ["Python", "Graphviz"],
     "features": [
       "Determinate Finite State Machines",

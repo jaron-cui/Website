@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { useEffect, useRef } from 'react';
 
 enum Block {
-  Air, Grass, Stone
+  Air, Grass, Grasses, Stone, Soil, Placeholder
 };
 
 // represents a 2D grid-based terrain
@@ -126,13 +126,18 @@ precision mediump float;
 
 varying vec2 vUvs;
 varying vec2 vPos;
-uniform sampler2D uSampler2;
+
+uniform sampler2D uBlockTextures;
+uniform int uBlockSize;
+
 uniform vec2 uScreenSize;
 uniform vec2 uBlockOffset;
 uniform vec2 uGridSize;
-uniform int uBlockSize;
+
 uniform int uBlockTypes;
 uniform sampler2D uTerrain;
+
+uniform int wind;
 
 void main() {
   vec2 pixelPos = ((vPos + 1.0) * 0.5) * uScreenSize;
@@ -147,6 +152,7 @@ void main() {
     return;
   }
   int blockType = int(255.0 * texture2D(uTerrain, c / uGridSize).a);
+  int textureVariant = blockType == 1 || blockType == 2 ? wind + 2 : 0;
   if (blockType == 0) {
     discard;
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
@@ -154,13 +160,13 @@ void main() {
   }
   vec2 subTextureOffset = blockPos - c;
 
-  vec2 textureOffset = vec2(subTextureOffset.x, (1.0 - subTextureOffset.y + float(blockType - 1)) / float(uBlockTypes));
+  vec2 textureOffset = vec2((subTextureOffset.x + float(textureVariant)) / 5.0, (1.0 - subTextureOffset.y + float(blockType - 1)) / float(uBlockTypes));
 
-    gl_FragColor = vec4(texture2D(uSampler2, textureOffset));
+    gl_FragColor = vec4(texture2D(uBlockTextures, textureOffset));
 }`;
 
 const WORLD_WIDTH = 48;
-const WORLD_HEIGHT = 16;
+const WORLD_HEIGHT = 20;
 const world = new Terrain(WORLD_WIDTH, WORLD_HEIGHT);
 for (let x = 0; x < WORLD_WIDTH; x += 1) {
   for (let y = 0; y < WORLD_HEIGHT; y += 1) {
@@ -168,6 +174,8 @@ for (let x = 0; x < WORLD_WIDTH; x += 1) {
       world.set(x, y, Block.Stone);
     } else if (y < 16) {
       world.set(x, y, Block.Grass);
+    } else if (y < 17) {
+      world.set(x, y, Block.Grasses);
     } else {
       world.set(x, y, Block.Air);
     }
@@ -180,16 +188,17 @@ worldData.scaleMode = PIXI.SCALE_MODES.NEAREST;
 
 const SCREEN_WIDTH = 960;
 const SCREEN_HEIGHT = 540;
-const BLOCK_TEXTURES = PIXI.Texture.from('blocks.png');
+const BLOCK_TEXTURES = PIXI.Texture.from('blocks2.png');
 BLOCK_TEXTURES.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
 const uniforms = {
-  uSampler2: BLOCK_TEXTURES,
+  uBlockTextures: BLOCK_TEXTURES,
   uScreenSize: [SCREEN_WIDTH, SCREEN_HEIGHT],
   uBlockOffset: [0, 0],
   uGridSize: [WORLD_WIDTH, WORLD_HEIGHT],
   uBlockSize: 20,
   uBlockTypes: Object.keys(Block).length / 2 - 1,
-  uTerrain: worldData
+  uTerrain: worldData,
+  wind: 0
 };
 
 // Make sure repeat wrap is used and no mipmapping.
@@ -244,11 +253,13 @@ app.stage.addChild(quad);
   bunny.y = app.screen.height / 2;
 
   //app.stage.addChild(bunny);
-
+  let t = 0;
   // Listen for animate update
   app.ticker.minFPS = 40;
   app.ticker.maxFPS = 40;
   app.ticker.add((delta: number) => {
+    t += 1;
+    quad.shader.uniforms.wind = Math.sin(t / 30) * 2.2;
     for (let i = 0; i < bodies.length; i += 1) {
       for (let j = i + 1; j < bodies.length; j += 1) {
         const b1 = bodies[i];

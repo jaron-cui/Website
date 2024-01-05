@@ -200,12 +200,6 @@ const uniforms = {
   uTerrain: worldData,
   wind: 0
 };
-
-// Make sure repeat wrap is used and no mipmapping.
-
-// uniforms.noise.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
-// uniforms.noise.baseTexture.mipmap = PIXI.MIPMAP_MODES.OFF;
-
 // Build the shader and the quad.
 const shader = PIXI.Shader.from(vertexSrc, fragmentSrc, uniforms);
 const quad = new PIXI.Mesh(geometry, shader);
@@ -213,46 +207,10 @@ const quad = new PIXI.Mesh(geometry, shader);
 quad.position.set(0, 0);
 quad.scale.set(2);
 
-    
-
 function createApp() {
   const app = new PIXI.Application<HTMLCanvasElement>({ background: '#1099bb', width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
-// done.. add it to stage!
-// tileMesh.position.set(400, 300);
-// tileMesh.scale.set(2);
-app.stage.addChild(quad);
-  // create a new Sprite from an image path
-  const bunny = PIXI.Sprite.from('blocks.png');
-  bunny.scale.set(2)
-  const sprites: any[] = [];
-  for (let i = 0; i < 2; i += 1) {
-    const sprite = PIXI.Sprite.from('https://pixijs.com/assets/bunny.png');
-    sprite.anchor.set(0.5);
-    sprites.push(sprite);
-    app.stage.addChild(sprite);
-  }
-  class Body {
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    constructor (x: number, y: number, xv: number, yv: number) {
-        this.x = x;
-        this.y = y;
-        this.vx = xv;
-        this.vy = yv;
-    }
-  }
-  const bodies = [new Body(app.screen.width / 2 + 50, app.screen.height / 2 + 50, -3, 0), new Body(200, 0, 0, 2.5)]
 
-  // center the sprite's anchor point
-  bunny.anchor.set(0.5);
-
-  // move the sprite to the center of the screen
-  bunny.x = app.screen.width / 2;
-  bunny.y = app.screen.height / 2;
-
-  //app.stage.addChild(bunny);
+  app.stage.addChild(quad);
   let t = 0;
   // Listen for animate update
   app.ticker.minFPS = 40;
@@ -260,35 +218,6 @@ app.stage.addChild(quad);
   app.ticker.add((delta: number) => {
     t += 1;
     quad.shader.uniforms.wind = Math.sin(t / 30) * 2.2;
-    for (let i = 0; i < bodies.length; i += 1) {
-      for (let j = i + 1; j < bodies.length; j += 1) {
-        const b1 = bodies[i];
-        const b2 = bodies[j];
-        const dx = b2.x - b1.x;
-        const dy = b2.y - b1.y;
-        const r = Math.sqrt(dx * dx + dy * dy);
-        const theta = Math.atan2(dy, dx);
-        const f = 1000 / (r * r);
-        const fx = f * Math.cos(theta);
-        const fy = f * Math.sin(theta);
-        b1.vx += fx;
-        b2.vx -= fx;
-        b1.vy += fy;
-        b2.vy -= fy;
-      }
-    }
-    bodies.forEach(body => {
-      body.x += body.vx;
-      body.y += body.vy;
-      });
-    // just for fun, let's rotate mr rabbit a little
-    // delta is 1 if running at 100% performance
-    // creates frame-independent transformation
-    bunny.rotation += -.01 * delta;
-    for (let i = 0; i < bodies.length; i += 1) {
-      sprites[i].x = bodies[i].x;
-      sprites[i].y = bodies[i].y;
-    }
   });
   return app;
 };

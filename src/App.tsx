@@ -11,6 +11,9 @@ import Contact from './page/Contact';
 import ViewportPage from './page/extraneous/ViewportPage';
 import { StringUtil } from './page/extraneous/StringManipulation';
 import WordlePage from './page/extraneous/Wordle';
+import Tetris from './page/extraneous/Tetris';
+import Groc from './page/extraneous/Grocery';
+import { Rect } from './page/extraneous/Rect';
 
 const paths = [
   ['/', () => <Home />],
@@ -22,7 +25,10 @@ const paths = [
   ['/#/3DViewport', () => <ViewportPage />],
   ['/#/strings', () => <StringUtil />],
   ['/#/wordle', () => <WordlePage />],
-  ['/#/wordle/{}', ([ cipher ]: string[]) => <WordlePage cipherText={cipher}/>]
+  ['/#/wordle/{}', ([ cipher ]: string[]) => <WordlePage cipherText={cipher}/>],
+  ['/#/tetris', () => <Tetris />],
+  ['/#/screen', () => <Groc />],
+  ['/#/rect', () => <Rect />]
 ]
 
 function App() {

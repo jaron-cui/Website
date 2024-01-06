@@ -103,6 +103,78 @@ function distance(a: [number, number], b: [number, number]): number {
   return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
 }
 
+type ThingCollisionEvent = {
+  time: number;
+  id1: number;
+  id2: number;
+  axis: [number, number];
+};
+
+type TerrainCollisionEvent = {
+  time: number;
+  id: number;
+  axis: [number, number];
+};
+
+function calculateThingCollision(thing1: Inertial, thing2: Inertial): ThingCollisionEvent {
+  const { x: x1, y: y1, w: w1, h: h1, vx: vx1, vy: vy1 } = thing1;
+  const { x: x2, y: y2, w: w2, h: h2, vx: vx2, vy: vy2 } = thing2;
+  const dvx = vx2 - vx1;
+  const dvy = vy2 - vy1;
+  const xa = dvx < 0 ? 1 : -1;
+  const ya = dvy < 0 ? 1 : -1;
+  // x1 + xa * w1 / 2 + t * vx1 = x2 - xa * w2 / 2 + t * vx2
+  // -> t = (x2 - x1 - xa * w2 / 2 - xa * w1 / 2) / (vx1 - vx2)
+  const tx = dvx === 0 ? Infinity : (x2 - x1 - xa * w2 / 2 - xa * w1 / 2) / (vx1 - vx2);
+
+  // y1 + ya * h1 / 2 + t * vy1 = y2 - ya * h2 / 2 + t * vy2
+  // -> t = (y2 - y1 - ya * h2 / 2 - ya * h1 / 2) / (vy1 - vy2)
+  const ty = dvy === 0 ? Infinity : (y2 - y1 - ya * h2 / 2 - ya * h1 / 2) / (vy1 - vy2);
+
+  const t = Math.min(tx, ty);
+
+  const axis: [number, number] = [0, 0];
+  if (tx < ty) {
+    axis[0] = xa;
+  } else {
+    axis[1] = ya;
+  }
+  return { time: t, id1: thing1.id, id2: thing2.id, axis };
+}
+
+function getNextThingCollision(inertials: Inertial[]): ThingCollisionEvent {
+  let nextCollision: ThingCollisionEvent = { time: Infinity, id1: -1, id2: -1, axis: [0, 0] };
+  for (let i = 0; i < inertials.length; i += 1) {
+    const thing1 = inertials[i];
+    for (let j = i + 1; j < inertials.length; j += 1) {
+      const thing2 = inertials[j];
+      const collision = calculateThingCollision(thing1, thing2);
+      if (collision.time < 0 || collision.time === Infinity) {
+        continue;
+      }
+      if (collision.time < nextCollision.time) {
+        nextCollision = collision;
+      }
+    }
+  }
+  return nextCollision;
+}
+
+function stepPhysics(world: World) {
+  const inertials: Inertial[] = [];
+  for (const thing of world.things.values()) {
+    if (inertial(thing)) {
+      inertials.push(thing);
+    }
+  }
+  let timeLeft = 1.0;
+  while (timeLeft > 0) {
+    const nextThingCollision = getNextThingCollision(inertials);
+    const nextTerrainCollision = getNextTerrainCollision(world, inertialIds);
+
+  }
+}
+
 function handleDetonation(detonated: Explosive, world: World) {
   const { x, y, explosionRadius, maxExplosionDamage } = detonated;
 

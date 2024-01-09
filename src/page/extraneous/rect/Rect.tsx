@@ -160,6 +160,21 @@ function getNextThingCollision(inertials: Inertial[]): ThingCollisionEvent {
   return nextCollision;
 }
 
+function getNextTerrainCollision(world: World, inertials: Inertial[]): TerrainCollisionEvent | any {
+  let nextCollision: TerrainCollisionEvent = { time: Infinity, id: -1, axis: [0, 0] };
+  for (const thing of inertials) {
+    const { x, y, w, h, vx, vy } = thing;
+    const xa = vx < 0 ? -1 : 1;
+    const ya = vy < 0 ? -1 : 1;
+    let nextXBorder = xa === 1 ? Math.ceil(x + w / 2) : Math.floor(x - w / 2);
+    let tx = Infinity;
+    while (true) {
+      let t = (nextXBorder - (x + xa * w / 2)) / vx;
+     // const sad = 0;
+    }
+  }
+}
+
 function stepPhysics(world: World) {
   const inertials: Inertial[] = [];
   for (const thing of world.things.values()) {
@@ -170,7 +185,7 @@ function stepPhysics(world: World) {
   let timeLeft = 1.0;
   while (timeLeft > 0) {
     const nextThingCollision = getNextThingCollision(inertials);
-    const nextTerrainCollision = getNextTerrainCollision(world, inertialIds);
+    const nextTerrainCollision = getNextTerrainCollision(world, inertials);
 
   }
 }
@@ -282,7 +297,9 @@ const WORLD_HEIGHT = 20;
 const WORLD = new Terrain(WORLD_WIDTH, WORLD_HEIGHT);
 for (let x = 0; x < WORLD_WIDTH; x += 1) {
   for (let y = 0; y < WORLD_HEIGHT; y += 1) {
-    if (y < 15) {
+    if (y < 10) {
+      WORLD.set(x, y, Block.Soil);
+    } else if (y < 15) {
       WORLD.set(x, y, Block.Stone);
     } else if (y < 16) {
       WORLD.set(x, y, Block.Grass);

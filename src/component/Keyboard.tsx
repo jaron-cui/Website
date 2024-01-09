@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { CENTERED, CENTERED_VERTICAL, UNSELECTABLE } from "../util/styles";
+import TypingHandler from "./TypingHandler";
 
 export const KEYS = [
   'qwertyuiop'.split(''),
@@ -71,26 +72,15 @@ interface KeyboardProps {
 }
 
 const Keyboard = ({ onKey, colors, colorAliases }: KeyboardProps) => {
-  const keyboardHandler = useRef<(event: KeyboardEvent) => void>(() => null);
-
-  useEffect(() => {
-    keyboardHandler.current = (event: KeyboardEvent) => {
-      const key = event.key.toLowerCase();
-      if (ALL_KEYS.has(key)) {
-        keyHandler(key)();
-      }
-    };
-  }, [onKey]);
-
-  useEffect(() => {
-    const handler = (event: KeyboardEvent) => keyboardHandler.current(event);
-    document.addEventListener('keydown', handler, false);
-    return () => document.removeEventListener('keydown', handler, false);
-  }, []);
-
-
   function keyHandler(key: string) {
     return () => {onKey(key);console.log(key)};
+  }
+
+  function onTypedKey(key: string) {
+    const lowercase = key.toLowerCase();
+    if (ALL_KEYS.has(lowercase)) {
+      onKey(lowercase);
+    }
   }
 
   function keyColor(key: string): string {
@@ -109,6 +99,7 @@ const Keyboard = ({ onKey, colors, colorAliases }: KeyboardProps) => {
           {row.map(key => <Key id={key} color={keyColor(key)} key={key} onClick={keyHandler(key)}/>)}
         </div>
       ))}
+      <TypingHandler onKey={onTypedKey}/>
     </div>
   )
 }

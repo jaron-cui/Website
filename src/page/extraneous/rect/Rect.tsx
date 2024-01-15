@@ -113,20 +113,20 @@ function renderable<T>(thing: any): thing is Renderable<T> {
   return thing.renderable;
 }
 
-abstract class Armature<T> {
+interface Armature<T> {
   pieces: Map<string, AnimationFrames>;
-  
-  constructor(pieces: Map<string, AnimationFrames>) {
-    this.pieces = pieces;
-  }
-
-  abstract getPose(configData: T): Map<string, ArmaturePiecePose>;
+  getPose(configData: T): Map<string, ArmaturePiecePose>;
 }
 
 // EXAMPLE OF SPRITE RIGGING WITH ANIMATION
-class DynamiteRig extends Armature<{
+const DYNAMITE_RIG: Armature<{
   fuse: number;
-}> {
+}> = {
+  pieces: new Map([
+    ['dynamite', {
+      
+    }]
+  ]),
   getPose(configData: { fuse: number; }): Map<string, ArmaturePiecePose> {
     return new Map([
       ['dynamite', {

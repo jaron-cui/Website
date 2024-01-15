@@ -103,6 +103,52 @@ function mortal(thing: any): thing is Mortal {
   return thing.mortal;
 }
 
+interface Renderable<T> {
+  renderable: true;
+  armature: Armature<T>;
+  armatureConfig: T;
+}
+
+function renderable<T>(thing: any): thing is Renderable<T> {
+  return thing.renderable;
+}
+
+abstract class Armature<T> {
+  pieces: Map<string, AnimationFrames>;
+  
+  constructor(pieces: Map<string, AnimationFrames>) {
+    this.pieces = pieces;
+  }
+
+  abstract getPose(configData: T): Map<string, ArmaturePiecePose>;
+}
+
+// EXAMPLE OF SPRITE RIGGING WITH ANIMATION
+class DynamiteRig extends Armature<{
+  fuse: number;
+}> {
+  getPose(configData: { fuse: number; }): Map<string, ArmaturePiecePose> {
+    return new Map([
+      ['dynamite', {
+        animation: 'ignition',
+        frame: configData.fuse
+      }]
+    ]);
+  }
+}
+
+interface ArmaturePiecePose {
+  rx?: number;
+  ry?: number;
+  degreeRotation?: number;
+  scale?: number;
+  animation: string;
+  frame: number;
+}
+
+interface AnimationFrames {
+
+}
 
 function distance(a: [number, number], b: [number, number]): number {
   return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);

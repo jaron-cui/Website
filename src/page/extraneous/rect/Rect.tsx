@@ -103,38 +103,31 @@ function mortal(thing: any): thing is Mortal {
   return thing.mortal;
 }
 
-interface Renderable<T> {
+interface Renderable {
   renderable: true;
-  armature: Armature<T>;
-  armatureConfig: T;
+  pieces: Map<string, AnimationFrames>;
+  getPose(): Map<string, ArmaturePiecePose>;
 }
 
-function renderable<T>(thing: any): thing is Renderable<T> {
+function renderable(thing: any): thing is Renderable {
   return thing.renderable;
 }
 
-interface Armature<T> {
-  pieces: Map<string, AnimationFrames>;
-  getPose(configData: T): Map<string, ArmaturePiecePose>;
-}
-
 // EXAMPLE OF SPRITE RIGGING WITH ANIMATION
-const DYNAMITE_RIG: Armature<{
-  fuse: number;
-}> = {
+const DYNAMITE_RIG: Renderable & { fuse: number } = {
+  fuse: 0,
   pieces: new Map([
-    ['dynamite', {
-      
-    }]
+    ['dynamite', {}]
   ]),
-  getPose(configData: { fuse: number; }): Map<string, ArmaturePiecePose> {
+  getPose(): Map<string, ArmaturePiecePose> {
     return new Map([
       ['dynamite', {
         animation: 'ignition',
-        frame: configData.fuse
+        frame: this.fuse
       }]
     ]);
-  }
+  },
+  renderable: true
 }
 
 interface ArmaturePiecePose {

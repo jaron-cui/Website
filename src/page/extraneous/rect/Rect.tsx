@@ -6,6 +6,10 @@ enum Block {
   Air, Grass, Grasses, Stone, Soil, Placeholder
 };
 
+enum SpriteTextures {
+  
+}
+
 // represents a 2D grid-based terrain
 class Terrain {
   blocks: Uint8Array;
@@ -29,8 +33,8 @@ class Terrain {
 class World {
   terrain: Terrain;
   things: Map<number, Physical>;
-  constructor() {
-    this.terrain = new Terrain(48, 20);
+  constructor(terrain: Terrain) {
+    this.terrain = terrain;
     this.things = new Map();
   }
 }
@@ -98,6 +102,7 @@ interface Mortal {
 function mortal(thing: any): thing is Mortal {
   return thing.mortal;
 }
+
 
 function distance(a: [number, number], b: [number, number]): number {
   return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
@@ -275,6 +280,15 @@ function getNextTerrainCollision(world: World, inertials: Inertial[]): TerrainCo
   return nextCollision;
 }
 
+function stepEverythingBy(time: number, world: World, exclude?: number) {
+  for (const thing of world.things.values()) {
+    if (inertial(thing)) {
+      thing.x += thing.vx * time;
+      thing.y += thing.vy * time;
+    }
+  }
+}
+
 function processTerrainCollision(collision: TerrainCollisionEvent, world: World) {
   const thing = world.things.get(collision.id);
   if (!thing || !inertial(thing)) {
@@ -289,6 +303,7 @@ function processTerrainCollision(collision: TerrainCollisionEvent, world: World)
     thing.y += collision.time * thing.vy;
     thing.vy = 0;
   }
+  stepEverythingBy(collision.time, world, collision.id);
 } 
 
 function stepPhysics(world: World) {
@@ -297,7 +312,7 @@ function stepPhysics(world: World) {
     if (inertial(thing)) {
       inertials.push(thing);
       thing.vy -= 0.08;
-      console.log(JSON.stringify(thing));
+      // console.log(JSON.stringify(thing));
       world.things.set(thing.id, thing);
     }
   }
@@ -308,20 +323,13 @@ function stepPhysics(world: World) {
 
     // TODO: replace
     if (nextTerrainCollision.time <= timeLeft) {
-      console.log("colliding")
+      // console.log("colliding")
       processTerrainCollision(nextTerrainCollision, world);
-      timeLeft -= nextTerrainCollision.time;
     } else {
-      timeLeft -= nextTerrainCollision.time;
-      // TODO: fix
-      const obj = world.things.get(0);
-      if (inertial(obj)) {
-        console.log("incrementing")
-        obj.x += obj.vx;
-        obj.y += obj.vy;
-        world.things.set(obj.id, obj);
-      }
+      stepEverythingBy(timeLeft, world);
     }
+    // TODO: update when thing collisions are enabled
+    timeLeft -= nextTerrainCollision.time;
     // if (nextThingCollision.time < nextTerrainCollision.time) {
     //   processThingCollision
     // }
@@ -453,26 +461,84 @@ worldData.wrapMode = PIXI.WRAP_MODES.CLAMP;
 worldData.mipmap = PIXI.MIPMAP_MODES.OFF;
 worldData.scaleMode = PIXI.SCALE_MODES.NEAREST;
 
+function convertTerrainDataToTexture(terrain: Terrain): PIXI.BaseTexture<PIXI.BufferResource, PIXI.IAutoDetectOptions> {
+  const data = PIXI.BaseTexture.fromBuffer(terrain.blocks, terrain.w, terrain.h, { format: PIXI.FORMATS.ALPHA, type: PIXI.TYPES.UNSIGNED_BYTE });
+  data.wrapMode = PIXI.WRAP_MODES.CLAMP;
+  data.mipmap = PIXI.MIPMAP_MODES.OFF;
+  data.scaleMode = PIXI.SCALE_MODES.NEAREST;
+  return data;
+}
+
 const SCREEN_WIDTH = 960;
 const SCREEN_HEIGHT = 540;
-const BLOCK_TEXTURES = PIXI.Texture.from('blocks2.png');
-BLOCK_TEXTURES.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
-const uniforms = {
-  uBlockTextures: BLOCK_TEXTURES,
-  uScreenSize: [SCREEN_WIDTH, SCREEN_HEIGHT],
-  uBlockOffset: [0, 0],
-  uGridSize: [WORLD_WIDTH, WORLD_HEIGHT],
-  uBlockSize: 20,
-  uBlockTypes: Object.keys(Block).length / 2 - 1,
-  uTerrain: worldData,
-  wind: 0
-};
+// const BLOCK_TEXTURES = PIXI.Texture.from('blocks2.png');
+// BLOCK_TEXTURES.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+// const DEFAULT_UNIFORMS = {
+//   uBlockTextures: BLOCK_TEXTURES,
+//   uScreenSize: [SCREEN_WIDTH, SCREEN_HEIGHT],
+//   uBlockOffset: [0, 0],
+//   uGridSize: [WORLD_WIDTH, WORLD_HEIGHT],
+//   uBlockSize: 20,
+//   uBlockTypes: Object.keys(Block).length / 2 - 1,
+//   uTerrain: null,
+//   wind: 0
+// };
+
+function createInitialUniforms() {
+  const blockTextures = PIXI.Texture.from('blocks2.png');
+  blockTextures.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+  return {
+    uBlockTextures: blockTextures,
+    uScreenSize: [SCREEN_WIDTH, SCREEN_HEIGHT],
+    uBlockOffset: [0, 0],
+    uGridSize: [WORLD_WIDTH, WORLD_HEIGHT],
+    uBlockSize: 20,
+    uBlockTypes: Object.keys(Block).length / 2 - 1,
+    uTerrain: null,
+    wind: 0
+  };
+}
 // Build the shader and the quad.
-const shader = PIXI.Shader.from(vertexShader, fragmentShader, uniforms);
+const shader = PIXI.Shader.from(vertexShader, fragmentShader, createInitialUniforms());
 const quad = new PIXI.Mesh(geometry, shader);
 
 quad.position.set(0, 0);
 quad.scale.set(2);
+
+class Renderer {
+  time: number;
+  world: World;
+  terrainLayer: PIXI.Mesh<PIXI.Shader>;
+  entitySprites: Map<number, PIXI.Sprite>;
+
+  constructor(world: World) {
+    this.world = world;
+
+    this.time = 0;
+
+    const shader = PIXI.Shader.from(vertexShader, fragmentShader, createInitialUniforms());
+    this.terrainLayer = new PIXI.Mesh(geometry, shader);
+    this.terrainLayer.position.set(0, 0);
+    this.terrainLayer.scale.set(2);
+
+    this.entitySprites = new Map();
+  }
+
+  updateTerrain() {
+    this.terrainLayer.shader.uniforms.uTerrain = convertTerrainDataToTexture(this.world.terrain);
+  }
+
+  updateEntities() {
+    // sprite.x = (world.things.get(0)?.x as number + 1) * 20;
+    // sprite.y = SCREEN_HEIGHT - (world.things.get(0)?.y as number + 1) * 20;
+    // for (const sprite)
+  }
+
+  updateAmbient() {
+    this.time += 1;
+    quad.shader.uniforms.wind = Math.sin(this.time / 30) * 2.2;
+  }
+}
 
 function createApp() {
   const app = new PIXI.Application<HTMLCanvasElement>({ background: '#1099bb', width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
@@ -483,8 +549,7 @@ function createApp() {
   app.ticker.minFPS = 40;
   app.ticker.maxFPS = 40;
 
-  const world = new World();
-  world.terrain = WORLD;
+  const world = new World(WORLD);
   const obj: Inertial = {
     inertial: true,
     physical: true,

@@ -478,35 +478,6 @@ spritesheet.parse().then(() => {
   //app.stage.addChild(block);
 });
 
-// const shader = PIXI.Shader.from(`
-//   precision mediump float;
-//   void main() {
-//       // Vertex shader output
-//       gl_Position = vec4(position, 0.0, 1.0);
-//   }`, `
-//   precision mediump float;
-//   //attribute vec2 position;
-//   //varying vec2 vUvs;
-
-//   //uniform sampler2D uSampler2;
-
-//   void main() {
-//     //gl_Position = vec4(position, 0.0, 0.0);
-//     gl_FragColor = vec4(position, 0.0, 1.0);
-//   }
-
-// `,
-// {
-//     //uSampler2: PIXI.Texture.from('blocks.png'),
-// });
-
-// const geometry = new PIXI.Geometry()
-//     .addAttribute('position', [-100, -100, // x, y
-//     100, -100, // x, y
-//     100, 100,
-//     -100, 100], 2);
-
-//     const tileMesh = new PIXI.Mesh(geometry, shader);
 const geometry = new PIXI.Geometry()
     .addAttribute('aVertexPosition', // the attribute name
         [-1, -1, // x, y
@@ -555,18 +526,6 @@ function convertTerrainDataToTexture(terrain: Terrain): PIXI.BaseTexture<PIXI.Bu
 
 const SCREEN_WIDTH = 960;
 const SCREEN_HEIGHT = 540;
-// const BLOCK_TEXTURES = PIXI.Texture.from('blocks2.png');
-// BLOCK_TEXTURES.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
-// const DEFAULT_UNIFORMS = {
-//   uBlockTextures: BLOCK_TEXTURES,
-//   uScreenSize: [SCREEN_WIDTH, SCREEN_HEIGHT],
-//   uBlockOffset: [0, 0],
-//   uGridSize: [WORLD_WIDTH, WORLD_HEIGHT],
-//   uBlockSize: 20,
-//   uBlockTypes: Object.keys(Block).length / 2 - 1,
-//   uTerrain: null,
-//   wind: 0
-// };
 
 function createInitialUniforms() {
   const blockTextures = PIXI.Texture.from('blocks2.png');
@@ -582,22 +541,18 @@ function createInitialUniforms() {
     wind: 0
   };
 }
-// Build the shader and the quad.
-const shader = PIXI.Shader.from(vertexShader, fragmentShader, createInitialUniforms());
-const quad = new PIXI.Mesh(geometry, shader);
-
-quad.position.set(0, 0);
-quad.scale.set(2);
 
 class Armature {
   x!: number;
   y!: number;
   pieces: Map<string, PIXI.Sprite>;
 
-  constructor(x: number, y: number, template: Map<string, AnimationFrames>) {
+  constructor(x: number, y: number, template: Map<string, AnimationFrames>, app: PIXI.Application<HTMLCanvasElement>) {
     this.pieces = new Map<string, PIXI.Sprite>();
     for (const [name, animationFrames] of template.entries()) {
-      this.pieces.set(name, new PIXI.AnimatedSprite(animationFrames.frames));
+      const sprite = new PIXI.AnimatedSprite(animationFrames.frames);
+      this.pieces.set(name, sprite);
+      app.stage.addChild(sprite);
     }
     // initial default pose
     this.pose(x, y, new Map([...[...template.entries()].map(entry => [entry[0], {
@@ -620,10 +575,16 @@ class Armature {
       piece.y = pose.ry === undefined ? piece.y : SCREEN_HEIGHT - (this.y + pose.ry + 1) * 20;
     }
   }
+
+  // TODO: implement
+  // deleteSprites() {
+    
+  // }
 }
 
 class Renderer {
   app: PIXI.Application<HTMLCanvasElement>;
+
   time: number;
   world: World;
   terrainLayer: PIXI.Mesh<PIXI.Shader>;
@@ -639,6 +600,7 @@ class Renderer {
     this.terrainLayer = new PIXI.Mesh(geometry, shader);
     this.terrainLayer.position.set(0, 0);
     this.terrainLayer.scale.set(2);
+    this.app.stage.addChild(this.terrainLayer);
 
     this.entityArmatures = new Map();
   }
@@ -652,6 +614,7 @@ class Renderer {
       const thing = this.world.things.get(i);
       if (!thing) {
         this.entityArmatures.delete(i);
+        // TODO: delete unused sprites after
         continue;
       }
       if (!renderable(thing)) {
@@ -659,7 +622,7 @@ class Renderer {
       }
       let armature = this.entityArmatures.get(i);
       if (!armature) {
-        armature = new Armature(thing.x, thing.y, thing.pieces);
+        armature = new Armature(thing.x, thing.y, thing.pieces, this.app);
         this.entityArmatures.set(i, armature);
       }
       armature.pose(thing.x, thing.y, thing.getPose());
@@ -668,20 +631,21 @@ class Renderer {
 
   updateAmbient() {
     this.time += 1;
-    quad.shader.uniforms.wind = Math.sin(this.time / 30) * 2.2;
+    this.terrainLayer.shader.uniforms.wind = Math.sin(this.time / 30) * 2.2;
   }
 }
 
 function createApp() {
   const app = new PIXI.Application<HTMLCanvasElement>({ background: '#1099bb', width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
 
-  app.stage.addChild(quad);
+  // app.stage.addChild(quad);
   let t = 0;
   // Listen for animate update
   app.ticker.minFPS = 40;
   app.ticker.maxFPS = 40;
 
   const world = new World(WORLD);
+  world.things.set(0, {...DYNAMITE_RIG, x: 10, y: 20, w: 1, h: 1, physical: true, id: 0});
   const obj: Inertial = {
     inertial: true,
     physical: true,
@@ -700,9 +664,13 @@ function createApp() {
   sprite.anchor.set(0.5);
   app.stage.addChild(sprite);
 
+  const renderer = new Renderer(world, app);
+  renderer.updateTerrain();
+
   app.ticker.add((delta: number) => {
     t += 1;
-    quad.shader.uniforms.wind = Math.sin(t / 30) * 2.2;
+    renderer.updateAmbient();
+    //quad.shader.uniforms.wind = Math.sin(t / 30) * 2.2;
     stepPhysics(world);
     sprite.x = (world.things.get(0)?.x as number + 1) * 20;
     sprite.y = SCREEN_HEIGHT - (world.things.get(0)?.y as number + 1) * 20;

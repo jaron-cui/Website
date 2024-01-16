@@ -113,21 +113,8 @@ function renderable(thing: any): thing is Renderable {
   return thing.renderable;
 }
 
-// EXAMPLE OF SPRITE RIGGING WITH ANIMATION
-const DYNAMITE_RIG: Renderable & { fuse: number } = {
-  fuse: 0,
-  pieces: new Map([
-    ['dynamite', {}]
-  ]),
-  getPose(): Map<string, ArmaturePiecePose> {
-    return new Map([
-      ['dynamite', {
-        animation: 'ignition',
-        frame: this.fuse
-      }]
-    ]);
-  },
-  renderable: true
+function range(length: number) {
+  return Array(length).fill(0).map((_, i) => i);
 }
 
 interface ArmaturePiecePose {
@@ -139,8 +126,66 @@ interface ArmaturePiecePose {
   frame: number;
 }
 
-interface AnimationFrames {
+class AnimationFrames {
+  frames: PIXI.Texture[];
+  animations: string[];
+  animationOffsets: Map<string, number>;
 
+  constructor(animations: Record<string, PIXI.Texture[]>) {
+    this.frames = [];
+    this.animations = Object.keys(animations);
+    this.animationOffsets = new Map();
+    for (const animationName of this.animations) {
+      this.animationOffsets.set(animationName, this.frames.length);
+      this.frames.push(...animations[animationName]);
+    }
+  }
+
+  getFrameIndex(animation: string, frame: number) {
+    const offset = this.animationOffsets.get(animation);
+    return offset === undefined ? 0 : offset + frame;
+  }
+}
+
+const DYNAMITE_TEXTURE_SCHEMA = {
+  frames: Object.fromEntries(
+    range(12).map(i => ['' + i, {
+      frame: {x: 9 * i, y: 0, w: 9, h: 18},
+      spriteSourceSize: {x: 9 * i, y: 0, w: 9, h: 18},
+      sourceSize: {w: 9, h: 18}
+    }])
+  ),
+  animations: {
+    ignition: range(12).map(i => '' + i)
+  },
+  meta: {
+    image: 'dynamite.png',
+    format: 'RGBA8888',
+    size: {w: 108, h: 18},
+    scale: '1'
+  }
+}
+
+// EXAMPLE OF SPRITE RIGGING WITH ANIMATION
+const DYNAMITE_RIG: Renderable & { fuse: number } = {
+  fuse: 0,
+  pieces: new Map([
+    ['dynamite', new AnimationFrames(
+      new PIXI.Spritesheet(
+        PIXI.BaseTexture.from(DYNAMITE_TEXTURE_SCHEMA.meta.image),
+        DYNAMITE_TEXTURE_SCHEMA
+      ).animations
+    )]
+  ]),
+  getPose(): Map<string, ArmaturePiecePose> {
+    return new Map([
+      ['dynamite', {
+        animation: 'ignition',
+        frame: this.fuse
+      }]
+    ]);
+  },
+  renderable: true
 }
 
 function distance(a: [number, number], b: [number, number]): number {
@@ -544,13 +589,48 @@ const quad = new PIXI.Mesh(geometry, shader);
 quad.position.set(0, 0);
 quad.scale.set(2);
 
+class Armature {
+  x!: number;
+  y!: number;
+  pieces: Map<string, PIXI.Sprite>;
+
+  constructor(x: number, y: number, template: Map<string, AnimationFrames>) {
+    this.pieces = new Map<string, PIXI.Sprite>();
+    for (const [name, animationFrames] of template.entries()) {
+      this.pieces.set(name, new PIXI.AnimatedSprite(animationFrames.frames));
+    }
+    // initial default pose
+    this.pose(x, y, new Map([...[...template.entries()].map(entry => [entry[0], {
+      rx: 0,
+      ry: 0,
+      animation: entry[1].animations[0],
+      frame: 0
+    }] as [string, ArmaturePiecePose])]));
+  }
+
+  pose(x: number, y: number, poses: Map<string, ArmaturePiecePose>) {
+    this.x = x;
+    this.y = y;
+    for (const [id, pose] of poses) {
+      const piece = this.pieces.get(id);
+      if (!piece) {
+        continue;
+      }
+      piece.x = pose.rx === undefined ? piece.x : (this.x + pose.rx + 1) * 20;
+      piece.y = pose.ry === undefined ? piece.y : SCREEN_HEIGHT - (this.y + pose.ry + 1) * 20;
+    }
+  }
+}
+
 class Renderer {
+  app: PIXI.Application<HTMLCanvasElement>;
   time: number;
   world: World;
   terrainLayer: PIXI.Mesh<PIXI.Shader>;
-  entitySprites: Map<number, PIXI.Sprite>;
+  entityArmatures: Map<number, Armature>;
 
-  constructor(world: World) {
+  constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
+    this.app = app;
     this.world = world;
 
     this.time = 0;
@@ -560,7 +640,7 @@ class Renderer {
     this.terrainLayer.position.set(0, 0);
     this.terrainLayer.scale.set(2);
 
-    this.entitySprites = new Map();
+    this.entityArmatures = new Map();
   }
 
   updateTerrain() {
@@ -568,9 +648,22 @@ class Renderer {
   }
 
   updateEntities() {
-    // sprite.x = (world.things.get(0)?.x as number + 1) * 20;
-    // sprite.y = SCREEN_HEIGHT - (world.things.get(0)?.y as number + 1) * 20;
-    // for (const sprite)
+    for (const i of this.entityArmatures.keys()) {
+      const thing = this.world.things.get(i);
+      if (!thing) {
+        this.entityArmatures.delete(i);
+        continue;
+      }
+      if (!renderable(thing)) {
+        continue;
+      }
+      let armature = this.entityArmatures.get(i);
+      if (!armature) {
+        armature = new Armature(thing.x, thing.y, thing.pieces);
+        this.entityArmatures.set(i, armature);
+      }
+      armature.pose(thing.x, thing.y, thing.getPose());
+    }
   }
 
   updateAmbient() {

@@ -6,10 +6,6 @@ enum Block {
   Air, Grass, Grasses, Stone, Soil, Placeholder
 };
 
-enum SpriteTextures {
-  
-}
-
 // represents a 2D grid-based terrain
 class Terrain {
   blocks: Uint8Array;
@@ -109,12 +105,42 @@ interface Renderable {
   x: number;
   y: number;
   renderable: true;
-  pieces: Map<string, SpriteSheetID>;
-  getPose(): Map<string, ArmaturePiecePose>;
+  armaturePieceSprites: Record<string, SpriteSet>;
+  getArmaturePoses(): Record<string, ArmaturePiecePose>;
 }
 
 function renderable(thing: any): thing is Renderable {
   return thing.renderable;
+}
+
+const SPRITE_TEXTURES: Record<string, SpriteSet> = {};
+
+abstract class AnimatedEntity implements Renderable {
+  x: number;
+  y: number;
+  renderable: true;
+  armaturePieceSprites: Record<string, SpriteSet>;
+  
+  constructor(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+
+    this.armaturePieceSprites = {};
+    const armatureSpriteSpecification = this.specifyArmatureSprites();
+    for (const armaturePiece in armatureSpriteSpecification) {
+      const armaturePiecesTexture = SPRITE_TEXTURES[armatureSpriteSpecification[armaturePiece]];
+      if (!armaturePiecesTexture) {
+        console.error('Could not find the sprite set ' + armatureSpriteSpecification[armaturePiece]);
+      }
+      this.armaturePieceSprites[armaturePiece] = armaturePiecesTexture;
+    }
+
+    this.renderable = true;
+  }
+
+  protected abstract specifyArmatureSprites(): Record<string, string>;
+
+  abstract getArmaturePoses(): Record<string, ArmaturePiecePose>;
 }
 
 function range(length: number) {
@@ -130,7 +156,7 @@ interface ArmaturePiecePose {
   frame: number;
 }
 
-class AnimationFrames {
+class SpriteSet {
   frames: PIXI.Texture[];
   animations: string[];
   animationOffsets: Map<string, number>;
@@ -171,20 +197,82 @@ const DYNAMITE_TEXTURE_SCHEMA = {
 }
 
 // EXAMPLE OF SPRITE RIGGING WITH ANIMATION
-const DYNAMITE_RIG: Renderable & { fuse: number } = {
-  x: 0,
-  y: 0,
-  fuse: 6,
-  pieces: new Map([['dynamite', 'dynamite-sprites']]),
-  getPose(): Map<string, ArmaturePiecePose> {
-    return new Map([
-      ['dynamite', {
+// const DYNAMITE_RIG: Renderable & { fuse: number } = {
+//   x: 0,
+//   y: 0,
+//   fuse: 6,
+//   armaturePieceSprites: {
+//     body: 'dynamite-sprites'
+//   },
+//   getArmaturePoses(): Record<string, ArmaturePiecePose> {
+//     return {
+//       body: {
+//         animation: 'ignition',
+//         frame: this.fuse
+//       }
+//     };
+//   },
+//   renderable: true
+// }
+
+class Dynamite extends AnimatedEntity implements Inertial, Explosive {
+  id: number;
+
+  mass: number;
+  w: number;
+  h: number;
+  vx: number;
+  vy: number;
+
+  explosionRadius: number;
+  maxExplosionDamage: number;
+
+  physical: true;
+  inertial: true;
+  explosive: true;
+
+  fuse: number;
+
+  constructor(id: number, x: number, y: number) {
+    super(x, y);
+
+    this.id = id;
+
+    this.w = 1;
+    this.h = 1;
+    this.mass = 1;
+
+    this.vx = 0;
+    this.vy = 0;
+
+    this.explosionRadius = 3;
+    this.maxExplosionDamage = 50;
+
+    this.physical = true;
+    this.inertial = true;
+    this.explosive = true;
+
+    this.fuse = 5;
+  }
+
+  protected specifyArmatureSprites(): Record<string, string> {
+    return {
+      body: 'dynamite-sprites'
+    };
+  }
+
+  getArmaturePoses(): Record<string, ArmaturePiecePose> {
+    return {
+      body: {
         animation: 'ignition',
         frame: this.fuse
-      }]
-    ]);
-  },
-  renderable: true
+      }
+    };
+  }
+
+  detonate(): void {
+    throw new Error('Method not implemented.');
+  }
 }
 
 function distance(a: [number, number], b: [number, number]): number {
@@ -544,35 +632,36 @@ function createInitialUniforms() {
 class Armature {
   x!: number;
   y!: number;
-  pieces: Map<string, PIXI.Sprite>;
+  pieces: Record<string, PIXI.Sprite>;
 
   constructor(
-    x: number, y: number, template: Map<string, SpriteSheetID>,
-    spritesheets: Record<SpriteSheetID, AnimationFrames>, app: PIXI.Application<HTMLCanvasElement>
+    x: number, y: number, template: Record<string, SpriteSet>, app: PIXI.Application<HTMLCanvasElement>
   ) {
-    this.pieces = new Map<string, PIXI.Sprite>();
-    for (const [name, spritesheetID] of template.entries()) {
-      const sprite = new PIXI.AnimatedSprite(spritesheets[spritesheetID].frames, false);
-      this.pieces.set(name, sprite);
+    this.pieces = {};
+    for (const bone in template) {
+      const sprite = new PIXI.AnimatedSprite(template[bone].frames, false);
+      this.pieces[bone] = sprite;
       app.stage.addChild(sprite);
     }
     // initial default pose
-    this.pose(x, y, new Map([...[...template.entries()].map(entry => [entry[0], {
+    this.pose(x, y, Object.fromEntries([...Object.keys(template).map(bone => [bone, {
       rx: 0,
       ry: 0,
-      animation: spritesheets[entry[1]].animations[0],
+      animation: template[bone].animations[0],
       frame: 0
     }] as [string, ArmaturePiecePose])]));
   }
 
-  pose(x: number, y: number, poses: Map<string, ArmaturePiecePose>) {
+  pose(x: number, y: number, poses: Record<string, ArmaturePiecePose>) {
     this.x = x;
     this.y = y;
-    for (const [id, pose] of poses) {
-      const piece = this.pieces.get(id);
+    for (const bone in poses) {
+      const piece = this.pieces[bone];
       if (!piece) {
         continue;
       }
+      const pose = poses[bone];
+
       piece.x = pose.rx === undefined ? piece.x : (this.x + pose.rx + 1) * 20;
       piece.y = pose.ry === undefined ? piece.y : SCREEN_HEIGHT - (this.y + pose.ry + 1) * 20;
       // if (piece instanceof PIXI.AnimatedSprite) {
@@ -594,12 +683,10 @@ class Renderer {
   world: World;
   terrainLayer: PIXI.Mesh<PIXI.Shader>;
   entityArmatures: Map<number, Armature>;
-  spritesheets: Record<SpriteSheetID, AnimationFrames>;
 
-  constructor(world: World, spritesheets: Record<SpriteSheetID, AnimationFrames>, app: PIXI.Application<HTMLCanvasElement>) {
+  constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
     this.world = world;
-    this.spritesheets = spritesheets;
 
     this.time = 0;
 
@@ -629,11 +716,10 @@ class Renderer {
       }
       let armature = this.entityArmatures.get(i);
       if (!armature) {
-        console.log('created new armature')
-        armature = new Armature(thing.x, thing.y, thing.pieces, this.spritesheets, this.app);
+        armature = new Armature(thing.x, thing.y, thing.armaturePieceSprites, this.app);
         this.entityArmatures.set(i, armature);
       }
-      armature.pose(thing.x, thing.y, thing.getPose());
+      armature.pose(thing.x, thing.y, thing.getArmaturePoses());
     }
   }
 
@@ -641,6 +727,22 @@ class Renderer {
     this.time += 1;
     this.terrainLayer.shader.uniforms.wind = Math.sin(this.time / 30) * 2.2;
   }
+}
+
+async function loadTextures() {
+  // async function loadFromSchema(spriteSet: string, schema: any) {
+  //   const sprites = new PIXI.Spritesheet(PIXI.BaseTexture.from(schema.meta.image), schema);
+  //   await sprites.parse();
+  //   SPRITE_TEXTURES[spriteSet] = sprites.animations
+  // }
+  const dynamiteSprites = new PIXI.Spritesheet(
+    PIXI.BaseTexture.from(DYNAMITE_TEXTURE_SCHEMA.meta.image),
+    DYNAMITE_TEXTURE_SCHEMA
+  );
+  await dynamiteSprites.parse();
+  SPRITE_TEXTURES['dynamite-sprites'] = new SpriteSet({
+    ignition: dynamiteSprites.animations.ignition
+  });
 }
 
 async function createApp() {
@@ -653,8 +755,6 @@ async function createApp() {
   app.ticker.maxFPS = 40;
 
   const world = new World(WORLD);
-  const thing: Physical & Renderable & { fuse: number } = {...DYNAMITE_RIG, x: 10, y: 20, w: 1, h: 1, physical: true, id: 1};
-  world.things.set(1, thing);
   const obj: Inertial = {
     inertial: true,
     physical: true,
@@ -673,13 +773,12 @@ async function createApp() {
   sprite.anchor.set(0.5);
   app.stage.addChild(sprite);
 
-  const dynamiteSprites = new PIXI.Spritesheet(
-    PIXI.BaseTexture.from(DYNAMITE_TEXTURE_SCHEMA.meta.image),
-    DYNAMITE_TEXTURE_SCHEMA
-  );
-  await dynamiteSprites.parse();
+  await loadTextures();
+  
+  const thing = new Dynamite(1, 10, 20);
+  world.things.set(1, thing);
 
-  const renderer = new Renderer(world, {'dynamite-sprites': new AnimationFrames({ignition: dynamiteSprites.animations.ignition})}, app);
+  const renderer = new Renderer(world, app);
   renderer.updateTerrain();
   renderer.updateEntities();
 

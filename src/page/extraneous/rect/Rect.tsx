@@ -181,7 +181,7 @@ const DYNAMITE_TEXTURE_SCHEMA = {
   frames: Object.fromEntries(
     range(12).map(i => ['' + i, {
       frame: {x: 9 * i, y: 0, w: 9, h: 18},
-      spriteSourceSize: {x: 9 * i, y: 0, w: 9, h: 18},
+      spriteSourceSize: {x: 0, y: 0, w: 9, h: 18},
       sourceSize: {w: 9, h: 18}
     }])
   ),
@@ -632,14 +632,17 @@ function createInitialUniforms() {
 class Armature {
   x!: number;
   y!: number;
-  pieces: Record<string, PIXI.Sprite>;
+  pieces: Record<string, PIXI.AnimatedSprite>;
+  template: Record<string, SpriteSet>;
 
   constructor(
     x: number, y: number, template: Record<string, SpriteSet>, app: PIXI.Application<HTMLCanvasElement>
   ) {
     this.pieces = {};
+    this.template = template;
     for (const bone in template) {
       const sprite = new PIXI.AnimatedSprite(template[bone].frames, false);
+      sprite.anchor.set(0.5);
       this.pieces[bone] = sprite;
       app.stage.addChild(sprite);
     }
@@ -662,11 +665,11 @@ class Armature {
       }
       const pose = poses[bone];
 
-      piece.x = pose.rx === undefined ? piece.x : (this.x + pose.rx + 1) * 20;
-      piece.y = pose.ry === undefined ? piece.y : SCREEN_HEIGHT - (this.y + pose.ry + 1) * 20;
-      // if (piece instanceof PIXI.AnimatedSprite) {
-      //   piece.currentFrame = pose.animation
-      // }
+      piece.x = (this.x + (pose.rx || 0) + 1) * 20;
+      piece.y = SCREEN_HEIGHT - (this.y + (pose.ry || 0) + 1) * 20;
+
+      piece.currentFrame = this.template[bone].getFrameIndex(pose.animation, pose.frame);
+      console.log(piece.currentFrame);
     }
   }
 
@@ -780,19 +783,23 @@ async function createApp() {
 
   const renderer = new Renderer(world, app);
   renderer.updateTerrain();
-  renderer.updateEntities();
 
   app.ticker.add((delta: number) => {
     t += 1;
     renderer.updateAmbient();
+    renderer.updateEntities();
     //quad.shader.uniforms.wind = Math.sin(t / 30) * 2.2;
     stepPhysics(world);
     sprite.x = (world.things.get(0)?.x as number + 1) * 20;
     sprite.y = SCREEN_HEIGHT - (world.things.get(0)?.y as number + 1) * 20;
     if (t % 100 === 0) {
       (world.things.get(0) as Inertial).vy = 1;
-      thing.fuse = t % 20;
     }
+    if (t % 10 === 0) {
+      thing.fuse += 1;
+      thing.fuse = thing.fuse % 12;
+    }
+    // console.log(thing.fuse)
   });
   return app;
 };

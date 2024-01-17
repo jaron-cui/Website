@@ -32,7 +32,7 @@ class Terrain {
 
 class World {
   terrain: Terrain;
-  things: Map<number, Physical>;
+  things: Map<number, Physical | Inertial | Renderable>;
   constructor(terrain: Terrain) {
     this.terrain = terrain;
     this.things = new Map();
@@ -103,9 +103,13 @@ function mortal(thing: any): thing is Mortal {
   return thing.mortal;
 }
 
+type SpriteSheetID = string;
+
 interface Renderable {
+  x: number;
+  y: number;
   renderable: true;
-  pieces: Map<string, AnimationFrames>;
+  pieces: Map<string, SpriteSheetID>;
   getPose(): Map<string, ArmaturePiecePose>;
 }
 
@@ -168,15 +172,10 @@ const DYNAMITE_TEXTURE_SCHEMA = {
 
 // EXAMPLE OF SPRITE RIGGING WITH ANIMATION
 const DYNAMITE_RIG: Renderable & { fuse: number } = {
-  fuse: 0,
-  pieces: new Map([
-    ['dynamite', new AnimationFrames(
-      new PIXI.Spritesheet(
-        PIXI.BaseTexture.from(DYNAMITE_TEXTURE_SCHEMA.meta.image),
-        DYNAMITE_TEXTURE_SCHEMA
-      ).animations
-    )]
-  ]),
+  x: 0,
+  y: 0,
+  fuse: 6,
+  pieces: new Map([['dynamite', 'dynamite-sprites']]),
   getPose(): Map<string, ArmaturePiecePose> {
     return new Map([
       ['dynamite', {
@@ -547,10 +546,13 @@ class Armature {
   y!: number;
   pieces: Map<string, PIXI.Sprite>;
 
-  constructor(x: number, y: number, template: Map<string, AnimationFrames>, app: PIXI.Application<HTMLCanvasElement>) {
+  constructor(
+    x: number, y: number, template: Map<string, SpriteSheetID>,
+    spritesheets: Record<SpriteSheetID, AnimationFrames>, app: PIXI.Application<HTMLCanvasElement>
+  ) {
     this.pieces = new Map<string, PIXI.Sprite>();
-    for (const [name, animationFrames] of template.entries()) {
-      const sprite = new PIXI.AnimatedSprite(animationFrames.frames);
+    for (const [name, spritesheetID] of template.entries()) {
+      const sprite = new PIXI.AnimatedSprite(spritesheets[spritesheetID].frames, false);
       this.pieces.set(name, sprite);
       app.stage.addChild(sprite);
     }
@@ -558,7 +560,7 @@ class Armature {
     this.pose(x, y, new Map([...[...template.entries()].map(entry => [entry[0], {
       rx: 0,
       ry: 0,
-      animation: entry[1].animations[0],
+      animation: spritesheets[entry[1]].animations[0],
       frame: 0
     }] as [string, ArmaturePiecePose])]));
   }
@@ -573,6 +575,9 @@ class Armature {
       }
       piece.x = pose.rx === undefined ? piece.x : (this.x + pose.rx + 1) * 20;
       piece.y = pose.ry === undefined ? piece.y : SCREEN_HEIGHT - (this.y + pose.ry + 1) * 20;
+      // if (piece instanceof PIXI.AnimatedSprite) {
+      //   piece.currentFrame = pose.animation
+      // }
     }
   }
 
@@ -589,10 +594,12 @@ class Renderer {
   world: World;
   terrainLayer: PIXI.Mesh<PIXI.Shader>;
   entityArmatures: Map<number, Armature>;
+  spritesheets: Record<SpriteSheetID, AnimationFrames>;
 
-  constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
+  constructor(world: World, spritesheets: Record<SpriteSheetID, AnimationFrames>, app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
     this.world = world;
+    this.spritesheets = spritesheets;
 
     this.time = 0;
 
@@ -610,7 +617,7 @@ class Renderer {
   }
 
   updateEntities() {
-    for (const i of this.entityArmatures.keys()) {
+    for (const i of this.world.things.keys()) {
       const thing = this.world.things.get(i);
       if (!thing) {
         this.entityArmatures.delete(i);
@@ -622,7 +629,8 @@ class Renderer {
       }
       let armature = this.entityArmatures.get(i);
       if (!armature) {
-        armature = new Armature(thing.x, thing.y, thing.pieces, this.app);
+        console.log('created new armature')
+        armature = new Armature(thing.x, thing.y, thing.pieces, this.spritesheets, this.app);
         this.entityArmatures.set(i, armature);
       }
       armature.pose(thing.x, thing.y, thing.getPose());
@@ -635,7 +643,7 @@ class Renderer {
   }
 }
 
-function createApp() {
+async function createApp() {
   const app = new PIXI.Application<HTMLCanvasElement>({ background: '#1099bb', width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
 
   // app.stage.addChild(quad);
@@ -645,7 +653,8 @@ function createApp() {
   app.ticker.maxFPS = 40;
 
   const world = new World(WORLD);
-  world.things.set(0, {...DYNAMITE_RIG, x: 10, y: 20, w: 1, h: 1, physical: true, id: 0});
+  const thing: Physical & Renderable & { fuse: number } = {...DYNAMITE_RIG, x: 10, y: 20, w: 1, h: 1, physical: true, id: 1};
+  world.things.set(1, thing);
   const obj: Inertial = {
     inertial: true,
     physical: true,
@@ -664,8 +673,15 @@ function createApp() {
   sprite.anchor.set(0.5);
   app.stage.addChild(sprite);
 
-  const renderer = new Renderer(world, app);
+  const dynamiteSprites = new PIXI.Spritesheet(
+    PIXI.BaseTexture.from(DYNAMITE_TEXTURE_SCHEMA.meta.image),
+    DYNAMITE_TEXTURE_SCHEMA
+  );
+  await dynamiteSprites.parse();
+
+  const renderer = new Renderer(world, {'dynamite-sprites': new AnimationFrames({ignition: dynamiteSprites.animations.ignition})}, app);
   renderer.updateTerrain();
+  renderer.updateEntities();
 
   app.ticker.add((delta: number) => {
     t += 1;
@@ -676,6 +692,7 @@ function createApp() {
     sprite.y = SCREEN_HEIGHT - (world.things.get(0)?.y as number + 1) * 20;
     if (t % 100 === 0) {
       (world.things.get(0) as Inertial).vy = 1;
+      thing.fuse = t % 20;
     }
   });
   return app;
@@ -685,11 +702,13 @@ export const Rect = () => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const myDomElement = createApp().view;
-
-    if (ref.current) {
-      ref.current.appendChild(myDomElement);
-    }
+    const myDomElement = createApp();
+    
+    myDomElement.then(app => {
+      if (ref.current) {
+        ref.current.appendChild(app.view);
+      }
+    });
   }, []);
 
   return <div ref={ref}></div>;

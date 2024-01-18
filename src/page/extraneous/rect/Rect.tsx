@@ -194,7 +194,26 @@ const DYNAMITE_TEXTURE_SCHEMA = {
     size: {w: 108, h: 18},
     scale: '1'
   }
-}
+};
+
+const PLAYER_TEXTURE_SCHEMA = {
+  frames: Object.fromEntries(
+    range(7).map(i => ['' + i, {
+      frame: {x: 12 * i, y: 0, w: 12, h: 16},
+      spriteSourceSize: {x: 0, y: 0, w: 12, h: 16},
+      sourceSize: {w: 12, h: 16}
+    }])
+  ),
+  animations: {
+    walk: range(7).map(i => '' + i)
+  },
+  meta: {
+    image: 'player-legs.png',
+    format: 'RGBA8888',
+    size: {w: 108, h: 18},
+    scale: '1'
+  }
+};
 
 // EXAMPLE OF SPRITE RIGGING WITH ANIMATION
 // const DYNAMITE_RIG: Renderable & { fuse: number } = {
@@ -215,41 +234,46 @@ const DYNAMITE_TEXTURE_SCHEMA = {
 //   renderable: true
 // }
 
-class Dynamite extends AnimatedEntity implements Inertial, Explosive {
+abstract class InertialAnimatedEntity extends AnimatedEntity implements Inertial {
   id: number;
 
-  mass: number;
   w: number;
   h: number;
+
+  mass: number;
   vx: number;
   vy: number;
 
+  physical: true;
+  inertial: true;
+
+  constructor(id: number, x: number, y: number, w: number, h: number, mass: number) {
+    super(x, y);
+    this.id = id;
+    this.w = w;
+    this.h = h;
+    this.mass = mass;
+    this.vx = 0;
+    this.vy = 0;
+    this.physical = true;
+    this.inertial = true;
+  }
+}
+
+class Dynamite extends InertialAnimatedEntity implements Explosive {
   explosionRadius: number;
   maxExplosionDamage: number;
 
-  physical: true;
-  inertial: true;
   explosive: true;
 
   fuse: number;
 
   constructor(id: number, x: number, y: number) {
-    super(x, y);
-
-    this.id = id;
-
-    this.w = 1;
-    this.h = 1;
-    this.mass = 1;
-
-    this.vx = 0;
-    this.vy = 0;
+    super(id, x, y, 1, 1, 1);
 
     this.explosionRadius = 3;
     this.maxExplosionDamage = 50;
 
-    this.physical = true;
-    this.inertial = true;
     this.explosive = true;
 
     this.fuse = 5;
@@ -272,6 +296,30 @@ class Dynamite extends AnimatedEntity implements Inertial, Explosive {
 
   detonate(): void {
     throw new Error('Method not implemented.');
+  }
+}
+
+class Player extends InertialAnimatedEntity {
+  walkStage: number;
+
+  constructor(id: number, x: number, y: number) {
+    super(id, x, y, 1, 2, 1);
+    this.walkStage = 0;
+  }
+
+  protected specifyArmatureSprites(): Record<string, string> {
+    return {
+      legs: 'player-legs'
+    }
+  }
+
+  getArmaturePoses(): Record<string, ArmaturePiecePose> {
+    return {
+      legs: {
+        animation: 'walk',
+        frame: this.walkStage
+      }
+    }
   }
 }
 
@@ -643,6 +691,7 @@ class Armature {
     for (const bone in template) {
       const sprite = new PIXI.AnimatedSprite(template[bone].frames, false);
       sprite.anchor.set(0.5);
+      sprite.scale.set(20/8);
       this.pieces[bone] = sprite;
       app.stage.addChild(sprite);
     }
@@ -738,13 +787,20 @@ async function loadTextures() {
   //   await sprites.parse();
   //   SPRITE_TEXTURES[spriteSet] = sprites.animations
   // }
-  const dynamiteSprites = new PIXI.Spritesheet(
-    PIXI.BaseTexture.from(DYNAMITE_TEXTURE_SCHEMA.meta.image),
-    DYNAMITE_TEXTURE_SCHEMA
-  );
+  const texture = PIXI.BaseTexture.from(DYNAMITE_TEXTURE_SCHEMA.meta.image);
+  texture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+  const dynamiteSprites = new PIXI.Spritesheet(texture, DYNAMITE_TEXTURE_SCHEMA);
   await dynamiteSprites.parse();
   SPRITE_TEXTURES['dynamite-sprites'] = new SpriteSet({
     ignition: dynamiteSprites.animations.ignition
+  });
+
+  const playerLegsTex = PIXI.BaseTexture.from(PLAYER_TEXTURE_SCHEMA.meta.image);
+  playerLegsTex.scaleMode = PIXI.SCALE_MODES.NEAREST;
+  const playerlegSprites = new PIXI.Spritesheet(playerLegsTex, PLAYER_TEXTURE_SCHEMA);
+  await playerlegSprites.parse();
+  SPRITE_TEXTURES['player-legs'] = new SpriteSet({
+    walk: playerlegSprites.animations.walk
   });
 }
 
@@ -772,14 +828,19 @@ async function createApp() {
   }
   world.things.set(0, obj);
 
-  const sprite = PIXI.Sprite.from('https://pixijs.com/assets/bunny.png');
+  const sprite = PIXI.Sprite.from('player.png');
   sprite.anchor.set(0.5);
+  sprite.scale.set(20/8);
+  sprite.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
   app.stage.addChild(sprite);
 
   await loadTextures();
   
-  const thing = new Dynamite(1, 10, 20);
+  const thing = new Dynamite(1, 14, 24);
   world.things.set(1, thing);
+
+  const player = new Player(2, 16, 24);
+  world.things.set(2, player);
 
   const renderer = new Renderer(world, app);
   renderer.updateTerrain();
@@ -798,6 +859,10 @@ async function createApp() {
     if (t % 10 === 0) {
       thing.fuse += 1;
       thing.fuse = thing.fuse % 12;
+    }
+    if (t % 2 === 0) {
+      player.walkStage += 1;
+    player.walkStage = player.walkStage % 7;
     }
     // console.log(thing.fuse)
   });

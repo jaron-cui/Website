@@ -99,7 +99,7 @@ const Keyboard = ({ onKey, colors, colorAliases }: KeyboardProps) => {
           {row.map(key => <Key id={key} color={keyColor(key)} key={key} onClick={keyHandler(key)}/>)}
         </div>
       ))}
-      <TypingHandler onKey={onTypedKey}/>
+      <TypingHandler onKeyDown={onTypedKey}/>
     </div>
   )
 }

@@ -309,7 +309,7 @@ const Tetris = () => {
     <div>
       <div>{overlayPiece(gameState.fallingPiece, gameState.board).map((row, i) => <Row row={row} key={i}/>)}
       </div>
-      <TypingHandler onKey={onKey}/>
+      <TypingHandler onKeyDown={onKey}/>
     </div>
   )
 }

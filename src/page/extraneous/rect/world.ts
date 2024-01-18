@@ -123,7 +123,8 @@ export interface ArmaturePiecePose {
   rx?: number;
   ry?: number;
   degreeRotation?: number;
-  scale?: number;
+  scaleX?: number;
+  scaleY?: number;
   animation: string;
   frame: number;
 }

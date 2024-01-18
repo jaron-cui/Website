@@ -71,19 +71,21 @@ export class Dynamite extends InertialAnimatedEntity implements Explosive {
 
 type Direction = 'left' | 'right';
 
-const JUMP_BUFFER_TICKS = 5;
+const JUMP_BUFFER_TICKS = 2;
 const COYOTE_TIMER_TICKS = 5;
 const JUMP_SPEED = 0.4;
-const JUMP_HOLDING = GRAVITY * 0.3;
+const JUMP_HOLDING = GRAVITY * 0.4;
 const JUMP_WALK_BOOST = 0.1;
 
 const MAX_WALK_SPEED = 0.2;
 const WALK_ACCELERATION = 0.02;
-const FRICTION = 0.04;
+const GROUND_FRICTION = 0.04;
+const AIR_FRICTION = 0.005;
 export class Player extends InertialAnimatedEntity {
   walkStage: number;
 
   walking: Direction | undefined;
+  facing: Direction;
   jumping: boolean;
 
   jumpBuffer: number;
@@ -93,6 +95,7 @@ export class Player extends InertialAnimatedEntity {
     super(id, x, y, 1, 2, 1);
     this.walkStage = 0;
     this.jumping = false;
+    this.facing = 'right';
 
     this.jumpBuffer = 0;
     this.coyoteTimer = 0;
@@ -108,7 +111,8 @@ export class Player extends InertialAnimatedEntity {
     return {
       legs: {
         animation: 'walk',
-        frame: this.walking === 'right' && this.onGround ? Math.floor(this.walkStage) : 0
+        frame: this.walking && this.onGround ? Math.floor(this.walkStage) : 0,
+        scaleX: this.facing === 'right' ? 1 : -1
       }
     }
   }
@@ -124,15 +128,18 @@ export class Player extends InertialAnimatedEntity {
     if (this.walking === 'right') {
       // walk right
       this.vx = Math.min(this.vx + WALK_ACCELERATION, MAX_WALK_SPEED);
+      this.facing = 'right';
     } else if (this.walking === 'left') {
       // walk left
       this.vx = Math.max(this.vx - WALK_ACCELERATION, -MAX_WALK_SPEED);
+      this.facing = 'left';
     } else if (!this.walking && this.vx !== 0) {
       // friction
+      const friction = this.onGround ? GROUND_FRICTION : AIR_FRICTION;
       if (this.vx > 0) {
-        this.vx = Math.max(0, this.vx - FRICTION);
+        this.vx = Math.max(0, this.vx - friction);
       } else {
-        this.vx = Math.min(0, this.vx + FRICTION);
+        this.vx = Math.min(0, this.vx + friction);
       }
     }
   }

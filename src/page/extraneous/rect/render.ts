@@ -5,6 +5,7 @@ import { vertexShader, fragmentShader } from './shaders';
 export const SCREEN_WIDTH = 960;
 export const SCREEN_HEIGHT = 540;
 export const SPRITE_TEXTURES: Record<string, SpriteSet> = {};
+export const GRAPHICAL_SCALE = 20/8;
 
 export const BLOCK_TEXTURE_SCHEMA = {
   frames: {
@@ -196,6 +197,11 @@ class Armature {
       piece.y = SCREEN_HEIGHT - (this.y + (pose.ry || 0) + 1) * 20;
 
       piece.currentFrame = this.template[bone].getFrameIndex(pose.animation, pose.frame);
+
+      piece.scale.set(
+        pose.scaleX === undefined ? piece.scale.x : pose.scaleX * GRAPHICAL_SCALE,
+        pose.scaleY === undefined ? piece.scale.y : pose.scaleY * GRAPHICAL_SCALE
+      );
     }
   }
 

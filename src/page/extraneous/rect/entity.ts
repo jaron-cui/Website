@@ -67,8 +67,12 @@ export class Dynamite extends InertialAnimatedEntity implements Explosive {
   }
 }
 
+type Direction = 'left' | 'right';
+
 export class Player extends InertialAnimatedEntity {
   walkStage: number;
+
+  walking?: Direction;
 
   constructor(id: number, x: number, y: number) {
     super(id, x, y, 1, 2, 1);
@@ -85,9 +89,14 @@ export class Player extends InertialAnimatedEntity {
     return {
       legs: {
         animation: 'walk',
-        frame: this.walkStage
+        frame: this.walking === 'right' ? Math.floor(this.walkStage / 2) : 0
       }
     }
+  }
+
+  onTick() {
+    this.walkStage += 1;
+    this.walkStage %= 14;
   }
 }
 

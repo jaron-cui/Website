@@ -1,4 +1,4 @@
-import { Inertial, World, Block, inertial } from "./world";
+import { Inertial, World, Block, inertial, physical } from "./world";
 
 export function distance(a: [number, number], b: [number, number]): number {
   return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
@@ -196,6 +196,7 @@ function processTerrainCollision(collision: TerrainCollisionEvent, world: World)
   } else {
     thing.y += collision.time * thing.vy;
     thing.vy = 0;
+    thing.onGround = true;
   }
   stepEverythingBy(collision.time, world, collision.id);
 } 
@@ -203,9 +204,13 @@ function processTerrainCollision(collision: TerrainCollisionEvent, world: World)
 export function stepPhysics(world: World) {
   const inertials: Inertial[] = [];
   for (const thing of world.things.values()) {
+    if (physical(thing) && thing.onTick) {
+      thing.onTick();
+    }
     if (inertial(thing)) {
       inertials.push(thing);
       thing.vy -= 0.08;
+      thing.onGround = false;
       // console.log(JSON.stringify(thing));
       world.things.set(thing.id, thing);
     }

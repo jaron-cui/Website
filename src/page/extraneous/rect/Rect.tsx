@@ -1,9 +1,10 @@
 import * as PIXI from 'pixi.js';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Inertial, World, Block, Terrain, WORLD_HEIGHT, WORLD_WIDTH } from './world';
 import { Renderer, SCREEN_HEIGHT, SCREEN_WIDTH, loadTextures } from './render';
 import { stepPhysics } from './physics';
 import { Dynamite, Player } from './entity';
+import TypingHandler from '../../../component/TypingHandler';
 
 const WORLD = new Terrain(WORLD_WIDTH, WORLD_HEIGHT);
 for (let x = 0; x < WORLD_WIDTH; x += 1) {
@@ -27,7 +28,7 @@ worldData.mipmap = PIXI.MIPMAP_MODES.OFF;
 worldData.scaleMode = PIXI.SCALE_MODES.NEAREST;
 
 
-async function createApp() {
+async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDown: string) => void, (keyUp: string) => void]> {
   const app = new PIXI.Application<HTMLCanvasElement>({ background: '#1099bb', width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
 
   // app.stage.addChild(quad);
@@ -83,32 +84,60 @@ async function createApp() {
       thing.fuse += 1;
       thing.fuse = thing.fuse % 12;
     }
-    if (t % 2 === 0) {
-      player.walkStage += 1;
-    player.walkStage = player.walkStage % 7;
-    }
+    // if (t % 2 === 0) {
+    //   player.walkStage += 1;
+    // player.walkStage = player.walkStage % 7;
+    // }
     // console.log(thing.fuse)
   });
-  return app;
+
+  const keyStatuses: Record<string, boolean> = {};
+
+  function onKeyDown(key: string) {
+    keyStatuses[key] = true;
+    if (keyStatuses['d']) {
+      player.walking = 'right';
+    }
+  }
+
+  function onKeyUp(key: string) {
+    keyStatuses[key] = false;
+    if (!keyStatuses['d']) {
+      player.walking = 'left';
+    }
+  }
+
+  return [app, onKeyDown, onKeyUp];
 };
 
 export const Rect = () => {
-  const ref = useRef<HTMLDivElement>(null);
+  const gameRef = useRef<HTMLDivElement>(null);
+  const keyDownRef = useRef<(key: string) => void>(() => null);
+  const keyUpRef = useRef<(key: string) => void>(() => null);
 
   useEffect(() => {
     const myDomElement = createApp();
     
-    myDomElement.then(app => {
-      ref.current?.appendChild(app.view);
+    myDomElement.then(([app, onKeyDown, onKeyUp]) => {
+      keyDownRef.current = onKeyDown;
+      keyUpRef.current = onKeyUp;
+      gameRef.current?.appendChild(app.view);
     });
  
     return () => {
-      myDomElement.then(app => {
-        ref.current?.removeChild(app.view);
+      myDomElement.then(([app]) => {
+        gameRef.current?.removeChild(app.view);
         app.destroy();
       });
     };
   }, []);
 
-  return <div ref={ref}></div>;
+  return (
+    <div ref={gameRef}>
+      <TypingHandler
+        onKeyDown={(key: string) => keyDownRef.current && keyDownRef.current(key)}
+        onKeyUp={(key: string) => keyUpRef.current && keyUpRef.current(key)}
+      />
+    </div>
+  );
 }

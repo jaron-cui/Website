@@ -43,6 +43,7 @@ export interface Physical {
   w: number;
   h: number;
   id: number;
+  onTick?: () => void;
 }
 
 export function physical(thing: any): thing is Physical {
@@ -54,6 +55,7 @@ export interface Inertial extends Physical {
   mass: number;
   vx: number;
   vy: number;
+  onGround?: boolean;
 }
 
 export function inertial(thing: any): thing is Inertial {

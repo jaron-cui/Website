@@ -93,18 +93,26 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
 
   const keyStatuses: Record<string, boolean> = {};
 
+  function onPressUpdate() {
+    const netWalk = +!!keyStatuses['d'] - +!!keyStatuses['a'];
+    if (netWalk > 0) {
+      player.walking = 'right';
+    } else if (netWalk < 0) {
+      player.walking = 'left';
+    } else {
+      player.walking = undefined;
+    }
+    player.jumping = keyStatuses['w'] || keyStatuses[' '];
+  }
+
   function onKeyDown(key: string) {
     keyStatuses[key] = true;
-    if (keyStatuses['d']) {
-      player.walking = 'right';
-    }
+    onPressUpdate();
   }
 
   function onKeyUp(key: string) {
     keyStatuses[key] = false;
-    if (!keyStatuses['d']) {
-      player.walking = 'left';
-    }
+    onPressUpdate();
   }
 
   return [app, onKeyDown, onKeyUp];

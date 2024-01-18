@@ -1,4 +1,4 @@
-import { distance } from "./physics";
+import { GRAVITY, distance } from "./physics";
 import { AnimatedEntity } from "./render";
 import { Inertial, Explosive, ArmaturePiecePose, World, Block, explosive, mortal } from "./world";
 
@@ -14,6 +14,8 @@ abstract class InertialAnimatedEntity extends AnimatedEntity implements Inertial
 
   physical: true;
   inertial: true;
+
+  onGround?: boolean;
 
   constructor(id: number, x: number, y: number, w: number, h: number, mass: number) {
     super(x, y);
@@ -69,14 +71,31 @@ export class Dynamite extends InertialAnimatedEntity implements Explosive {
 
 type Direction = 'left' | 'right';
 
+const JUMP_BUFFER_TICKS = 5;
+const COYOTE_TIMER_TICKS = 5;
+const JUMP_SPEED = 0.4;
+const JUMP_HOLDING = GRAVITY * 0.3;
+const JUMP_WALK_BOOST = 0.1;
+
+const MAX_WALK_SPEED = 0.2;
+const WALK_ACCELERATION = 0.02;
+const FRICTION = 0.04;
 export class Player extends InertialAnimatedEntity {
   walkStage: number;
 
-  walking?: Direction;
+  walking: Direction | undefined;
+  jumping: boolean;
+
+  jumpBuffer: number;
+  coyoteTimer: number;
 
   constructor(id: number, x: number, y: number) {
     super(id, x, y, 1, 2, 1);
     this.walkStage = 0;
+    this.jumping = false;
+
+    this.jumpBuffer = 0;
+    this.coyoteTimer = 0;
   }
 
   protected specifyArmatureSprites(): Record<string, string> {
@@ -89,14 +108,53 @@ export class Player extends InertialAnimatedEntity {
     return {
       legs: {
         animation: 'walk',
-        frame: this.walking === 'right' ? Math.floor(this.walkStage / 2) : 0
+        frame: this.walking === 'right' && this.onGround ? Math.floor(this.walkStage) : 0
       }
     }
   }
 
   onTick() {
-    this.walkStage += 1;
-    this.walkStage %= 14;
+    this.walkStage += Math.abs(this.vx) * 8;
+    this.walkStage %= 7;
+    this.handleJump();
+    this.handleWalk();
+  }
+
+  private handleWalk() {
+    if (this.walking === 'right') {
+      // walk right
+      this.vx = Math.min(this.vx + WALK_ACCELERATION, MAX_WALK_SPEED);
+    } else if (this.walking === 'left') {
+      // walk left
+      this.vx = Math.max(this.vx - WALK_ACCELERATION, -MAX_WALK_SPEED);
+    } else if (!this.walking && this.vx !== 0) {
+      // friction
+      if (this.vx > 0) {
+        this.vx = Math.max(0, this.vx - FRICTION);
+      } else {
+        this.vx = Math.min(0, this.vx + FRICTION);
+      }
+    }
+  }
+
+  private handleJump() {
+    // handle coyote timer and jump buffer
+    this.coyoteTimer = this.onGround ? COYOTE_TIMER_TICKS : Math.max(0, this.coyoteTimer - 1);
+    this.jumpBuffer = this.jumping ? JUMP_BUFFER_TICKS : Math.max(0, this.jumpBuffer - 1);
+    // handle jump initiation
+    if (this.jumpBuffer && this.coyoteTimer > 0) {
+      this.vy = JUMP_SPEED;
+      // if the player jumps while walking, boost them in that direction
+      if (this.walking === 'right') {
+        this.vx = Math.min(MAX_WALK_SPEED, this.vx + JUMP_WALK_BOOST);
+      } else if (this.walking === 'left') {
+        this.vx = Math.max(-MAX_WALK_SPEED, this.vx - JUMP_WALK_BOOST);
+      }
+    }
+    // the player stays in the air longer if they hold the jump key
+    if (this.jumping && !this.onGround) {
+      this.vy -= JUMP_HOLDING;
+    }
   }
 }
 

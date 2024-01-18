@@ -114,7 +114,7 @@ function getNextTerrainCollision(world: World, inertials: Inertial[]): TerrainCo
       // Fix this by explicity handling the 0.5 case, for which round has a 50/50 variability
       const bottom = y - h / 2 + t * vy;
       const top = y + h / 2 + t * vy;
-      const minY = Math.round(bottom);
+      const minY = Math.round(bottom) + 1;
       const maxY = Math.round(top);
       let collision = false;
       for (let by = minY; by <= maxY; by += 1) {
@@ -201,6 +201,8 @@ function processTerrainCollision(collision: TerrainCollisionEvent, world: World)
   stepEverythingBy(collision.time, world, collision.id);
 } 
 
+export const GRAVITY = -0.08;
+
 export function stepPhysics(world: World) {
   const inertials: Inertial[] = [];
   for (const thing of world.things.values()) {
@@ -209,7 +211,7 @@ export function stepPhysics(world: World) {
     }
     if (inertial(thing)) {
       inertials.push(thing);
-      thing.vy -= 0.08;
+      thing.vy += GRAVITY;
       thing.onGround = false;
       // console.log(JSON.stringify(thing));
       world.things.set(thing.id, thing);

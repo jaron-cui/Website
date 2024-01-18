@@ -1,29 +1,9 @@
 import * as PIXI from 'pixi.js';
 import { useEffect, useRef } from 'react';
 import { Inertial, World, Block, Terrain, WORLD_HEIGHT, WORLD_WIDTH } from './world';
-import { BLOCK_TEXTURE_SCHEMA, Renderer, SCREEN_HEIGHT, SCREEN_WIDTH, loadTextures } from './render';
+import { Renderer, SCREEN_HEIGHT, SCREEN_WIDTH, loadTextures } from './render';
 import { stepPhysics } from './physics';
 import { Dynamite, Player } from './entity';
-
-
-// Create the SpriteSheet from data and image
-const spritesheet = new PIXI.Spritesheet(
-  PIXI.BaseTexture.from(BLOCK_TEXTURE_SCHEMA.meta.image),
-  BLOCK_TEXTURE_SCHEMA
-);
-
-// Generate all the Textures asynchronously
-spritesheet.parse().then(() => {
-  console.log('done');
-  // Create a new Sprite from the Texture
-  const block = new PIXI.Sprite(spritesheet.textures['0']);
-  block.scale.set(2);
-  block.x = 0;
-  block.y = 0;
-  //app.stage.addChild(block);
-});
-
-
 
 const WORLD = new Terrain(WORLD_WIDTH, WORLD_HEIGHT);
 for (let x = 0; x < WORLD_WIDTH; x += 1) {
@@ -119,10 +99,15 @@ export const Rect = () => {
     const myDomElement = createApp();
     
     myDomElement.then(app => {
-      if (ref.current) {
-        ref.current.appendChild(app.view);
-      }
+      ref.current?.appendChild(app.view);
     });
+ 
+    return () => {
+      myDomElement.then(app => {
+        ref.current?.removeChild(app.view);
+        app.destroy();
+      });
+    };
   }, []);
 
   return <div ref={ref}></div>;

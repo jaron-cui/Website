@@ -121,7 +121,6 @@ function getNextTerrainCollision(world: World, inertials: Inertial[]): TerrainCo
         const block = world.terrain.at(nextXBorder, by);
         if (block != Block.Air && block != Block.Grasses) {
           tx = t;
-          console.log("colliding with " + block);
           collision = true;
           break;
         }
@@ -153,7 +152,6 @@ function getNextTerrainCollision(world: World, inertials: Inertial[]): TerrainCo
         }
         if (block != Block.Air && block != Block.Grasses) {
           ty = t;
-          console.log("colliding y with " + block + " at " + bx + ", " + nextYBorder);
           collision = true;
           break;
         }

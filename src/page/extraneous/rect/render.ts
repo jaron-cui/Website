@@ -105,6 +105,7 @@ export async function loadTextures() {
   SPRITE_TEXTURES['dynamite-sprites'] = new SpriteSet({
     ignition: dynamiteSprites.animations.ignition
   });
+  PIXI.utils.clearTextureCache();
 
   const playerLegsTex = PIXI.BaseTexture.from(PLAYER_TEXTURE_SCHEMA.meta.image);
   playerLegsTex.scaleMode = PIXI.SCALE_MODES.NEAREST;
@@ -113,6 +114,7 @@ export async function loadTextures() {
   SPRITE_TEXTURES['player-legs'] = new SpriteSet({
     walk: playerlegSprites.animations.walk
   });
+  PIXI.utils.clearTextureCache();
 }
 
 function convertTerrainDataToTexture(terrain: Terrain): PIXI.BaseTexture<PIXI.BufferResource, PIXI.IAutoDetectOptions> {
@@ -194,7 +196,6 @@ class Armature {
       piece.y = SCREEN_HEIGHT - (this.y + (pose.ry || 0) + 1) * 20;
 
       piece.currentFrame = this.template[bone].getFrameIndex(pose.animation, pose.frame);
-      console.log(piece.currentFrame);
     }
   }
 

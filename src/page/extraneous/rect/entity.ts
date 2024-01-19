@@ -71,7 +71,7 @@ export class Dynamite extends InertialAnimatedEntity implements Explosive {
 }
 
 const JUMP_BUFFER_TICKS = 2;
-const COYOTE_TIMER_TICKS = 5;
+const COYOTE_TIMER_TICKS = 3;
 const JUMP_SPEED = 0.4;
 const JUMP_HOLDING = GRAVITY * -0.4;
 const JUMP_WALK_BOOST = 0.1;

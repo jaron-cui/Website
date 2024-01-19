@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Inertial, World, Block, Terrain, WORLD_HEIGHT, WORLD_WIDTH } from './world';
 import { Renderer, SCREEN_HEIGHT, SCREEN_WIDTH, loadTextures } from './render';
 import { stepPhysics } from './physics';
@@ -40,7 +40,7 @@ worldData.scaleMode = PIXI.SCALE_MODES.NEAREST;
 
 
 async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDown: string) => void, (keyUp: string) => void]> {
-  const app = new PIXI.Application<HTMLCanvasElement>({ background: '#1099bb', width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
+  const app = new PIXI.Application<HTMLCanvasElement>({ background: '#7acdeb', width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
 
   // app.stage.addChild(quad);
   let t = 0;

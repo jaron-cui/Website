@@ -93,7 +93,7 @@ export class Player extends InertialAnimatedEntity {
   coyoteTimer: number;
 
   constructor(id: number, x: number, y: number) {
-    super(id, x, y, 1, 2, 1);
+    super(id, x, y, 0.75, 2, 1);
     this.walkStage = 0;
     this.jumping = false;
     this.facing = 'right';

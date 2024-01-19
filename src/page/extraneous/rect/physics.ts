@@ -199,17 +199,17 @@ function processTerrainCollision(collision: TerrainCollisionEvent, world: World)
   // TODO: make more complex collision interactions such as bounce
   if (collision.axis[0] !== 0) {
     thing.x += collision.time * thing.vx;
-    thing.hittingWall = thing.vx < 0 ? 'left' : 'right';
+    thing.hittingWall = collision.axis[0] === -1 ? 'left' : 'right';
     thing.vx = 0;
   } else {
     thing.y += collision.time * thing.vy;
     thing.vy = 0;
-    thing.onGround = true;
+    thing.onGround = collision.axis[1] === -1;
   }
   stepEverythingBy(collision.time, world, collision.id);
 } 
 
-export const GRAVITY = -0.08;
+export const GRAVITY = -0.06;
 
 export function stepPhysics(world: World) {
   const inertials: Inertial[] = [];

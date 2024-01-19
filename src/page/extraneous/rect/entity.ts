@@ -1,6 +1,6 @@
 import { GRAVITY, distance } from "./physics";
 import { AnimatedEntity } from "./render";
-import { Inertial, Explosive, ArmaturePiecePose, World, Block, explosive, mortal } from "./world";
+import { Inertial, XDirection, Explosive, ArmaturePiecePose, World, Block, explosive, mortal } from "./world";
 
 abstract class InertialAnimatedEntity extends AnimatedEntity implements Inertial {
   id: number;
@@ -16,6 +16,7 @@ abstract class InertialAnimatedEntity extends AnimatedEntity implements Inertial
   inertial: true;
 
   onGround?: boolean;
+  hittingWall?: XDirection | undefined;
 
   constructor(id: number, x: number, y: number, w: number, h: number, mass: number) {
     super(x, y);
@@ -69,8 +70,6 @@ export class Dynamite extends InertialAnimatedEntity implements Explosive {
   }
 }
 
-type Direction = 'left' | 'right';
-
 const JUMP_BUFFER_TICKS = 2;
 const COYOTE_TIMER_TICKS = 5;
 const JUMP_SPEED = 0.4;
@@ -84,8 +83,8 @@ const AIR_FRICTION = 0.005;
 export class Player extends InertialAnimatedEntity {
   walkStage: number;
 
-  walking: Direction | undefined;
-  facing: Direction;
+  walking: XDirection | undefined;
+  facing: XDirection;
   jumping: boolean;
 
   jumpBuffer: number;
@@ -120,8 +119,17 @@ export class Player extends InertialAnimatedEntity {
   onTick() {
     this.walkStage += Math.abs(this.vx) * 8;
     this.walkStage %= 7;
+    // wall jump handling should come before jump handling
+    //this.handleWallJump();
     this.handleJump();
     this.handleWalk();
+  }
+
+  private handleWallJump() {
+    if (this.hittingWall && this.jumping && this.jumpBuffer === 0 && !this.onGround) {
+      this.vx = this.hittingWall === 'left' ? JUMP_WALK_BOOST : -JUMP_WALK_BOOST;
+      this.vy = JUMP_SPEED;
+    }
   }
 
   private handleWalk() {

@@ -22,6 +22,11 @@ for (let x = 0; x < WORLD_WIDTH; x += 1) {
     }
   }
 }
+WORLD.set(17, 16, Block.Soil);
+WORLD.set(22, 17, Block.Soil);
+WORLD.set(22, 18, Block.Soil);
+WORLD.set(22, 19, Block.Soil);
+WORLD.set(22, 20, Block.Soil);
 const worldData = PIXI.BaseTexture.fromBuffer(WORLD.blocks, WORLD.w, WORLD.h, { format: PIXI.FORMATS.ALPHA, type: PIXI.TYPES.UNSIGNED_BYTE });
 worldData.wrapMode = PIXI.WRAP_MODES.CLAMP;
 worldData.mipmap = PIXI.MIPMAP_MODES.OFF;
@@ -71,6 +76,9 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
 
   app.ticker.add((delta: number) => {
     t += 1;
+    if (t % 1 !== 0) {
+      return;
+    }
     renderer.updateAmbient();
     renderer.updateEntities();
     //quad.shader.uniforms.wind = Math.sin(t / 30) * 2.2;

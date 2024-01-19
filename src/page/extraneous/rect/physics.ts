@@ -103,38 +103,45 @@ function getNextTerrainCollision(world: World, inertials: Inertial[]): TerrainCo
     const { x, y, w, h, vx, vy } = thing;
     const xa = vx < 0 ? -1 : 1;
     const ya = vy < 0 ? -1 : 1;
-    let nextXBorder = xa === 1 ? Math.ceil(x + w / 2) : Math.floor(x - w / 2);
     let tx = Infinity;
-    while (true) {
-      let t = (nextXBorder - (x + xa * w / 2)) / vx;
-      if (t > 1) {
-        break;
-      }
-      // TODO: there is going to be some assymetry into how block corner collisions are handled
-      // Fix this by explicity handling the 0.5 case, for which round has a 50/50 variability
-      const bottom = y - h / 2 + t * vy;
-      const top = y + h / 2 + t * vy;
-      const minY = Math.round(bottom) + 1;
-      const maxY = Math.round(top);
-      let collision = false;
-      for (let by = minY; by <= maxY; by += 1) {
-        const block = world.terrain.at(nextXBorder, by);
-        if (block != Block.Air && block != Block.Grasses) {
-          tx = t;
-          collision = true;
+    {
+      const hitboxEdge = x + xa * w / 2;
+      let nextBlock = xa === 1 ? Math.ceil(hitboxEdge + 0.5) : Math.floor(hitboxEdge - 0.5);
+      while (true) {
+        let t = (nextBlock - xa * 0.5 - hitboxEdge) / vx;
+        if (t > 1) {
           break;
         }
+        // TODO: there is going to be some assymetry into how block corner collisions are handled
+        // Fix this by explicity handling the 0.5 case, for which round has a 50/50 variability
+        const bottom = y - h / 2 + t * vy;
+        const top = y + h / 2 + t * vy;
+        const minY = Math.round(bottom);
+        const maxY = Math.floor(top);
+        let collision = false;
+        for (let by = minY; by <= maxY; by += 1) {
+          const block = world.terrain.at(nextBlock, by);
+          if (block != Block.Air && block != Block.Grasses) {
+            tx = t;
+            collision = true;
+            if (thing.id === 2) {
+              //console.log('colliding with ' + nextBlock + ' position ' + thing.x);
+            }
+            break;
+          }
+        }
+        if (collision) {
+          break;
+        }
+        nextBlock += xa;
       }
-      if (collision) {
-        break;
-      }
-      nextXBorder += xa;
     }
 
-    let nextYBorder = ya === 1 ? Math.ceil(y + h / 2) : Math.floor(y - h / 2);
+    const hitboxEdge = y + ya * h / 2;
+    let nextBlock = ya === 1 ? Math.ceil(hitboxEdge + 0.5) : Math.floor(hitboxEdge - 0.5);
     let ty = Infinity;
     while (true) {
-      let t = (nextYBorder - (y + ya * h / 2)) / vy;
+      let t = (nextBlock - ya * 0.5 - hitboxEdge) / vy;
       if (t > 1) {
         break;
       }
@@ -143,23 +150,23 @@ function getNextTerrainCollision(world: World, inertials: Inertial[]): TerrainCo
       const bottom = x - w / 2 + t * vx;
       const top = x + w / 2 + t * vx;
       const minX = Math.round(bottom);
-      const maxX = Math.round(top);
+      const maxX = -Math.round(-top);
       let collision = false;
       for (let bx = minX; bx <= maxX; bx += 1) {
-        const block = world.terrain.at(bx, nextYBorder);
-        if (block === undefined) {
-          console.log("undefined " + bx + ", " + nextYBorder)
-        }
+        const block = world.terrain.at(bx, nextBlock);
         if (block != Block.Air && block != Block.Grasses) {
           ty = t;
           collision = true;
+          if (thing.id === 2) {
+            console.log('y colliding with ' + nextBlock + ' position ' + thing.x + ', ' + thing.y);
+          }
           break;
         }
       }
       if (collision) {
         break;
       }
-      nextYBorder += ya;
+      nextBlock += ya;
     }
     if (tx < ty) {
       if (tx < nextCollision.time) {
@@ -193,6 +200,7 @@ function processTerrainCollision(collision: TerrainCollisionEvent, world: World)
   if (collision.axis[0] !== 0) {
     thing.x += collision.time * thing.vx;
     thing.vx = 0;
+    thing.hittingWall = thing.vx < 0 ? 'left' : 'right';
   } else {
     thing.y += collision.time * thing.vy;
     thing.vy = 0;
@@ -213,6 +221,7 @@ export function stepPhysics(world: World) {
       inertials.push(thing);
       thing.vy += GRAVITY;
       thing.onGround = false;
+      thing.hittingWall = undefined;
       // console.log(JSON.stringify(thing));
       world.things.set(thing.id, thing);
     }

@@ -193,8 +193,8 @@ class Armature {
       }
       const pose = poses[bone];
 
-      piece.x = (this.x + (pose.rx || 0) + 1) * 20;
-      piece.y = SCREEN_HEIGHT - (this.y + (pose.ry || 0) + 1) * 20;
+      piece.x = (this.x + (pose.rx || 0) + 0.5) * 20;
+      piece.y = SCREEN_HEIGHT - (this.y + (pose.ry || 0) + 0.5) * 20;
 
       piece.currentFrame = this.template[bone].getFrameIndex(pose.animation, pose.frame);
 

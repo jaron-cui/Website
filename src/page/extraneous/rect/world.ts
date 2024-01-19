@@ -50,12 +50,15 @@ export function physical(thing: any): thing is Physical {
   return thing.physical;
 }
 
+export type XDirection = 'left' | 'right';
+
 export interface Inertial extends Physical {
   inertial: true;
   mass: number;
   vx: number;
   vy: number;
   onGround?: boolean;
+  hittingWall?: XDirection;
 }
 
 export function inertial(thing: any): thing is Inertial {

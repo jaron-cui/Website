@@ -199,8 +199,8 @@ function processTerrainCollision(collision: TerrainCollisionEvent, world: World)
   // TODO: make more complex collision interactions such as bounce
   if (collision.axis[0] !== 0) {
     thing.x += collision.time * thing.vx;
-    thing.vx = 0;
     thing.hittingWall = thing.vx < 0 ? 'left' : 'right';
+    thing.vx = 0;
   } else {
     thing.y += collision.time * thing.vy;
     thing.vy = 0;

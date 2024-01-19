@@ -73,13 +73,14 @@ export class Dynamite extends InertialAnimatedEntity implements Explosive {
 const JUMP_BUFFER_TICKS = 2;
 const COYOTE_TIMER_TICKS = 5;
 const JUMP_SPEED = 0.4;
-const JUMP_HOLDING = GRAVITY * 0.4;
+const JUMP_HOLDING = GRAVITY * -0.4;
 const JUMP_WALK_BOOST = 0.1;
 
 const MAX_WALK_SPEED = 0.2;
 const WALK_ACCELERATION = 0.02;
 const GROUND_FRICTION = 0.04;
 const AIR_FRICTION = 0.005;
+const WALL_FRICTION = GRAVITY * -0.9;
 export class Player extends InertialAnimatedEntity {
   walkStage: number;
 
@@ -129,6 +130,7 @@ export class Player extends InertialAnimatedEntity {
     if (this.hittingWall && this.jumping && this.jumpBuffer === 0 && !this.onGround) {
       this.vx = this.hittingWall === 'left' ? JUMP_SPEED : -JUMP_SPEED;
       this.vy = JUMP_SPEED;
+      console.log('WALL JUMP ' + this.hittingWall)
     }
   }
 
@@ -166,10 +168,15 @@ export class Player extends InertialAnimatedEntity {
         this.vx = Math.max(-MAX_WALK_SPEED, this.vx - JUMP_WALK_BOOST);
       }
     }
-    // the player stays in the air longer if they hold the jump key
+    // the player stays in the air longer if they hold the jump key or slide against a wall
+    let verticalFriction = 0;
     if (this.jumping && !this.onGround) {
-      this.vy -= JUMP_HOLDING;
+      verticalFriction = JUMP_HOLDING;
     }
+    if (this.hittingWall && this.vy < 0 && !this.onGround) {
+      verticalFriction = Math.max(verticalFriction, WALL_FRICTION);
+    }
+    this.vy += verticalFriction;
   }
 }
 

@@ -27,6 +27,12 @@ WORLD.set(22, 17, Block.Soil);
 WORLD.set(22, 18, Block.Soil);
 WORLD.set(22, 19, Block.Soil);
 WORLD.set(22, 20, Block.Soil);
+
+WORLD.set(19, 18, Block.Soil);
+WORLD.set(19, 19, Block.Soil);
+WORLD.set(19, 20, Block.Soil);
+WORLD.set(19, 21, Block.Soil);
+WORLD.set(19, 22, Block.Soil);
 const worldData = PIXI.BaseTexture.fromBuffer(WORLD.blocks, WORLD.w, WORLD.h, { format: PIXI.FORMATS.ALPHA, type: PIXI.TYPES.UNSIGNED_BYTE });
 worldData.wrapMode = PIXI.WRAP_MODES.CLAMP;
 worldData.mipmap = PIXI.MIPMAP_MODES.OFF;

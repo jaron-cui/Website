@@ -120,14 +120,14 @@ export class Player extends InertialAnimatedEntity {
     this.walkStage += Math.abs(this.vx) * 8;
     this.walkStage %= 7;
     // wall jump handling should come before jump handling
-    //this.handleWallJump();
+    this.handleWallJump();
     this.handleJump();
     this.handleWalk();
   }
 
   private handleWallJump() {
     if (this.hittingWall && this.jumping && this.jumpBuffer === 0 && !this.onGround) {
-      this.vx = this.hittingWall === 'left' ? JUMP_WALK_BOOST : -JUMP_WALK_BOOST;
+      this.vx = this.hittingWall === 'left' ? JUMP_SPEED : -JUMP_SPEED;
       this.vy = JUMP_SPEED;
     }
   }

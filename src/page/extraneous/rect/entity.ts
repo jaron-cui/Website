@@ -81,6 +81,7 @@ const WALK_ACCELERATION = 0.02;
 const GROUND_FRICTION = 0.04;
 const AIR_FRICTION = 0.005;
 const WALL_FRICTION = GRAVITY * -0.9;
+const WALL_JUMP_SPEED = JUMP_SPEED * 0.6;
 export class Player extends InertialAnimatedEntity {
   walkStage: number;
 
@@ -128,9 +129,8 @@ export class Player extends InertialAnimatedEntity {
 
   private handleWallJump() {
     if (this.hittingWall && this.jumping && this.jumpBuffer === 0 && !this.onGround) {
-      this.vx = this.hittingWall === 'left' ? JUMP_SPEED : -JUMP_SPEED;
+      this.vx = this.hittingWall === 'left' ? WALL_JUMP_SPEED : -WALL_JUMP_SPEED;
       this.vy = JUMP_SPEED;
-      console.log('WALL JUMP ' + this.hittingWall)
     }
   }
 

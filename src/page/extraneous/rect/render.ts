@@ -1,11 +1,13 @@
 import * as PIXI from 'pixi.js';
 import { SpriteSet, Renderable, ArmaturePiecePose, World, renderable, Terrain, Block, WORLD_WIDTH, WORLD_HEIGHT } from "./world";
 import { vertexShader, fragmentShader } from './shaders';
+import { Inventory, PlayerInventory } from './item';
 
 export const SCREEN_WIDTH = 960;
 export const SCREEN_HEIGHT = 540;
-export const SPRITE_TEXTURES: Record<string, SpriteSet> = {};
 export const GRAPHICAL_SCALE = 20/8;
+export const SPRITE_TEXTURES: Record<string, SpriteSet> = {};
+const GUI_TEXTURES: Record<string, SpriteSet> = {};
 
 export const BLOCK_TEXTURE_SCHEMA = {
   frames: {
@@ -55,13 +57,17 @@ export function range(length: number) {
   return Array(length).fill(0).map((_, i) => i);
 }
 
-export const DYNAMITE_TEXTURE_SCHEMA = {
+function frame(x: number, y: number, w: number, h: number) {
+  return {
+    frame: {x: x, y: y, w: w, h: h},
+    spriteSourceSize: {x: 0, y: 0, w: w, h: h},
+    sourceSize: {w: w, h: h}
+  }
+}
+
+const DYNAMITE_TEXTURE_SCHEMA = {
   frames: Object.fromEntries(
-    range(12).map(i => ['' + i, {
-      frame: {x: 9 * i, y: 0, w: 9, h: 18},
-      spriteSourceSize: {x: 0, y: 0, w: 9, h: 18},
-      sourceSize: {w: 9, h: 18}
-    }])
+    range(12).map(i => ['' + i, frame(9 * i, 0, 9, 18)])
   ),
   animations: {
     ignition: range(12).map(i => '' + i)
@@ -74,13 +80,9 @@ export const DYNAMITE_TEXTURE_SCHEMA = {
   }
 };
 
-export const PLAYER_TEXTURE_SCHEMA = {
+const PLAYER_TEXTURE_SCHEMA = {
   frames: Object.fromEntries(
-    range(7).map(i => ['' + i, {
-      frame: {x: 12 * i, y: 0, w: 12, h: 16},
-      spriteSourceSize: {x: 0, y: 0, w: 12, h: 16},
-      sourceSize: {w: 12, h: 16}
-    }])
+    range(7).map(i => ['' + i, frame(12 * i, 0, 12, 16)])
   ),
   animations: {
     walk: range(7).map(i => '' + i)
@@ -92,6 +94,23 @@ export const PLAYER_TEXTURE_SCHEMA = {
     scale: '1'
   }
 };
+
+const GUI_TEXTURE_SCHEMA = {
+  frames: {
+    'unselected-slot': frame(0, 0, 10, 10),
+    'selected-slot': frame(0, 10, 10, 10)
+  },
+  animations: {
+    selected: ['selected-slot'],
+    unselected: ['unselected-slot']
+  },
+  meta: {
+    image: 'inventory.png',
+    format: 'RGBA8888',
+    size: {w: 8, h: 16},
+    scale: '1'
+  }
+}
 
 export async function loadTextures() {
   // async function loadFromSchema(spriteSet: string, schema: any) {
@@ -114,6 +133,16 @@ export async function loadTextures() {
   await playerlegSprites.parse();
   SPRITE_TEXTURES['player-legs'] = new SpriteSet({
     walk: playerlegSprites.animations.walk
+  });
+  PIXI.utils.clearTextureCache();
+
+  const inventoryTex = PIXI.BaseTexture.from(GUI_TEXTURE_SCHEMA.meta.image);
+  inventoryTex.scaleMode = PIXI.SCALE_MODES.NEAREST;
+  const inventorySprites = new PIXI.Spritesheet(inventoryTex, GUI_TEXTURE_SCHEMA);
+  await inventorySprites.parse();
+  GUI_TEXTURES['inventory'] = new SpriteSet({
+    selected: inventorySprites.animations.selected,
+    unselected: inventorySprites.animations.unselected
   });
   PIXI.utils.clearTextureCache();
 }
@@ -218,6 +247,7 @@ export class Renderer {
   world: World;
   terrainLayer: PIXI.Mesh<PIXI.Shader>;
   entityArmatures: Map<number, Armature>;
+  inventorySlots: PIXI.AnimatedSprite[];
 
   constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
@@ -232,6 +262,28 @@ export class Renderer {
     this.app.stage.addChild(this.terrainLayer);
 
     this.entityArmatures = new Map();
+    this.inventorySlots = [];
+  }
+
+  updateInventory(inventory: PlayerInventory) {
+    const SLOT_SIZE = 10;
+    const scale = 3;
+    for (let i = inventory.slots.length; i < this.inventorySlots.length; i += 1) {
+      this.app.stage.removeChild(this.inventorySlots[i]);
+    }
+    for (let i = 0; i < inventory.slots.length; i += 1) {
+      if (i >= this.inventorySlots.length) {
+        const sprite = new PIXI.AnimatedSprite(GUI_TEXTURES['inventory'].frames, false);
+        sprite.x = scale * SLOT_SIZE * i;
+        sprite.y = 0;
+        sprite.scale.set(scale);
+        this.app.stage.addChild(sprite);
+        this.inventorySlots.push(sprite);
+      }
+      const selection = i === inventory.selected ? 'selected' : 'unselected';
+      const sprite = this.inventorySlots[i];
+      sprite.currentFrame = GUI_TEXTURES['inventory'].getFrameIndex(selection, 0);
+    }
   }
 
   updateTerrain() {

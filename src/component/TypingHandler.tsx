@@ -1,6 +1,11 @@
 import { useRef, useEffect } from "react";
 
-const TypingHandler = ({ onKeyDown, onKeyUp }: { onKeyDown?: (key: string) => void, onKeyUp?: (key: string) => void }) => {
+interface TypingHandlerProps {
+  onKeyDown?: (key: string) => void;
+  onKeyUp?: (key: string) => void;
+}
+
+const TypingHandler = ({ onKeyDown, onKeyUp }: TypingHandlerProps) => {
   const keyboardHandler = useRef<(event: KeyboardEvent) => void>(() => null);
 
   useEffect(() => {

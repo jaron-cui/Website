@@ -5,6 +5,8 @@ import { Renderer, SCREEN_HEIGHT, SCREEN_WIDTH, loadTextures } from './render';
 import { stepPhysics } from './physics';
 import { Dynamite, Player } from './entity';
 import TypingHandler from '../../../component/TypingHandler';
+import { PlayerInventory } from './item';
+import { mod } from '../../../util/util';
 
 const WORLD = new Terrain(WORLD_WIDTH, WORLD_HEIGHT);
 for (let x = 0; x < WORLD_WIDTH; x += 1) {
@@ -80,6 +82,25 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
   const renderer = new Renderer(world, app);
   renderer.updateTerrain();
 
+  const inventory: PlayerInventory = {
+    selected: 0,
+    slots: [
+      {
+        item: 's',
+        quantity: 1,
+        data: {}
+      },
+      undefined,
+      undefined,
+      {
+        item: 'd',
+        quantity: 64,
+        data: {}
+      }
+    ]
+  };
+  renderer.updateInventory(inventory);
+
   app.ticker.add((delta: number) => {
     t += 1;
     if (t % 1 !== 0) {
@@ -129,6 +150,13 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
     onPressUpdate();
   }
 
+  app.stage.eventMode = 'static';
+  app.stage.hitArea = app.screen;
+  app.stage.addEventListener('wheel', (event: WheelEvent) => {
+    const sign = Math.sign(event.deltaY);
+    inventory.selected = mod((inventory.selected + sign), inventory.slots.length);
+    renderer.updateInventory(inventory);
+  });
   return [app, onKeyDown, onKeyUp];
 };
 
@@ -155,7 +183,7 @@ export const Rect = () => {
   }, []);
 
   return (
-    <div ref={gameRef}>
+    <div ref={gameRef} onContextMenu={e => e.preventDefault()} onMouseDown={e => e.preventDefault()}>
       <TypingHandler
         onKeyDown={(key: string) => keyDownRef.current && keyDownRef.current(key)}
         onKeyUp={(key: string) => keyUpRef.current && keyUpRef.current(key)}

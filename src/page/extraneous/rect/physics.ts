@@ -157,9 +157,9 @@ function getNextTerrainCollision(world: World, inertials: Inertial[]): TerrainCo
         if (block != Block.Air && block != Block.Grasses) {
           ty = t;
           collision = true;
-          if (thing.id === 2) {
-            console.log('y colliding with ' + nextBlock + ' position ' + thing.x + ', ' + thing.y);
-          }
+          // if (thing.id === 2) {
+          //   console.log('y colliding with ' + nextBlock + ' position ' + thing.x + ', ' + thing.y);
+          // }
           break;
         }
       }

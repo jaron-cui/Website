@@ -1,3 +1,4 @@
+import { Game } from "./game";
 import { Inertial, World, Block, inertial, physical } from "./world";
 
 export function distance(a: [number, number], b: [number, number]): number {
@@ -192,8 +193,12 @@ function stepEverythingBy(time: number, world: World, exclude?: number) {
 
 function processTerrainCollision(collision: TerrainCollisionEvent, world: World) {
   const thing = world.things.get(collision.id);
-  if (!thing || !inertial(thing)) {
-    console.error("Tried to process a collision involving a nonexistent or nonintertial thing.");
+  if (!thing) {
+    console.error("Tried to process a collision involving a nonexistent thing.");
+    return;
+  }
+  if (!inertial(thing)) {
+    console.error("Tried to process a collision involving a  nonintertial thing.");
     return;
   }
   // TODO: make more complex collision interactions such as bounce
@@ -211,19 +216,21 @@ function processTerrainCollision(collision: TerrainCollisionEvent, world: World)
 
 export const GRAVITY = -0.06;
 
-export function stepPhysics(world: World) {
-  const inertials: Inertial[] = [];
+export function stepPhysics(game: Game) {
+  const world = game.world;
   for (const thing of world.things.values()) {
     if (physical(thing) && thing.onTick) {
-      thing.onTick();
+      thing.onTick(game);
     }
+  }
+  const inertials: Inertial[] = [];
+  for (const thing of world.things.values()) {
     if (inertial(thing)) {
       inertials.push(thing);
       thing.vy += GRAVITY;
       thing.onGround = false;
       thing.hittingWall = undefined;
       // console.log(JSON.stringify(thing));
-      world.things.set(thing.id, thing);
     }
   }
   let timeLeft = 1.0;

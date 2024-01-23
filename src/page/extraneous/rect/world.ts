@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { type Game } from './game';
 
 export const WORLD_WIDTH = 64;
 export const WORLD_HEIGHT = 64;
@@ -29,7 +30,7 @@ export class Terrain {
 
 export class World {
   terrain: Terrain;
-  things: Map<number, Physical | Inertial | Renderable>;
+  things: Map<number, Entity>;
   constructor(terrain: Terrain) {
     this.terrain = terrain;
     this.things = new Map();
@@ -43,7 +44,7 @@ export interface Physical {
   w: number;
   h: number;
   id: number;
-  onTick?: () => void;
+  onTick?: (game: Game) => void;
 }
 
 export function physical(thing: any): thing is Physical {
@@ -100,6 +101,8 @@ export interface Renderable {
 export function renderable(thing: any): thing is Renderable {
   return thing.renderable;
 }
+
+export type Entity = (Physical | Inertial | Renderable | Mortal | Explosive) & {id: number};
 
 export class SpriteSet {
   frames: PIXI.Texture[];

@@ -1,6 +1,8 @@
+import type { Game } from "./game";
+import type { PlayerInventory } from "./item";
 import { GRAVITY, distance } from "./physics";
 import { AnimatedEntity } from "./render";
-import { Inertial, XDirection, Explosive, ArmaturePiecePose, World, Block, explosive, mortal } from "./world";
+import { Inertial, XDirection, Explosive, ArmaturePiecePose, World, Block, explosive, mortal, physical } from "./world";
 
 abstract class InertialAnimatedEntity extends AnimatedEntity implements Inertial {
   id: number;
@@ -31,6 +33,8 @@ abstract class InertialAnimatedEntity extends AnimatedEntity implements Inertial
   }
 }
 
+const DYNAMITE_MAX_FUSE = 9;
+const DYNAMITE_FUSE_TICK = 20;
 export class Dynamite extends InertialAnimatedEntity implements Explosive {
   explosionRadius: number;
   maxExplosionDamage: number;
@@ -39,15 +43,15 @@ export class Dynamite extends InertialAnimatedEntity implements Explosive {
 
   fuse: number;
 
-  constructor(id: number, x: number, y: number) {
-    super(id, x, y, 1, 1, 1);
+  constructor(x: number, y: number) {
+    super(0, x, y, 1, 1, 1);
 
     this.explosionRadius = 3;
     this.maxExplosionDamage = 50;
 
     this.explosive = true;
 
-    this.fuse = 5;
+    this.fuse = DYNAMITE_MAX_FUSE * DYNAMITE_FUSE_TICK;
   }
 
   protected specifyArmatureSprites(): Record<string, string> {
@@ -60,9 +64,17 @@ export class Dynamite extends InertialAnimatedEntity implements Explosive {
     return {
       body: {
         animation: 'ignition',
-        frame: this.fuse
+        frame: DYNAMITE_MAX_FUSE - Math.floor(this.fuse / DYNAMITE_FUSE_TICK)
       }
     };
+  }
+
+  onTick(game: Game) {
+    if (this.fuse > 0) {
+      this.fuse -= 1;
+      return;
+    }
+    handleDetonation(this, game);
   }
 
   detonate(): void {
@@ -92,14 +104,22 @@ export class Player extends InertialAnimatedEntity {
   jumpBuffer: number;
   coyoteTimer: number;
 
-  constructor(id: number, x: number, y: number) {
-    super(id, x, y, 0.875, 2, 1);
+  inventory: PlayerInventory;
+
+  constructor(x: number, y: number) {
+    super(0, x, y, 0.875, 2, 1);
     this.walkStage = 0;
     this.jumping = false;
     this.facing = 'right';
 
     this.jumpBuffer = 0;
     this.coyoteTimer = 0;
+    this.inventory = {
+      selected: 0,
+      slots: [
+        undefined, undefined, undefined, undefined
+      ]
+    }
   }
 
   protected specifyArmatureSprites(): Record<string, string> {
@@ -180,16 +200,16 @@ export class Player extends InertialAnimatedEntity {
   }
 }
 
-function handleDetonation(detonated: Explosive, world: World) {
+function handleDetonation(detonated: Explosive, game: Game) {
   const { x, y, explosionRadius, maxExplosionDamage } = detonated;
 
   // delete the detonated thing
-  world.things.delete(detonated.id);
+  game.world.things.delete(detonated.id);
 
-  const { terrain, things } = world;
+  const { terrain, things } = game.world;
   // handle effect on terrain
-  for (let bx = x - explosionRadius; bx <= x + explosionRadius; bx += 1) {
-    for (let by = y - explosionRadius; by <= y + explosionRadius; by += 1) {
+  for (let bx = Math.floor(x - explosionRadius); bx <= x + explosionRadius; bx += 1) {
+    for (let by = Math.floor(y - explosionRadius); by <= y + explosionRadius; by += 1) {
       // distance from explosion to block
       const d = distance([x, y], [bx, by]);
       if (d > explosionRadius) {
@@ -199,23 +219,26 @@ function handleDetonation(detonated: Explosive, world: World) {
       const damage = (1 - d / explosionRadius) * maxExplosionDamage;
       const block = terrain.at(bx, by);
       if (block !== Block.Air && damage > 10) {
-        terrain.set(bx, by, Block.Air);
+        game.setBlock(bx, by, Block.Air);
       }
     }
   }
   // handle effect on things
-  for (const thing of things.values()) {
-    const d = distance([x, y], [thing.x, thing.y]);
-    if (d > explosionRadius) {
-      continue;
-    }
-    const damage = (1 - d / explosionRadius) * maxExplosionDamage;
-    // detonate other explosives in range
-    if (damage > 10 && explosive(thing)) {
-      thing.detonate();
-    }
-    if (mortal(thing)) {
-      thing.damage(damage);
-    }
-  }
+  // for (const thing of things.values()) {
+  //   if (!physical(thing)) {
+  //     continue;
+  //   }
+  //   const d = distance([x, y], [thing.x, thing.y]);
+  //   if (d > explosionRadius) {
+  //     continue;
+  //   }
+  //   const damage = (1 - d / explosionRadius) * maxExplosionDamage;
+  //   // detonate other explosives in range
+  //   if (damage > 10 && explosive(thing)) {
+  //     thing.detonate();
+  //   }
+  //   if (mortal(thing)) {
+  //     thing.damage(damage);
+  //   }
+  // }
 }

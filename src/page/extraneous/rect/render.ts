@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { SpriteSet, Renderable, ArmaturePiecePose, World, renderable, Terrain, Block, WORLD_WIDTH, WORLD_HEIGHT } from "./world";
+import { SpriteSet, Renderable, ArmaturePiecePose, World, renderable, Terrain, Block, WORLD_WIDTH, WORLD_HEIGHT, Entity } from "./world";
 import { vertexShader, fragmentShader } from './shaders';
 import { ItemStack, PlayerInventory } from './item';
 
@@ -329,13 +329,19 @@ export class Renderer {
   }
 
   updateEntities() {
-    for (const i of this.world.things.keys()) {
+    for (const i of this.entityArmatures.keys()) {
       const thing = this.world.things.get(i);
       if (!thing) {
+        const removedArmature = this.entityArmatures.get(i) as Armature;
+        for (const bone in removedArmature.pieces) {
+          this.app.stage.removeChild(removedArmature.pieces[bone]);
+        }
         this.entityArmatures.delete(i);
-        // TODO: delete unused sprites after
         continue;
       }
+    }
+    for (const i of this.world.things.keys()) {
+      const thing = this.world.things.get(i) as Entity;
       if (!renderable(thing)) {
         continue;
       }

@@ -5,8 +5,9 @@ import { Renderer, SCREEN_HEIGHT, SCREEN_WIDTH, loadTextures } from './render';
 import { stepPhysics } from './physics';
 import { Dynamite, Player } from './entity';
 import TypingHandler from '../../../component/TypingHandler';
-import { PlayerInventory } from './item';
+import { PlayerInventory, handleSlotUse } from './item';
 import { mod } from '../../../util/util';
+import { Game } from './game';
 
 const WORLD = new Terrain(WORLD_WIDTH, WORLD_HEIGHT);
 for (let x = 0; x < WORLD_WIDTH; x += 1) {
@@ -51,30 +52,30 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
   app.ticker.maxFPS = 40;
 
   const world = new World(WORLD);
-  const obj: Inertial = {
-    inertial: true,
-    physical: true,
-    id: 0,
-    x: 10,
-    y: 26,
-    vx: 0,
-    vy: 0,
-    w: 1,
-    h: 2,
-    mass: 1
-  }
-  world.things.set(0, obj);
+  // const obj: Inertial = {
+  //   inertial: true,
+  //   physical: true,
+  //   id: 0,
+  //   x: 10,
+  //   y: 26,
+  //   vx: 0,
+  //   vy: 0,
+  //   w: 1,
+  //   h: 2,
+  //   mass: 1
+  // }
+  // world.things.set(0, obj);
 
   await loadTextures();
-  
-  const thing = new Dynamite(1, 14, 24);
-  world.things.set(1, thing);
 
-  const player = new Player(2, 16, 24);
-  world.things.set(2, player);
+  const player = new Player(16, 24);
 
   const renderer = new Renderer(world, app);
   renderer.updateTerrain();
+  const game = new Game(player, world, renderer);
+
+  game.spawn(new Dynamite(14, 24));
+  game.spawn(player);
 
   const inventory: PlayerInventory = {
     selected: 0,
@@ -86,30 +87,28 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
       },
       undefined,
       undefined,
-      {
-        id: 'd',
-        quantity: 64,
-        data: {}
-      }
+      undefined
     ]
   };
-  renderer.updateInventory(inventory);
+  player.inventory = inventory;
 
   app.ticker.add((delta: number) => {
     t += 1;
     if (t % 1 !== 0) {
       return;
     }
-    renderer.updateAmbient();
-    renderer.updateEntities();
-    //quad.shader.uniforms.wind = Math.sin(t / 30) * 2.2;
-    stepPhysics(world);
-    if (t % 100 === 0) {
-      (world.things.get(0) as Inertial).vy = 1;
-    }
+    // renderer.updateAmbient();
+    // renderer.updateEntities();
+    // renderer.updateInventory(player.inventory);
+    // //quad.shader.uniforms.wind = Math.sin(t / 30) * 2.2;
+    // stepPhysics(world);
+    game.tick();
+    // if (t % 100 === 0) {
+    //   (world.things.get(0) as Inertial).vy = 1;
+    // }
     if (t % 10 === 0) {
-      thing.fuse += 1;
-      thing.fuse = thing.fuse % 10;
+      // thing.fuse += 1;
+      // thing.fuse = thing.fuse % 10;
     }
     // if (t % 2 === 0) {
     //   player.walkStage += 1;
@@ -148,6 +147,15 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
     const sign = Math.sign(event.deltaY);
     inventory.selected = mod((inventory.selected + sign), inventory.slots.length);
     renderer.updateInventory(inventory);
+  });
+  app.stage.addEventListener('rightclick', (event: MouseEvent) => {
+    game.actionQueue.push(() => {
+      handleSlotUse({
+        user: player,
+        game: game,
+        slotNumber: player.inventory.selected
+      })
+    })
   });
   return [app, onKeyDown, onKeyUp];
 };

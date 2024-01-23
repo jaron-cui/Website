@@ -1,9 +1,14 @@
-import type { Player } from "./entity";
-import type { Inertial, World } from "./world";
+import { Dynamite, type Player } from "./entity";
+import { Game } from "./game";
+import type { Inertial } from "./world";
 
 const _ITEMS: Record<string, ItemDetails> = {};
 
-defineItem('dynamite', 'Dynamite', 1, () => false);
+defineItem('dynamite', 'Dynamite', 1, condition => {
+  (condition.user.inventory.slots[condition.slotNumber] as ItemStack).quantity -= 1;
+  condition.game.spawn(new Dynamite(condition.user.x, condition.user.y))
+  return true;
+});
 defineItem('pickaxe', 'Pickaxe', 1, () => false);
 defineItem('throwing-knife', 'Throwing Knife', 16, () => false);
 defineItem('spear', 'Spear', 1, () => false);
@@ -43,7 +48,7 @@ export function useSlot(context: UseCondition) {
 
 interface UseCondition {
   user: Player;
-  world: World;
+  game: Game;
   slotNumber: number;
   onBlock?: [number, number];
   onThing?: Inertial;
@@ -67,14 +72,14 @@ function handleEmptySlotUse(context: UseCondition): boolean {
 
 function handleItemUse(context: UseCondition): boolean {
   // TODO: inventory = user.inventory;
-  const inventory: Inventory = {slots: []};
+  const inventory: Inventory = context.user.inventory;
   const slot = inventory.slots[context.slotNumber] as ItemStack;
   return ITEMS[slot.id].use(context);
 }
 
-function handleSlotUse(context: UseCondition): boolean {
+export function handleSlotUse(context: UseCondition): boolean {
   // TODO: inventory = user.inventory;
-  const inventory: Inventory = {slots: []};
+  const inventory: Inventory = context.user.inventory;
   if (context.slotNumber < 0 || context.slotNumber >= inventory.slots.length) {
     return false;
   }

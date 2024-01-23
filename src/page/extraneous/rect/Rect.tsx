@@ -65,12 +65,6 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
   }
   world.things.set(0, obj);
 
-  const sprite = PIXI.Sprite.from('player.png');
-  sprite.anchor.set(0.5);
-  sprite.scale.set(20/8);
-  sprite.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
-  app.stage.addChild(sprite);
-
   await loadTextures();
   
   const thing = new Dynamite(1, 14, 24);
@@ -86,14 +80,14 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
     selected: 0,
     slots: [
       {
-        item: 's',
+        id: 'dynamite',
         quantity: 1,
         data: {}
       },
       undefined,
       undefined,
       {
-        item: 'd',
+        id: 'd',
         quantity: 64,
         data: {}
       }
@@ -110,14 +104,12 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
     renderer.updateEntities();
     //quad.shader.uniforms.wind = Math.sin(t / 30) * 2.2;
     stepPhysics(world);
-    sprite.x = (world.things.get(0)?.x as number + 1) * 20;
-    sprite.y = SCREEN_HEIGHT - (world.things.get(0)?.y as number + 1) * 20;
     if (t % 100 === 0) {
       (world.things.get(0) as Inertial).vy = 1;
     }
     if (t % 10 === 0) {
       thing.fuse += 1;
-      thing.fuse = thing.fuse % 12;
+      thing.fuse = thing.fuse % 10;
     }
     // if (t % 2 === 0) {
     //   player.walkStage += 1;

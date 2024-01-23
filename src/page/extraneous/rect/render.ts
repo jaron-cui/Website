@@ -1,15 +1,16 @@
 import * as PIXI from 'pixi.js';
 import { SpriteSet, Renderable, ArmaturePiecePose, World, renderable, Terrain, Block, WORLD_WIDTH, WORLD_HEIGHT } from "./world";
 import { vertexShader, fragmentShader } from './shaders';
-import { Inventory, PlayerInventory } from './item';
+import { ItemStack, PlayerInventory } from './item';
 
 export const SCREEN_WIDTH = 960;
 export const SCREEN_HEIGHT = 540;
 export const GRAPHICAL_SCALE = 20/8;
 export const SPRITE_TEXTURES: Record<string, SpriteSet> = {};
+const ITEM_TEXTURES: Record<string, SpriteSet> = {};
 const GUI_TEXTURES: Record<string, SpriteSet> = {};
 
-export const BLOCK_TEXTURE_SCHEMA = {
+const BLOCK_TEXTURE_SCHEMA = {
   frames: {
     0: {
       frame: { x: 0, y: 0, w: 8, h: 8 },
@@ -53,6 +54,19 @@ export abstract class AnimatedEntity implements Renderable {
   abstract getArmaturePoses(): Record<string, ArmaturePiecePose>;
 }
 
+function getItemFrame(item: ItemStack | undefined): number {
+  const sprites = ITEM_TEXTURES[''];
+  if (!item) {
+    return sprites.getFrameIndex('none', 0);
+  }
+  switch(item.id) {
+    case 'dynamite':
+      return sprites.getFrameIndex('dynamite', Math.max(0, Math.min(10, item.data['fuse'] || 0)));
+    default:
+      return sprites.getFrameIndex('unknown', 0);
+  }
+}
+
 export function range(length: number) {
   return Array(length).fill(0).map((_, i) => i);
 }
@@ -67,15 +81,15 @@ function frame(x: number, y: number, w: number, h: number) {
 
 const DYNAMITE_TEXTURE_SCHEMA = {
   frames: Object.fromEntries(
-    range(12).map(i => ['' + i, frame(9 * i, 0, 9, 18)])
+    range(10).map(i => ['' + i, frame(0, 8 * i, 8, 8)])
   ),
   animations: {
-    ignition: range(12).map(i => '' + i)
+    ignition: range(10).map(i => '' + i)
   },
   meta: {
     image: 'dynamite.png',
     format: 'RGBA8888',
-    size: {w: 108, h: 18},
+    size: {w: 8, h: 8 * 10},
     scale: '1'
   }
 };
@@ -145,6 +159,13 @@ export async function loadTextures() {
     unselected: inventorySprites.animations.unselected
   });
   PIXI.utils.clearTextureCache();
+
+  const itemSprites = new SpriteSet({
+    dynamite: dynamiteSprites.animations.ignition,
+    unknown: [PIXI.Texture.from('unknown.png')],
+    none: [PIXI.Texture.EMPTY]
+  });
+  ITEM_TEXTURES[''] = itemSprites;
 }
 
 function convertTerrainDataToTexture(terrain: Terrain): PIXI.BaseTexture<PIXI.BufferResource, PIXI.IAutoDetectOptions> {
@@ -240,6 +261,11 @@ class Armature {
   // }
 }
 
+interface InventorySlotSprites {
+  slot: PIXI.AnimatedSprite;
+  item: PIXI.AnimatedSprite;
+}
+
 export class Renderer {
   app: PIXI.Application<HTMLCanvasElement>;
 
@@ -247,7 +273,7 @@ export class Renderer {
   world: World;
   terrainLayer: PIXI.Mesh<PIXI.Shader>;
   entityArmatures: Map<number, Armature>;
-  inventorySlots: PIXI.AnimatedSprite[];
+  inventorySlots: InventorySlotSprites[];
 
   constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
@@ -268,21 +294,33 @@ export class Renderer {
   updateInventory(inventory: PlayerInventory) {
     const SLOT_SIZE = 10;
     const scale = 3;
-    for (let i = inventory.slots.length; i < this.inventorySlots.length; i += 1) {
-      this.app.stage.removeChild(this.inventorySlots[i]);
+    // remove extraneous inventory slots
+    for (let i = this.inventorySlots.length - 1; i >= inventory.slots.length; i -= 1) {
+      this.app.stage.removeChild(this.inventorySlots[i].slot);
+      this.app.stage.removeChild(this.inventorySlots[i].item);
+      this.inventorySlots.pop();
     }
     for (let i = 0; i < inventory.slots.length; i += 1) {
+      // add missing inventory slots
       if (i >= this.inventorySlots.length) {
-        const sprite = new PIXI.AnimatedSprite(GUI_TEXTURES['inventory'].frames, false);
-        sprite.x = scale * SLOT_SIZE * i;
-        sprite.y = 0;
-        sprite.scale.set(scale);
-        this.app.stage.addChild(sprite);
-        this.inventorySlots.push(sprite);
+        const slotSprite = new PIXI.AnimatedSprite(GUI_TEXTURES['inventory'].frames, false);
+        const itemSprite = new PIXI.AnimatedSprite(ITEM_TEXTURES[''].frames);
+        slotSprite.x = scale * SLOT_SIZE * (i + 0.5);
+        slotSprite.y = scale * SLOT_SIZE * (0.5);
+        slotSprite.scale.set(scale);
+        slotSprite.anchor.set(0.5);
+        itemSprite.x = scale * SLOT_SIZE * (i + 0.5);
+        itemSprite.y = scale * SLOT_SIZE * (0.5);
+        itemSprite.scale.set(scale);
+        itemSprite.anchor.set(0.5);
+        this.app.stage.addChild(slotSprite, itemSprite);
+        this.inventorySlots.push({ slot: slotSprite, item: itemSprite });
       }
+      // set selection indicator
       const selection = i === inventory.selected ? 'selected' : 'unselected';
-      const sprite = this.inventorySlots[i];
-      sprite.currentFrame = GUI_TEXTURES['inventory'].getFrameIndex(selection, 0);
+      const sprites = this.inventorySlots[i];
+      sprites.slot.currentFrame = GUI_TEXTURES['inventory'].getFrameIndex(selection, 0);
+      sprites.item.currentFrame = getItemFrame(inventory.slots[i]);
     }
   }
 

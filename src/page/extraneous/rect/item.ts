@@ -1,30 +1,37 @@
 import type { Player } from "./entity";
 import type { Inertial, World } from "./world";
 
-const ITEMS: Record<string, ItemDetails> = {
-  dynamite: {
-    name: 'Dynamite',
-    maxStack: 1,
-    use: (conditions: UseCondition) => {
-      return false;
-    }
-  }
-};
+const _ITEMS: Record<string, ItemDetails> = {};
 
-type ItemID = keyof typeof ITEMS;
+defineItem('dynamite', 'Dynamite', 1, () => false);
+defineItem('pickaxe', 'Pickaxe', 1, () => false);
+defineItem('throwing-knife', 'Throwing Knife', 16, () => false);
+defineItem('spear', 'Spear', 1, () => false);
+defineItem('bow', 'Bow', 1, () => false);
+
+function defineItem(id: string, name: string, maxStack: number, use: (condition: UseCondition) => boolean) {
+  _ITEMS[id] = {
+    id: id,
+    name: name,
+    maxStack: maxStack,
+    use: use
+  };
+}
+
+export const ITEMS: Readonly<Record<string, ItemDetails>> = Object.freeze(_ITEMS);
 
 export interface Inventory {
-  slots: (Slot | undefined)[];
+  slots: (ItemStack | undefined)[];
 }
 
 export interface PlayerInventory extends Inventory {
   selected: number;
 }
 
-interface Slot {
-  item: ItemID;
+export interface ItemStack {
+  id: string;
   quantity: number;
-  data: Record<string, unknown>;
+  data: Record<string, number>;
 }
 
 export function useSlot(context: UseCondition) {
@@ -43,6 +50,7 @@ interface UseCondition {
 }
 
 interface ItemDetails {
+  id: string;
   name: string;
   maxStack: number;
   use: (conditions: UseCondition) => boolean;
@@ -60,8 +68,8 @@ function handleEmptySlotUse(context: UseCondition): boolean {
 function handleItemUse(context: UseCondition): boolean {
   // TODO: inventory = user.inventory;
   const inventory: Inventory = {slots: []};
-  const slot = inventory.slots[context.slotNumber] as Slot;
-  return ITEMS[slot.item].use(context);
+  const slot = inventory.slots[context.slotNumber] as ItemStack;
+  return ITEMS[slot.id].use(context);
 }
 
 function handleSlotUse(context: UseCondition): boolean {

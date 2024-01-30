@@ -74,7 +74,9 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
   renderer.updateTerrain();
   const game = new Game(player, world, renderer);
 
-  game.spawn(new Dynamite(14, 24));
+  const d = new Dynamite(14, 24);
+  d.vx = -0.01;
+  game.spawn(d);
   game.spawn(player);
 
   const inventory: PlayerInventory = {
@@ -82,7 +84,7 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
     slots: [
       {
         id: 'dynamite',
-        quantity: 1,
+        quantity: 5,
         data: {}
       },
       undefined,

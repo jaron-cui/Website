@@ -1,7 +1,8 @@
+import { mod } from "../../../util/util";
 import type { Game } from "./game";
 import type { PlayerInventory } from "./item";
 import { GRAVITY, distance } from "./physics";
-import { AnimatedEntity } from "./render";
+import { AnimatedEntity, DYNAMITE_FUSE_STATES } from "./render";
 import { Inertial, XDirection, Explosive, ArmaturePiecePose, World, Block, explosive, mortal, physical } from "./world";
 
 abstract class InertialAnimatedEntity extends AnimatedEntity implements Inertial {
@@ -33,8 +34,8 @@ abstract class InertialAnimatedEntity extends AnimatedEntity implements Inertial
   }
 }
 
-const DYNAMITE_MAX_FUSE = 9;
-const DYNAMITE_FUSE_TICK = 20;
+export const DYNAMITE_FUSE_RATE = 1/18;
+export const DYNAMITE_FUSE_TICK = 10;
 export class Dynamite extends InertialAnimatedEntity implements Explosive {
   explosionRadius: number;
   maxExplosionDamage: number;
@@ -42,16 +43,18 @@ export class Dynamite extends InertialAnimatedEntity implements Explosive {
   explosive: true;
 
   fuse: number;
+  fuseTick: number;
 
-  constructor(x: number, y: number) {
-    super(0, x, y, 1, 1, 1);
+  constructor(x: number, y: number, fuse?: number, fuseTick?: number) {
+    super(0, x, y, 0.5, 1, 1);
 
     this.explosionRadius = 3;
     this.maxExplosionDamage = 50;
 
     this.explosive = true;
 
-    this.fuse = DYNAMITE_MAX_FUSE * DYNAMITE_FUSE_TICK;
+    this.fuse = fuse === undefined ? 1 : fuse;
+    this.fuseTick = fuseTick === undefined ? DYNAMITE_FUSE_TICK : fuseTick;
   }
 
   protected specifyArmatureSprites(): Record<string, string> {
@@ -64,17 +67,22 @@ export class Dynamite extends InertialAnimatedEntity implements Explosive {
     return {
       body: {
         animation: 'ignition',
-        frame: DYNAMITE_MAX_FUSE - Math.floor(this.fuse / DYNAMITE_FUSE_TICK)
+        frame: Math.floor(DYNAMITE_FUSE_STATES * (1 - this.fuse))
       }
     };
   }
 
   onTick(game: Game) {
-    if (this.fuse > 0) {
-      this.fuse -= 1;
-      return;
+    this.fuseTick = mod(this.fuseTick - 1, DYNAMITE_FUSE_TICK);
+    if (this.fuseTick === 0) {
+      if (this.fuse > 0){
+        this.fuse -= DYNAMITE_FUSE_RATE;
+        return;
+      }
     }
-    handleDetonation(this, game);
+    if (this.fuse <= 0) {
+      handleDetonation(this, game);
+    }
   }
 
   detonate(): void {
@@ -200,7 +208,7 @@ export class Player extends InertialAnimatedEntity {
   }
 }
 
-function handleDetonation(detonated: Explosive, game: Game) {
+export function handleDetonation(detonated: Explosive, game: Game) {
   const { x, y, explosionRadius, maxExplosionDamage } = detonated;
 
   // delete the detonated thing

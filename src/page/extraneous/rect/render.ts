@@ -10,6 +10,8 @@ export const SPRITE_TEXTURES: Record<string, SpriteSet> = {};
 const ITEM_TEXTURES: Record<string, SpriteSet> = {};
 const GUI_TEXTURES: Record<string, SpriteSet> = {};
 
+export const DYNAMITE_FUSE_STATES = 9;
+
 const BLOCK_TEXTURE_SCHEMA = {
   frames: {
     0: {
@@ -61,7 +63,10 @@ function getItemFrame(item: ItemStack | undefined): number {
   }
   switch(item.id) {
     case 'dynamite':
-      return sprites.getFrameIndex('dynamite', Math.max(0, Math.min(10, item.data['fuse'] || 0)));
+      const fuseMax = 9;
+      const fuseState = item.data['fuse'] === undefined ? 0 : Math.floor(fuseMax * (1 - item.data['fuse']));
+      console.log(fuseState + ' ' + item.data['fuse'])
+      return sprites.getFrameIndex('dynamite', Math.max(0, Math.min(fuseMax, fuseState)));
     default:
       return sprites.getFrameIndex('unknown', 0);
   }
@@ -93,6 +98,8 @@ const DYNAMITE_TEXTURE_SCHEMA = {
     scale: '1'
   }
 };
+
+const CHAR_COUNT = 95;
 
 const PLAYER_TEXTURE_SCHEMA = {
   frames: Object.fromEntries(
@@ -294,6 +301,7 @@ export class Renderer {
   updateInventory(inventory: PlayerInventory) {
     const SLOT_SIZE = 10;
     const scale = 3;
+    // console.log(JSON.stringify(inventory));
     // remove extraneous inventory slots
     for (let i = this.inventorySlots.length - 1; i >= inventory.slots.length; i -= 1) {
       this.app.stage.removeChild(this.inventorySlots[i].slot);

@@ -100,6 +100,20 @@ const DYNAMITE_TEXTURE_SCHEMA = {
 };
 
 const CHAR_COUNT = 95;
+const FONT_TEXTURE_SCHEMA = {
+  frames: Object.fromEntries(
+    range(CHAR_COUNT).map(i => ['' + i, frame(0, 9 * i, 7, 9)])
+  ),
+  animations: {
+    characters: range(CHAR_COUNT).map(i => '' + i)
+  },
+  meta: {
+    image: 'font.png',
+    format: 'RGBA8888',
+    size: {w: 7, h: CHAR_COUNT * 9},
+    scale: '1'
+  }
+};
 
 const PLAYER_TEXTURE_SCHEMA = {
   frames: Object.fromEntries(
@@ -167,6 +181,15 @@ export async function loadTextures() {
   });
   PIXI.utils.clearTextureCache();
 
+  const fontText = PIXI.BaseTexture.from(FONT_TEXTURE_SCHEMA.meta.image);
+  fontText.scaleMode = PIXI.SCALE_MODES.NEAREST;
+  const fontSprites = new PIXI.Spritesheet(fontText, FONT_TEXTURE_SCHEMA);
+  await fontSprites.parse();
+  GUI_TEXTURES['font'] = new SpriteSet({
+    characters: fontSprites.animations.characters
+  });
+  PIXI.utils.clearTextureCache();
+
   const itemSprites = new SpriteSet({
     dynamite: dynamiteSprites.animations.ignition,
     unknown: [PIXI.Texture.from('unknown.png')],
@@ -196,6 +219,66 @@ function createInitialUniforms() {
     uTerrain: null,
     wind: 0
   };
+}
+
+class TextBox {
+  x: number;
+  y: number;
+  scale: number;
+  text: string;
+  sprites: PIXI.Sprite[];
+  app: PIXI.Application<HTMLCanvasElement>;
+
+  constructor(x: number, y: number, text: string, app: PIXI.Application<HTMLCanvasElement>, scale?: number) {
+    this.x = x;
+    this.y = y;
+    this.scale = scale || 1;
+    this.text = text;
+    this.sprites = [];
+    this.app = app;
+    this.rerender();
+  }
+
+  modify(newText?: string, x?: number, y?: number, scale?: number) {
+    let modified = false;
+    if (newText !== undefined) {
+      this.text = newText;
+      modified = true;
+    }
+    if (x !== undefined) {
+      this.x = x;
+      modified = true;
+    }
+    if (y !== undefined) {
+      this.y = y;
+      modified = true;
+    }
+    if (scale !== undefined) {
+      this.scale = scale;
+      modified = true;
+    }
+    if (modified) {
+      this.rerender();
+    }
+  }
+
+  private rerender() {
+    this.deleteSprites();
+    for (let i = 0; i < this.text.length; i += 1) {
+      const character = this.text.charCodeAt(i);
+      const sprite = PIXI.Sprite.from(GUI_TEXTURES['font'].frames[character - 32]);
+      sprite.x = this.x + this.scale * 7 * i;
+      sprite.y = this.y;
+      sprite.scale.set(this.scale);
+      this.app.stage.addChild(sprite);
+      this.sprites.push(sprite);
+    }
+  }
+
+  private deleteSprites() {
+    this.sprites.forEach(sprite => this.app.stage.removeChild(sprite));
+    this.sprites = [];
+  }
 }
 
 const geometry = new PIXI.Geometry()
@@ -271,6 +354,7 @@ class Armature {
 interface InventorySlotSprites {
   slot: PIXI.AnimatedSprite;
   item: PIXI.AnimatedSprite;
+  count: TextBox;
 }
 
 export class Renderer {
@@ -296,6 +380,8 @@ export class Renderer {
 
     this.entityArmatures = new Map();
     this.inventorySlots = [];
+    // testing
+    const text = new TextBox(100, 100, 'hello there', app); 
   }
 
   updateInventory(inventory: PlayerInventory) {
@@ -313,22 +399,31 @@ export class Renderer {
       if (i >= this.inventorySlots.length) {
         const slotSprite = new PIXI.AnimatedSprite(GUI_TEXTURES['inventory'].frames, false);
         const itemSprite = new PIXI.AnimatedSprite(ITEM_TEXTURES[''].frames);
-        slotSprite.x = scale * SLOT_SIZE * (i + 0.5);
-        slotSprite.y = scale * SLOT_SIZE * (0.5);
+        const slotCenterX = scale * SLOT_SIZE * (i + 0.5);
+        const slotCenterY = scale * SLOT_SIZE * (0.5);
+        const textOffsetX = scale * SLOT_SIZE * 0.1;
+        const textOffsetY = scale * SLOT_SIZE * 0.1;
+        slotSprite.x = slotCenterX;
+        slotSprite.y = slotCenterY;
         slotSprite.scale.set(scale);
         slotSprite.anchor.set(0.5);
-        itemSprite.x = scale * SLOT_SIZE * (i + 0.5);
-        itemSprite.y = scale * SLOT_SIZE * (0.5);
+        itemSprite.x = slotCenterX;
+        itemSprite.y = slotCenterY
         itemSprite.scale.set(scale);
         itemSprite.anchor.set(0.5);
         this.app.stage.addChild(slotSprite, itemSprite);
-        this.inventorySlots.push({ slot: slotSprite, item: itemSprite });
+        this.inventorySlots.push({
+          slot: slotSprite,
+          item: itemSprite,
+          count: new TextBox(slotCenterX + textOffsetX, slotCenterY + textOffsetY, '', this.app, 2)
+        });
       }
       // set selection indicator
       const selection = i === inventory.selected ? 'selected' : 'unselected';
       const sprites = this.inventorySlots[i];
       sprites.slot.currentFrame = GUI_TEXTURES['inventory'].getFrameIndex(selection, 0);
       sprites.item.currentFrame = getItemFrame(inventory.slots[i]);
+      sprites.count.modify((inventory.slots[i]?.quantity || '') + '');
     }
   }
 

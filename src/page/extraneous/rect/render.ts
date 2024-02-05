@@ -2,6 +2,10 @@ import * as PIXI from 'pixi.js';
 import { SpriteSet, Renderable, ArmaturePiecePose, World, renderable, Terrain, Block, WORLD_WIDTH, WORLD_HEIGHT, Entity } from "./world";
 import { vertexShader, fragmentShader } from './shaders';
 import { ItemStack, PlayerInventory } from './item';
+// BEGIN EXPERIMENT IMPORTS
+import { EntityType } from './entity';
+import { Entity as Ent } from './entity';
+// END EXPERIMENT IMPORTS
 
 export const SCREEN_WIDTH = 960;
 export const SCREEN_HEIGHT = 540;
@@ -12,21 +16,33 @@ const GUI_TEXTURES: Record<string, SpriteSet> = {};
 
 export const DYNAMITE_FUSE_STATES = 9;
 
-const BLOCK_TEXTURE_SCHEMA = {
-  frames: {
-    0: {
-      frame: { x: 0, y: 0, w: 8, h: 8 },
-      sourceSize: { w: 8, h: 8 },
-      spriteSourceSize: { x: 0, y: 0, w: 8, h: 8 }
+// BEGIN EXPERIMENT
+interface EntityRenderController {
+  armaturePieceSprites: Record<string, SpriteSet>;
+  getArmaturePoses(entity: Ent): Record<string, ArmaturePiecePose>;
+}
+
+type RenderableEntityTypes = Extract<EntityType, 'player'>
+
+const ENTITY_RENDERING: Record<RenderableEntityTypes, EntityRenderController> = {
+  player: {
+    armaturePieceSprites: {
+      body: SPRITE_TEXTURES['dynamite-sprites']
+    },
+    getArmaturePoses: (entity: Ent) => {
+      if (entity.entityType !== 'dynamite') {
+        throw Error('Incorrect entity type.');
+      }
+      return {
+        body: {
+          animation: 'ignition',
+          frame: Math.floor(DYNAMITE_FUSE_STATES * (1 - entity.fuse))
+        }
+      };
     }
-  },
-  meta: {
-    image: 'blocks.png',
-    format: 'RGBA8888',
-    size: { w: 8, h: 16 },
-    scale: 2
   }
 };
+// END EXPERIMENT
 
 export abstract class AnimatedEntity implements Renderable {
   x: number;
@@ -65,7 +81,7 @@ function getItemFrame(item: ItemStack | undefined): number {
     case 'dynamite':
       const fuseMax = 9;
       const fuseState = item.data['fuse'] === undefined ? 0 : Math.floor(fuseMax * (1 - item.data['fuse']));
-      console.log(fuseState + ' ' + item.data['fuse'])
+      // console.log(fuseState + ' ' + item.data['fuse'])
       return sprites.getFrameIndex('dynamite', Math.max(0, Math.min(fuseMax, fuseState)));
     default:
       return sprites.getFrameIndex('unknown', 0);

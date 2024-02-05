@@ -1,8 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { useEffect, useRef } from 'react';
-import { Inertial, World, Block, Terrain, WORLD_HEIGHT, WORLD_WIDTH } from './world';
+import { World, Block, Terrain, WORLD_HEIGHT, WORLD_WIDTH } from './world';
 import { Renderer, SCREEN_HEIGHT, SCREEN_WIDTH, loadTextures } from './render';
-import { stepPhysics } from './physics';
 import { Dynamite, Player } from './entity';
 import TypingHandler from '../../../component/TypingHandler';
 import { PlayerInventory, handleSlotUse } from './item';

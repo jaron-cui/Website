@@ -1,4 +1,5 @@
 import { mod } from "../../../util/util";
+import { PLAYER_LOGIC, PlayerE } from "./entity/player";
 import type { Game } from "./game";
 import type { PlayerInventory } from "./item";
 import { GRAVITY, distance } from "./physics";
@@ -90,6 +91,168 @@ export class Dynamite extends InertialAnimatedEntity implements Explosive {
   }
 }
 
+// BEGIN EXPERIMENTS
+interface Physical {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+interface Inertiall extends Physical {
+  vx: number;
+  vy: number;
+  mass: number;
+  onGround?: boolean;
+  hittingWall?: XDirection;
+}
+
+type EntityData = Inertiall;
+
+type Entityy = Playerr | Dynamitee;
+
+type EntityTypee = Entityy['type'];
+
+abstract class BaseEntity<T extends EntityData> {
+  data: T;
+  readonly abstract type: string;
+  // temporary
+  readonly inertial: true = true;
+  readonly physical: true = true;
+
+  constructor(initialData: T) {
+    this.data = initialData;
+  }
+
+  abstract onTick(game: Game): void;
+}
+
+interface PlayerData extends Inertiall {
+  walkStage: number;
+
+  walking: XDirection | undefined;
+  facing: XDirection;
+  jumping: boolean;
+
+  jumpBuffer: number;
+  coyoteTimer: number;
+
+  inventory: PlayerInventory;
+}
+
+interface DynamiteData extends Inertiall {
+  fuse: number;
+  fuseTick: number;
+}
+
+class Playerr extends BaseEntity<PlayerData> {
+  type: 'player' = 'player';
+  onTick(game: Game): void {
+    throw new Error("Method not implemented.");
+  }
+  constructor() {
+    super({
+      x: 0,
+      y: 0,
+      w: 0,
+      h: 0,
+      vx: 0,
+      vy: 0,
+      mass: 1,
+      walkStage: 0,
+      walking: undefined,
+      facing: 'right',
+      jumping: false,
+      jumpBuffer: 0,
+      coyoteTimer: 0,
+      inventory: {
+        selected: 0,
+        slots: [undefined, undefined, undefined, undefined, undefined]
+      }
+    });
+  }
+}
+
+class Dynamitee extends BaseEntity<DynamiteData> {
+  type: 'dynamite' = 'dynamite';
+  onTick(game: Game): void {
+    throw new Error("Method not implemented.");
+  }
+  
+}
+
+const d: Entityy = (0 as any) as Entityy;
+
+export interface DynamiteE extends Inertial, Explosive {
+  entityType: 'dynamite';
+  fuse: number;
+}
+
+export type Entity = PlayerE | DynamiteE;
+
+export type EntityType = Entity['entityType'];
+
+type PresetEntityFields = 'id' | 'entityType' | 'x' | 'y' | 'vx' | 'vy' | 'w' | 'h' | 'mass' | 'inertial' | 'physical';
+export type DefaultEntity<T extends Entity> = Omit<T, PresetEntityFields>;
+export interface EntityLogic<T extends Entity> {
+  create(game: Game): DefaultEntity<T>;
+  onTick(entity: T, game: Game): void;
+}
+
+const HITBOXES: Record<EntityType, {x: number, y: number, vx: number, vy: number, w: number, h: number, mass: number}> = {
+  player: {
+    x: 0,
+    y: 0,
+    vx: 0,
+    vy: 0,
+    w: 0.875,
+    h: 2,
+    mass: 1
+  },
+  dynamite: {
+    x: 0,
+    y: 0,
+    vx: 0,
+    vy: 0,
+    w: 0,
+    h: 0,
+    mass: 0
+  }
+}
+
+const ENTITY_SPECS: Record<EntityType, EntityLogic<any>> = {
+  player: PLAYER_LOGIC,
+  dynamite: {
+    create: function (): DefaultEntity<DynamiteE> {
+      return {
+        fuse: 1,
+        explosive: true,
+        explosionRadius: 3,
+        maxExplosionDamage: 50,
+        detonate: () => 0
+      };
+    },
+    onTick: function (): void {
+      throw new Error("Function not implemented.");
+    }
+  }
+}
+
+function onTick(entity: Entity, game: Game) {
+  ENTITY_SPECS[entity.entityType].onTick(entity, game);
+}
+
+function create(type: EntityType, id: number, game: Game): Entity {
+  return {
+    id: id,
+    entityType: type,
+    ...HITBOXES[type],
+    ...ENTITY_SPECS[type].create(game)
+  } as Entity;
+}
+
+
+// END EXPERIMENTS
 const JUMP_BUFFER_TICKS = 2;
 const COYOTE_TIMER_TICKS = 3;
 const JUMP_SPEED = 0.4;

@@ -1,5 +1,7 @@
 import { mod } from "../../../util/util";
-import { DYNAMITE_FUSE_RATE, DYNAMITE_FUSE_TICK, Dynamite, Entity, Inertial, type Player } from "./entity";
+import { DYNAMITE_FUSE_RATE, DYNAMITE_FUSE_TICK, Entity } from "./entity";
+import { Dynamite } from "./entity/dynamite";
+import { Player } from "./entity/player";
 import { Game } from "./game";
 
 const _ITEMS: Record<string, ItemDetails> = {};

@@ -1,4 +1,5 @@
-import { Entity, Player } from "./entity";
+import { Entity } from "./entity";
+import { Player } from "./entity/player";
 import { ITEMS } from "./item";
 import { stepPhysics } from "./physics";
 import { Renderer } from "./render";

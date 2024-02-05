@@ -2,11 +2,12 @@ import * as PIXI from 'pixi.js';
 import { useEffect, useRef } from 'react';
 import { World, Block, Terrain, WORLD_HEIGHT, WORLD_WIDTH } from './world';
 import { Renderer, SCREEN_HEIGHT, SCREEN_WIDTH, loadTextures } from './render';
-import { Dynamite, Player } from './entity';
 import TypingHandler from '../../../component/TypingHandler';
 import { PlayerInventory, handleSlotUse } from './item';
 import { mod } from '../../../util/util';
 import { Game } from './game';
+import { Player } from './entity/player';
+import { Dynamite } from "./entity/dynamite";
 
 const WORLD = new Terrain(WORLD_WIDTH, WORLD_HEIGHT);
 for (let x = 0; x < WORLD_WIDTH; x += 1) {
@@ -43,27 +44,12 @@ worldData.scaleMode = PIXI.SCALE_MODES.NEAREST;
 
 async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDown: string) => void, (keyUp: string) => void]> {
   const app = new PIXI.Application<HTMLCanvasElement>({ background: '#7acdeb', width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
-
-  // app.stage.addChild(quad);
   let t = 0;
   // Listen for animate update
   app.ticker.minFPS = 40;
   app.ticker.maxFPS = 40;
 
   const world = new World(WORLD);
-  // const obj: Inertial = {
-  //   inertial: true,
-  //   physical: true,
-  //   id: 0,
-  //   x: 10,
-  //   y: 26,
-  //   vx: 0,
-  //   vy: 0,
-  //   w: 1,
-  //   h: 2,
-  //   mass: 1
-  // }
-  // world.things.set(0, obj);
 
   await loadTextures();
 

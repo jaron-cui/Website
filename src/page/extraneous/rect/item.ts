@@ -1,15 +1,15 @@
 import { mod } from "../../../util/util";
-import { DYNAMITE_FUSE_RATE, DYNAMITE_FUSE_TICK, Dynamite, type Player } from "./entity";
+import { DYNAMITE_FUSE_RATE, DYNAMITE_FUSE_TICK, Dynamite, Entity, Inertial, type Player } from "./entity";
 import { Game } from "./game";
-import type { Inertial } from "./world";
 
 const _ITEMS: Record<string, ItemDetails> = {};
 
 defineItem('dynamite', 'Dynamite', 1, condition => {
-  const item = condition.user.inventory.slots[condition.slotNumber] as ItemStack;
+  const user = condition.user.data;
+  const item = user.inventory.slots[condition.slotNumber] as ItemStack;
   // if already ignited, throw the dynamite
   if (item.data['ignited']) {
-    condition.game.spawn(new Dynamite(condition.user.x, condition.user.y, item.data['fuse'], item.data['fuseTick']));
+    condition.game.spawn(new Dynamite(user.x, user.y, item.data['fuse'], item.data['fuseTick']));
     item.quantity -= 1;
     item.data = {};
     return true;
@@ -20,14 +20,15 @@ defineItem('dynamite', 'Dynamite', 1, condition => {
   item.data['fuseTick'] = DYNAMITE_FUSE_TICK;
   return true;
 }, condition => {
-  const item = condition.user.inventory.slots[condition.slotNumber] as ItemStack;
+  const user = condition.user.data;
+  const item = user.inventory.slots[condition.slotNumber] as ItemStack;
   if (item.data['ignited']) {
     item.data['fuseTick'] = mod(item.data['fuseTick'] - 1, DYNAMITE_FUSE_TICK);
     if (item.data['fuseTick'] === 0) {
       if (item.data['fuse'] > 0) {
         item.data['fuse'] -= DYNAMITE_FUSE_RATE;
       } else {
-        condition.game.spawn(new Dynamite(condition.user.x, condition.user.y, 0, 0));
+        condition.game.spawn(new Dynamite(user.x, user.y, 0, 0));
         item.quantity -= 1;
         item.data = {};
       }
@@ -77,7 +78,7 @@ interface ItemContext {
   game: Game;
   slotNumber: number;
   onBlock?: [number, number];
-  onThing?: Inertial;
+  onThing?: Entity;
 }
 
 interface ItemDetails {
@@ -99,14 +100,14 @@ function handleEmptySlotUse(context: ItemContext): boolean {
 
 function handleItemUse(context: ItemContext): boolean {
   // TODO: inventory = user.inventory;
-  const inventory: Inventory = context.user.inventory;
+  const inventory: Inventory = context.user.data.inventory;
   const slot = inventory.slots[context.slotNumber] as ItemStack;
   return ITEMS[slot.id].use(context);
 }
 
 export function handleSlotUse(context: ItemContext): boolean {
   // TODO: inventory = user.inventory;
-  const inventory: Inventory = context.user.inventory;
+  const inventory: Inventory = context.user.data.inventory;
   if (context.slotNumber < 0 || context.slotNumber >= inventory.slots.length) {
     return false;
   }

@@ -74,7 +74,7 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
   const game = new Game(player, world, renderer);
 
   const d = new Dynamite(14, 24);
-  d.vx = -0.01;
+  d.data.vx = -0.01;
   game.spawn(d);
   game.spawn(player);
 
@@ -91,7 +91,7 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
       undefined
     ]
   };
-  player.inventory = inventory;
+  player.data.inventory = inventory;
 
   app.ticker.add((delta: number) => {
     t += 1;
@@ -123,13 +123,13 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
   function onPressUpdate() {
     const netWalk = +!!keyStatuses['d'] - +!!keyStatuses['a'];
     if (netWalk > 0) {
-      player.walking = 'right';
+      player.data.walking = 'right';
     } else if (netWalk < 0) {
-      player.walking = 'left';
+      player.data.walking = 'left';
     } else {
-      player.walking = undefined;
+      player.data.walking = undefined;
     }
-    player.jumping = keyStatuses['w'] || keyStatuses[' '];
+    player.data.jumping = keyStatuses['w'] || keyStatuses[' '];
   }
 
   function onKeyDown(key: string) {
@@ -154,7 +154,7 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
       handleSlotUse({
         user: player,
         game: game,
-        slotNumber: player.inventory.selected
+        slotNumber: player.data.inventory.selected
       })
     })
   });

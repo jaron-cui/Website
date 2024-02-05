@@ -1,8 +1,8 @@
-import { Player } from "./entity";
+import { Entity, Player } from "./entity";
 import { ITEMS } from "./item";
 import { stepPhysics } from "./physics";
 import { Renderer } from "./render";
-import { Block, Entity, World } from "./world";
+import { Block, World } from "./world";
 
 export class Game {
   player: Player;
@@ -38,7 +38,7 @@ export class Game {
     stepPhysics(this);
     this.actionQueue.forEach(action => action());
     this.actionQueue = [];
-    this.player.inventory.slots.forEach((slot, i) => {
+    this.player.data.inventory.slots.forEach((slot, i) => {
       const item = slot && ITEMS[slot.id];
       item?.onTick && item.onTick({
         user: this.player,
@@ -46,14 +46,14 @@ export class Game {
         slotNumber: i
       });
       if (slot?.quantity === 0) {
-        this.player.inventory.slots[i] = undefined;
+        this.player.data.inventory.slots[i] = undefined;
         return;
       }
     })
     
     this.renderer.updateAmbient();
     this.renderer.updateEntities();
-    this.renderer.updateInventory(this.player.inventory);
+    this.renderer.updateInventory(this.player.data.inventory);
     if (this.terrainOutOfDate) {
       this.renderer.updateTerrain();
       this.terrainOutOfDate = false;

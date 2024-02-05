@@ -1,105 +1,51 @@
 import { mod } from "../../../util/util";
-import { PLAYER_LOGIC, PlayerE } from "./entity/player";
 import type { Game } from "./game";
 import type { PlayerInventory } from "./item";
 import { GRAVITY, distance } from "./physics";
-import { AnimatedEntity, DYNAMITE_FUSE_STATES } from "./render";
-import { Inertial, XDirection, Explosive, ArmaturePiecePose, World, Block, explosive, mortal, physical } from "./world";
+import { DYNAMITE_FUSE_STATES, SPRITE_TEXTURES } from "./render";
+import { XDirection, ArmaturePiecePose, World, Block, SpriteSet } from "./world";
 
-abstract class InertialAnimatedEntity extends AnimatedEntity implements Inertial {
-  id: number;
+// abstract class InertialAnimatedEntity extends AnimatedEntity implements Inertial {
+//   id: number;
 
-  w: number;
-  h: number;
+//   w: number;
+//   h: number;
 
-  mass: number;
-  vx: number;
-  vy: number;
+//   mass: number;
+//   vx: number;
+//   vy: number;
 
-  physical: true;
-  inertial: true;
+//   physical: true;
+//   inertial: true;
 
-  onGround?: boolean;
-  hittingWall?: XDirection | undefined;
+//   onGround?: boolean;
+//   hittingWall?: XDirection | undefined;
 
-  constructor(id: number, x: number, y: number, w: number, h: number, mass: number) {
-    super(x, y);
-    this.id = id;
-    this.w = w;
-    this.h = h;
-    this.mass = mass;
-    this.vx = 0;
-    this.vy = 0;
-    this.physical = true;
-    this.inertial = true;
-  }
-}
+//   constructor(id: number, x: number, y: number, w: number, h: number, mass: number) {
+//     super(x, y);
+//     this.id = id;
+//     this.w = w;
+//     this.h = h;
+//     this.mass = mass;
+//     this.vx = 0;
+//     this.vy = 0;
+//     this.physical = true;
+//     this.inertial = true;
+//   }
+// }
 
 export const DYNAMITE_FUSE_RATE = 1/18;
 export const DYNAMITE_FUSE_TICK = 10;
-export class Dynamite extends InertialAnimatedEntity implements Explosive {
-  explosionRadius: number;
-  maxExplosionDamage: number;
-
-  explosive: true;
-
-  fuse: number;
-  fuseTick: number;
-
-  constructor(x: number, y: number, fuse?: number, fuseTick?: number) {
-    super(0, x, y, 0.5, 1, 1);
-
-    this.explosionRadius = 3;
-    this.maxExplosionDamage = 50;
-
-    this.explosive = true;
-
-    this.fuse = fuse === undefined ? 1 : fuse;
-    this.fuseTick = fuseTick === undefined ? DYNAMITE_FUSE_TICK : fuseTick;
-  }
-
-  protected specifyArmatureSprites(): Record<string, string> {
-    return {
-      body: 'dynamite-sprites'
-    };
-  }
-
-  getArmaturePoses(): Record<string, ArmaturePiecePose> {
-    return {
-      body: {
-        animation: 'ignition',
-        frame: Math.floor(DYNAMITE_FUSE_STATES * (1 - this.fuse))
-      }
-    };
-  }
-
-  onTick(game: Game) {
-    this.fuseTick = mod(this.fuseTick - 1, DYNAMITE_FUSE_TICK);
-    if (this.fuseTick === 0) {
-      if (this.fuse > 0){
-        this.fuse -= DYNAMITE_FUSE_RATE;
-        return;
-      }
-    }
-    if (this.fuse <= 0) {
-      handleDetonation(this, game);
-    }
-  }
-
-  detonate(): void {
-    throw new Error('Method not implemented.');
-  }
-}
 
 // BEGIN EXPERIMENTS
-interface Physical {
+export interface Physical {
   x: number;
   y: number;
   w: number;
   h: number;
 }
 
-interface Inertiall extends Physical {
+export interface Inertial extends Physical {
   vx: number;
   vy: number;
   mass: number;
@@ -107,27 +53,57 @@ interface Inertiall extends Physical {
   hittingWall?: XDirection;
 }
 
-type EntityData = Inertiall;
+export interface Explosive extends Physical {
+  explosionRadius: number;
+  maxExplosionDamage: number;
+}
 
-type Entityy = Playerr | Dynamitee;
+export interface Mortal {
+  mortal: true;
+  health: number;
+  maxHealth: number;
+  damage(amount: number): void;
+  heal(amount: number): void;
+  onDeath(): void;
+}
 
-type EntityTypee = Entityy['type'];
+type EntityData = (Inertial);
+
+export type Entity = Player | Dynamite;
+
+export type EntityType = Entity['type'];
 
 abstract class BaseEntity<T extends EntityData> {
+  id: number;
   data: T;
   readonly abstract type: string;
+  armaturePieceSprites: Record<string, SpriteSet>;
   // temporary
   readonly inertial: true = true;
   readonly physical: true = true;
 
+  protected abstract specifyArmatureSprites(): Record<string, string>;
+
+  abstract getArmaturePoses(): Record<string, ArmaturePiecePose>;
+
   constructor(initialData: T) {
+    this.id = -1;
     this.data = initialData;
+    this.armaturePieceSprites = {};
+    const armatureSpriteSpecification = this.specifyArmatureSprites();
+    for (const armaturePiece in armatureSpriteSpecification) {
+      const armaturePiecesTexture = SPRITE_TEXTURES[armatureSpriteSpecification[armaturePiece]];
+      if (!armaturePiecesTexture) {
+        console.error('Could not find the sprite set ' + armatureSpriteSpecification[armaturePiece]);
+      }
+      this.armaturePieceSprites[armaturePiece] = armaturePiecesTexture;
+    }
   }
 
   abstract onTick(game: Game): void;
 }
 
-interface PlayerData extends Inertiall {
+interface PlayerData extends Inertial {
   walkStage: number;
 
   walking: XDirection | undefined;
@@ -140,22 +116,14 @@ interface PlayerData extends Inertiall {
   inventory: PlayerInventory;
 }
 
-interface DynamiteData extends Inertiall {
-  fuse: number;
-  fuseTick: number;
-}
-
-class Playerr extends BaseEntity<PlayerData> {
+export class Player extends BaseEntity<PlayerData> {
   type: 'player' = 'player';
-  onTick(game: Game): void {
-    throw new Error("Method not implemented.");
-  }
-  constructor() {
+  constructor(x: number, y: number) {
     super({
-      x: 0,
-      y: 0,
-      w: 0,
-      h: 0,
+      x: x,
+      y: y,
+      w: 0.875,
+      h: 2,
       vx: 0,
       vy: 0,
       mass: 1,
@@ -171,86 +139,142 @@ class Playerr extends BaseEntity<PlayerData> {
       }
     });
   }
-}
 
-class Dynamitee extends BaseEntity<DynamiteData> {
-  type: 'dynamite' = 'dynamite';
-  onTick(game: Game): void {
-    throw new Error("Method not implemented.");
+  protected specifyArmatureSprites(): Record<string, string> {
+    return {
+      legs: 'player-legs'
+    }
   }
-  
+
+  getArmaturePoses(): Record<string, ArmaturePiecePose> {
+    return {
+      legs: {
+        animation: 'walk',
+        frame: this.data.walking && this.data.onGround ? Math.floor(this.data.walkStage) : 0,
+        scaleX: this.data.facing === 'right' ? 1 : -1
+      }
+    }
+  }
+
+  onTick() {
+    this.data.walkStage += Math.abs(this.data.vx) * 8;
+    this.data.walkStage %= 7;
+    // wall jump handling should come before jump handling
+    this.handleWallJump();
+    this.handleJump();
+    this.handleWalk();
+  }
+
+  private handleWallJump() {
+    if (this.data.hittingWall && this.data.jumping && this.data.jumpBuffer === 0 && !this.data.onGround) {
+      this.data.vx = this.data.hittingWall === 'left' ? WALL_JUMP_SPEED : -WALL_JUMP_SPEED;
+      this.data.vy = JUMP_SPEED;
+    }
+  }
+
+  private handleWalk() {
+    if (this.data.walking === 'right') {
+      // walk right
+      this.data.vx = Math.min(this.data.vx + WALK_ACCELERATION, MAX_WALK_SPEED);
+      this.data.facing = 'right';
+    } else if (this.data.walking === 'left') {
+      // walk left
+      this.data.vx = Math.max(this.data.vx - WALK_ACCELERATION, -MAX_WALK_SPEED);
+      this.data.facing = 'left';
+    } else if (!this.data.walking && this.data.vx !== 0) {
+      // friction
+      const friction = this.data.onGround ? GROUND_FRICTION : AIR_FRICTION;
+      if (this.data.vx > 0) {
+        this.data.vx = Math.max(0, this.data.vx - friction);
+      } else {
+        this.data.vx = Math.min(0, this.data.vx + friction);
+      }
+    }
+  }
+
+  private handleJump() {
+    // handle coyote timer and jump buffer
+    this.data.coyoteTimer = this.data.onGround ? COYOTE_TIMER_TICKS : Math.max(0, this.data.coyoteTimer - 1);
+    this.data.jumpBuffer = this.data.jumping ? JUMP_BUFFER_TICKS : Math.max(0, this.data.jumpBuffer - 1);
+    // handle jump initiation
+    if (this.data.jumpBuffer && this.data.coyoteTimer > 0) {
+      this.data.vy = JUMP_SPEED;
+      // if the player jumps while walking, boost them in that direction
+      if (this.data.walking === 'right') {
+        this.data.vx = Math.min(MAX_WALK_SPEED, this.data.vx + JUMP_WALK_BOOST);
+      } else if (this.data.walking === 'left') {
+        this.data.vx = Math.max(-MAX_WALK_SPEED, this.data.vx - JUMP_WALK_BOOST);
+      }
+    }
+    // the player stays in the air longer if they hold the jump key or slide against a wall
+    let verticalFriction = 0;
+    if (this.data.jumping && !this.data.onGround) {
+      verticalFriction = JUMP_HOLDING;
+    }
+    if (this.data.hittingWall && this.data.vy < 0 && !this.data.onGround) {
+      verticalFriction = Math.max(verticalFriction, WALL_FRICTION);
+    }
+    this.data.vy += verticalFriction;
+  }
 }
 
-const d: Entityy = (0 as any) as Entityy;
+interface DynamiteData extends Inertial {
+  explosionRadius: number;
+  maxExplosionDamage: number;
 
-export interface DynamiteE extends Inertial, Explosive {
-  entityType: 'dynamite';
   fuse: number;
+  fuseTick: number;
 }
 
-export type Entity = PlayerE | DynamiteE;
+export class Dynamite extends BaseEntity<DynamiteData> {
+  type: 'dynamite' = 'dynamite';
 
-export type EntityType = Entity['entityType'];
-
-type PresetEntityFields = 'id' | 'entityType' | 'x' | 'y' | 'vx' | 'vy' | 'w' | 'h' | 'mass' | 'inertial' | 'physical';
-export type DefaultEntity<T extends Entity> = Omit<T, PresetEntityFields>;
-export interface EntityLogic<T extends Entity> {
-  create(game: Game): DefaultEntity<T>;
-  onTick(entity: T, game: Game): void;
-}
-
-const HITBOXES: Record<EntityType, {x: number, y: number, vx: number, vy: number, w: number, h: number, mass: number}> = {
-  player: {
-    x: 0,
-    y: 0,
-    vx: 0,
-    vy: 0,
-    w: 0.875,
-    h: 2,
-    mass: 1
-  },
-  dynamite: {
-    x: 0,
-    y: 0,
-    vx: 0,
-    vy: 0,
-    w: 0,
-    h: 0,
-    mass: 0
+  constructor(x: number, y: number, fuse?: number, fuseTick?: number) {
+    super({
+      explosionRadius: 3,
+      maxExplosionDamage: 50,
+      fuse: fuse === undefined ? 1 : fuse,
+      fuseTick: fuseTick === undefined ? DYNAMITE_FUSE_TICK : fuseTick,
+      vx: 0,
+      vy: 0,
+      mass: 1,
+      x: x,
+      y: y,
+      w: 0.5,
+      h: 1
+    });
   }
-}
 
-const ENTITY_SPECS: Record<EntityType, EntityLogic<any>> = {
-  player: PLAYER_LOGIC,
-  dynamite: {
-    create: function (): DefaultEntity<DynamiteE> {
-      return {
-        fuse: 1,
-        explosive: true,
-        explosionRadius: 3,
-        maxExplosionDamage: 50,
-        detonate: () => 0
-      };
-    },
-    onTick: function (): void {
-      throw new Error("Function not implemented.");
+  protected specifyArmatureSprites(): Record<string, string> {
+    return {
+      body: 'dynamite-sprites'
+    };
+  }
+
+  getArmaturePoses(): Record<string, ArmaturePiecePose> {
+    return {
+      body: {
+        animation: 'ignition',
+        frame: Math.floor(DYNAMITE_FUSE_STATES * (1 - this.data.fuse))
+      }
+    };
+  }
+
+  onTick(game: Game) {
+    this.data.fuseTick = mod(this.data.fuseTick - 1, DYNAMITE_FUSE_TICK);
+    if (this.data.fuseTick === 0) {
+      if (this.data.fuse > 0){
+        this.data.fuse -= DYNAMITE_FUSE_RATE;
+        return;
+      }
+    }
+    if (this.data.fuse <= 0) {
+      handleDetonation(this.id, this.data, game);
     }
   }
 }
 
-function onTick(entity: Entity, game: Game) {
-  ENTITY_SPECS[entity.entityType].onTick(entity, game);
-}
-
-function create(type: EntityType, id: number, game: Game): Entity {
-  return {
-    id: id,
-    entityType: type,
-    ...HITBOXES[type],
-    ...ENTITY_SPECS[type].create(game)
-  } as Entity;
-}
-
+const d: Entity = (0 as any) as Entity;
 
 // END EXPERIMENTS
 const JUMP_BUFFER_TICKS = 2;
@@ -265,117 +289,12 @@ const GROUND_FRICTION = 0.04;
 const AIR_FRICTION = 0.005;
 const WALL_FRICTION = GRAVITY * -0.9;
 const WALL_JUMP_SPEED = JUMP_SPEED * 0.6;
-export class Player extends InertialAnimatedEntity {
-  walkStage: number;
 
-  walking: XDirection | undefined;
-  facing: XDirection;
-  jumping: boolean;
-
-  jumpBuffer: number;
-  coyoteTimer: number;
-
-  inventory: PlayerInventory;
-
-  constructor(x: number, y: number) {
-    super(0, x, y, 0.875, 2, 1);
-    this.walkStage = 0;
-    this.jumping = false;
-    this.facing = 'right';
-
-    this.jumpBuffer = 0;
-    this.coyoteTimer = 0;
-    this.inventory = {
-      selected: 0,
-      slots: [
-        undefined, undefined, undefined, undefined
-      ]
-    }
-  }
-
-  protected specifyArmatureSprites(): Record<string, string> {
-    return {
-      legs: 'player-legs'
-    }
-  }
-
-  getArmaturePoses(): Record<string, ArmaturePiecePose> {
-    return {
-      legs: {
-        animation: 'walk',
-        frame: this.walking && this.onGround ? Math.floor(this.walkStage) : 0,
-        scaleX: this.facing === 'right' ? 1 : -1
-      }
-    }
-  }
-
-  onTick() {
-    this.walkStage += Math.abs(this.vx) * 8;
-    this.walkStage %= 7;
-    // wall jump handling should come before jump handling
-    this.handleWallJump();
-    this.handleJump();
-    this.handleWalk();
-  }
-
-  private handleWallJump() {
-    if (this.hittingWall && this.jumping && this.jumpBuffer === 0 && !this.onGround) {
-      this.vx = this.hittingWall === 'left' ? WALL_JUMP_SPEED : -WALL_JUMP_SPEED;
-      this.vy = JUMP_SPEED;
-    }
-  }
-
-  private handleWalk() {
-    if (this.walking === 'right') {
-      // walk right
-      this.vx = Math.min(this.vx + WALK_ACCELERATION, MAX_WALK_SPEED);
-      this.facing = 'right';
-    } else if (this.walking === 'left') {
-      // walk left
-      this.vx = Math.max(this.vx - WALK_ACCELERATION, -MAX_WALK_SPEED);
-      this.facing = 'left';
-    } else if (!this.walking && this.vx !== 0) {
-      // friction
-      const friction = this.onGround ? GROUND_FRICTION : AIR_FRICTION;
-      if (this.vx > 0) {
-        this.vx = Math.max(0, this.vx - friction);
-      } else {
-        this.vx = Math.min(0, this.vx + friction);
-      }
-    }
-  }
-
-  private handleJump() {
-    // handle coyote timer and jump buffer
-    this.coyoteTimer = this.onGround ? COYOTE_TIMER_TICKS : Math.max(0, this.coyoteTimer - 1);
-    this.jumpBuffer = this.jumping ? JUMP_BUFFER_TICKS : Math.max(0, this.jumpBuffer - 1);
-    // handle jump initiation
-    if (this.jumpBuffer && this.coyoteTimer > 0) {
-      this.vy = JUMP_SPEED;
-      // if the player jumps while walking, boost them in that direction
-      if (this.walking === 'right') {
-        this.vx = Math.min(MAX_WALK_SPEED, this.vx + JUMP_WALK_BOOST);
-      } else if (this.walking === 'left') {
-        this.vx = Math.max(-MAX_WALK_SPEED, this.vx - JUMP_WALK_BOOST);
-      }
-    }
-    // the player stays in the air longer if they hold the jump key or slide against a wall
-    let verticalFriction = 0;
-    if (this.jumping && !this.onGround) {
-      verticalFriction = JUMP_HOLDING;
-    }
-    if (this.hittingWall && this.vy < 0 && !this.onGround) {
-      verticalFriction = Math.max(verticalFriction, WALL_FRICTION);
-    }
-    this.vy += verticalFriction;
-  }
-}
-
-export function handleDetonation(detonated: Explosive, game: Game) {
-  const { x, y, explosionRadius, maxExplosionDamage } = detonated;
+export function handleDetonation(id: number, data: Explosive, game: Game) {
+  const { x, y, explosionRadius, maxExplosionDamage } = data;
 
   // delete the detonated thing
-  game.world.things.delete(detonated.id);
+  game.world.things.delete(id);
 
   const { terrain, things } = game.world;
   // handle effect on terrain

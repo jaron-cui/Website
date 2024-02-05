@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { type Game } from './game';
+import { Entity } from './entity';
 
 export const WORLD_WIDTH = 64;
 export const WORLD_HEIGHT = 64;
@@ -37,72 +37,7 @@ export class World {
   }
 }
 
-export interface Physical {
-  physical: true;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  id: number;
-  onTick?: (game: Game) => void;
-}
-
-export function physical(thing: any): thing is Physical {
-  return thing.physical;
-}
-
 export type XDirection = 'left' | 'right';
-
-export interface Inertial extends Physical {
-  inertial: true;
-  mass: number;
-  vx: number;
-  vy: number;
-  onGround?: boolean;
-  hittingWall?: XDirection;
-}
-
-export function inertial(thing: any): thing is Inertial {
-  return thing.inertial;
-}
-
-export interface Explosive extends Physical {
-  explosive: true;
-  explosionRadius: number;
-  maxExplosionDamage: number;
-  detonate(): void;
-}
-
-export function explosive(thing: any): thing is Explosive {
-  return thing.explosive;
-}
-
-export interface Mortal {
-  mortal: true;
-  health: number;
-  maxHealth: number;
-  damage(amount: number): void;
-  heal(amount: number): void;
-  onDeath(): void;
-}
-
-export function mortal(thing: any): thing is Mortal {
-  return thing.mortal;
-}
-
-export interface Renderable {
-  x: number;
-  y: number;
-  renderable: true;
-  armaturePieceSprites: Record<string, SpriteSet>;
-  getArmaturePoses(): Record<string, ArmaturePiecePose>;
-}
-
-export function renderable(thing: any): thing is Renderable {
-  return thing.renderable;
-}
-
-export type Entity = (Physical | Inertial | Renderable | Mortal | Explosive) & {id: number};
 
 export class SpriteSet {
   frames: PIXI.Texture[];

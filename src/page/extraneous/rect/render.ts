@@ -1,9 +1,9 @@
 import * as PIXI from 'pixi.js';
-import { SpriteSet, Renderable, ArmaturePiecePose, World, renderable, Terrain, Block, WORLD_WIDTH, WORLD_HEIGHT, Entity } from "./world";
+import { SpriteSet, ArmaturePiecePose, World, Terrain, Block, WORLD_WIDTH, WORLD_HEIGHT } from "./world";
 import { vertexShader, fragmentShader } from './shaders';
 import { ItemStack, PlayerInventory } from './item';
 // BEGIN EXPERIMENT IMPORTS
-import { EntityType } from './entity';
+import { Entity, EntityType } from './entity';
 import { Entity as Ent } from './entity';
 // END EXPERIMENT IMPORTS
 
@@ -16,61 +16,33 @@ const GUI_TEXTURES: Record<string, SpriteSet> = {};
 
 export const DYNAMITE_FUSE_STATES = 9;
 
-// BEGIN EXPERIMENT
-interface EntityRenderController {
-  armaturePieceSprites: Record<string, SpriteSet>;
-  getArmaturePoses(entity: Ent): Record<string, ArmaturePiecePose>;
-}
-
-type RenderableEntityTypes = Extract<EntityType, 'player'>
-
-const ENTITY_RENDERING: Record<RenderableEntityTypes, EntityRenderController> = {
-  player: {
-    armaturePieceSprites: {
-      body: SPRITE_TEXTURES['dynamite-sprites']
-    },
-    getArmaturePoses: (entity: Ent) => {
-      if (entity.entityType !== 'dynamite') {
-        throw Error('Incorrect entity type.');
-      }
-      return {
-        body: {
-          animation: 'ignition',
-          frame: Math.floor(DYNAMITE_FUSE_STATES * (1 - entity.fuse))
-        }
-      };
-    }
-  }
-};
-// END EXPERIMENT
-
-export abstract class AnimatedEntity implements Renderable {
-  x: number;
-  y: number;
-  renderable: true;
-  armaturePieceSprites: Record<string, SpriteSet>;
+// export abstract class AnimatedEntity implements Renderable {
+//   x: number;
+//   y: number;
+//   renderable: true;
+//   armaturePieceSprites: Record<string, SpriteSet>;
   
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
+//   constructor(x: number, y: number) {
+//     this.x = x;
+//     this.y = y;
 
-    this.armaturePieceSprites = {};
-    const armatureSpriteSpecification = this.specifyArmatureSprites();
-    for (const armaturePiece in armatureSpriteSpecification) {
-      const armaturePiecesTexture = SPRITE_TEXTURES[armatureSpriteSpecification[armaturePiece]];
-      if (!armaturePiecesTexture) {
-        console.error('Could not find the sprite set ' + armatureSpriteSpecification[armaturePiece]);
-      }
-      this.armaturePieceSprites[armaturePiece] = armaturePiecesTexture;
-    }
+//     this.armaturePieceSprites = {};
+//     const armatureSpriteSpecification = this.specifyArmatureSprites();
+//     for (const armaturePiece in armatureSpriteSpecification) {
+//       const armaturePiecesTexture = SPRITE_TEXTURES[armatureSpriteSpecification[armaturePiece]];
+//       if (!armaturePiecesTexture) {
+//         console.error('Could not find the sprite set ' + armatureSpriteSpecification[armaturePiece]);
+//       }
+//       this.armaturePieceSprites[armaturePiece] = armaturePiecesTexture;
+//     }
 
-    this.renderable = true;
-  }
+//     this.renderable = true;
+//   }
 
-  protected abstract specifyArmatureSprites(): Record<string, string>;
+//   protected abstract specifyArmatureSprites(): Record<string, string>;
 
-  abstract getArmaturePoses(): Record<string, ArmaturePiecePose>;
-}
+//   abstract getArmaturePoses(): Record<string, ArmaturePiecePose>;
+// }
 
 function getItemFrame(item: ItemStack | undefined): number {
   const sprites = ITEM_TEXTURES[''];
@@ -461,15 +433,15 @@ export class Renderer {
     }
     for (const i of this.world.things.keys()) {
       const thing = this.world.things.get(i) as Entity;
-      if (!renderable(thing)) {
-        continue;
-      }
+      // if (!renderable(thing)) {
+      //   continue;
+      // }
       let armature = this.entityArmatures.get(i);
       if (!armature) {
-        armature = new Armature(thing.x, thing.y, thing.armaturePieceSprites, this.app);
+        armature = new Armature(thing.data.x, thing.data.y, thing.armaturePieceSprites, this.app);
         this.entityArmatures.set(i, armature);
       }
-      armature.pose(thing.x, thing.y, thing.getArmaturePoses());
+      armature.pose(thing.data.x, thing.data.y, thing.getArmaturePoses());
     }
   }
 

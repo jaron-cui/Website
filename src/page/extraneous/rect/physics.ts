@@ -1,5 +1,6 @@
+import { Entity, Inertial } from "./entity";
 import { Game } from "./game";
-import { Inertial, World, Block, inertial, physical } from "./world";
+import { World, Block } from "./world";
 
 export function distance(a: [number, number], b: [number, number]): number {
   return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
@@ -31,7 +32,7 @@ function rangesOverlap(a0: number, a1: number, b0: number, b1: number): boolean 
   );
 }
 
-function calculateThingCollision(thing1: Inertial, thing2: Inertial): ThingCollisionEvent {
+function calculateThingCollision(id1: number, thing1: Inertial, id2: number, thing2: Inertial): ThingCollisionEvent {
   const { x: x1, y: y1, w: w1, h: h1, vx: vx1, vy: vy1 } = thing1;
   const { x: x2, y: y2, w: w2, h: h2, vx: vx2, vy: vy2 } = thing2;
   // difference in velocity on x and y axes
@@ -77,16 +78,16 @@ function calculateThingCollision(thing1: Inertial, thing2: Inertial): ThingColli
   } else {
     axis[1] = ya;
   }
-  return { time: Math.min(tx, ty), id1: thing1.id, id2: thing2.id, axis };
+  return { time: Math.min(tx, ty), id1: id1, id2: id2, axis };
 }
 
-function getNextThingCollision(inertials: Inertial[]): ThingCollisionEvent {
+function getNextThingCollision(inertials: Entity[]): ThingCollisionEvent {
   let nextCollision: ThingCollisionEvent = { time: Infinity, id1: -1, id2: -1, axis: [0, 0] };
   for (let i = 0; i < inertials.length; i += 1) {
     const thing1 = inertials[i];
     for (let j = i + 1; j < inertials.length; j += 1) {
       const thing2 = inertials[j];
-      const collision = calculateThingCollision(thing1, thing2);
+      const collision = calculateThingCollision(thing1.id, thing1.data, thing2.id, thing2.data);
       if (collision.time < 0 || collision.time === Infinity) {
         continue;
       }
@@ -98,10 +99,10 @@ function getNextThingCollision(inertials: Inertial[]): ThingCollisionEvent {
   return nextCollision;
 }
 
-function getNextTerrainCollision(world: World, inertials: Inertial[]): TerrainCollisionEvent {
+function getNextTerrainCollision(world: World, inertials: Entity[]): TerrainCollisionEvent {
   let nextCollision: TerrainCollisionEvent = { time: Infinity, id: -1, axis: [0, 0] };
   for (const thing of inertials) {
-    const { x, y, w, h, vx, vy } = thing;
+    const { x, y, w, h, vx, vy } = thing.data;
     const xa = vx < 0 ? -1 : 1;
     const ya = vy < 0 ? -1 : 1;
     let tx = Infinity;
@@ -184,9 +185,9 @@ function getNextTerrainCollision(world: World, inertials: Inertial[]): TerrainCo
 
 function stepEverythingBy(time: number, world: World, exclude?: number) {
   for (const thing of world.things.values()) {
-    if (inertial(thing)) {
-      thing.x += thing.vx * time;
-      thing.y += thing.vy * time;
+    if (thing.inertial) {
+      thing.data.x += thing.data.vx * time;
+      thing.data.y += thing.data.vy * time;
     }
   }
 }
@@ -197,19 +198,19 @@ function processTerrainCollision(collision: TerrainCollisionEvent, world: World)
     console.error("Tried to process a collision involving a nonexistent thing.");
     return;
   }
-  if (!inertial(thing)) {
+  if (!thing.inertial) {
     console.error("Tried to process a collision involving a  nonintertial thing.");
     return;
   }
   // TODO: make more complex collision interactions such as bounce
   if (collision.axis[0] !== 0) {
-    thing.x += collision.time * thing.vx;
-    thing.hittingWall = collision.axis[0] === -1 ? 'left' : 'right';
-    thing.vx = 0;
+    thing.data.x += collision.time * thing.data.vx;
+    thing.data.hittingWall = collision.axis[0] === -1 ? 'left' : 'right';
+    thing.data.vx = 0;
   } else {
-    thing.y += collision.time * thing.vy;
-    thing.vy = 0;
-    thing.onGround = collision.axis[1] === -1;
+    thing.data.y += collision.time * thing.data.vy;
+    thing.data.vy = 0;
+    thing.data.onGround = collision.axis[1] === -1;
   }
   stepEverythingBy(collision.time, world, collision.id);
 } 
@@ -219,17 +220,17 @@ export const GRAVITY = -0.06;
 export function stepPhysics(game: Game) {
   const world = game.world;
   for (const thing of world.things.values()) {
-    if (physical(thing) && thing.onTick) {
+    if (thing.onTick) {
       thing.onTick(game);
     }
   }
-  const inertials: Inertial[] = [];
+  const inertials: Entity[] = [];
   for (const thing of world.things.values()) {
-    if (inertial(thing)) {
+    if (thing.inertial) {
       inertials.push(thing);
-      thing.vy += GRAVITY;
-      thing.onGround = false;
-      thing.hittingWall = undefined;
+      thing.data.vy += GRAVITY;
+      thing.data.onGround = false;
+      thing.data.hittingWall = undefined;
       // console.log(JSON.stringify(thing));
     }
   }

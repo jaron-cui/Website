@@ -5,6 +5,7 @@ import { ItemStack, PlayerInventory } from './item';
 // BEGIN EXPERIMENT IMPORTS
 import { Entity, EntityType } from './entity';
 import { Entity as Ent } from './entity';
+import { GRAVITY } from './physics';
 // END EXPERIMENT IMPORTS
 
 export const SCREEN_WIDTH = 960;
@@ -339,6 +340,25 @@ class Armature {
   // }
 }
 
+interface Trajectory {
+  x: number;
+  y: number;
+  pointCount: number;
+  function: (i: number, count: number) => [number, number];
+  spriteGroup: PIXI.ParticleContainer;
+  sprites: PIXI.Sprite[];
+}
+
+function getThrowingTrajectory(theta: number, strength: number): (i: number, count: number) => [number, number] {
+  const maxTime = 40;
+  return (i: number, count: number) => {
+    const fraction = i / count;
+    const t = fraction * maxTime;
+    console.log(i + ' ' + t + ' ' + (strength * t * Math.cos(theta)) + ' ' + (GRAVITY * t * t / 2 + strength * t * Math.sin(theta)));
+    return [strength * t * Math.cos(theta), GRAVITY * t * t / 2 + strength * t * Math.sin(theta)];
+  }
+}
+
 interface InventorySlotSprites {
   slot: PIXI.AnimatedSprite;
   item: PIXI.AnimatedSprite;
@@ -353,6 +373,7 @@ export class Renderer {
   terrainLayer: PIXI.Mesh<PIXI.Shader>;
   entityArmatures: Map<number, Armature>;
   inventorySlots: InventorySlotSprites[];
+  trajectory?: Trajectory;
 
   constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
@@ -369,7 +390,36 @@ export class Renderer {
     this.entityArmatures = new Map();
     this.inventorySlots = [];
     // testing
-    const text = new TextBox(100, 100, 'hello there', app); 
+    const text = new TextBox(100, 100, 'hello there', app);
+    
+    const particles = new PIXI.ParticleContainer();
+    this.app.stage.addChild(particles);
+    this.updateTrajectory({
+      x: 0,
+      y: 0,
+      pointCount: 40,
+      function: getThrowingTrajectory(Math.PI / 4, 0.7),
+      sprites: [],
+      spriteGroup: particles
+    })
+  }
+
+  updateTrajectory(trajectory: Trajectory) {
+    this.trajectory = trajectory;
+    for (let i = trajectory.sprites.length; i < trajectory.pointCount; i += 1) {
+      const sprite = PIXI.Sprite.from('point.png');
+      trajectory.spriteGroup.addChild(sprite);
+      trajectory.sprites.push(sprite);
+    }
+    for (let i = trajectory.sprites.length - 1; i >= trajectory.pointCount; i -= 1) {
+      const sprite = trajectory.sprites.pop();
+      sprite && trajectory.spriteGroup.removeChild(sprite);
+    }
+    trajectory.sprites.forEach((sprite, i) => {
+      const [x, y] = trajectory.function(i, trajectory.pointCount);
+      sprite.x = 100 + x * 20;
+      sprite.y = SCREEN_HEIGHT - (100 + y * 20);
+    });
   }
 
   updateInventory(inventory: PlayerInventory) {

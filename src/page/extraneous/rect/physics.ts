@@ -2,6 +2,8 @@ import { Entity, Inertial } from "./entity";
 import { Game } from "./game";
 import { World, Block } from "./world";
 
+export const GRAVITY = -0.05;
+
 export function distance(a: [number, number], b: [number, number]): number {
   return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
 }
@@ -213,9 +215,7 @@ function processTerrainCollision(collision: TerrainCollisionEvent, world: World)
     thing.data.onGround = collision.axis[1] === -1;
   }
   stepEverythingBy(collision.time, world, collision.id);
-} 
-
-export const GRAVITY = -0.06;
+}
 
 export function stepPhysics(game: Game) {
   const world = game.world;

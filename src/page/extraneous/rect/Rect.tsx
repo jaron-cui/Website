@@ -41,6 +41,63 @@ worldData.wrapMode = PIXI.WRAP_MODES.CLAMP;
 worldData.mipmap = PIXI.MIPMAP_MODES.OFF;
 worldData.scaleMode = PIXI.SCALE_MODES.NEAREST;
 
+interface InputState {
+  leftClick: boolean;
+  rightClick: boolean;
+  mousePosition: [number, number];
+  buttonsDown: Set<string>;
+}
+
+interface InputMap {
+  useMain: string;
+  useSecondary: string;
+  // TODO: let scrolling be reconfigurable
+  up: string;
+  down: string;
+  left: string;
+  right: string;
+
+  jump: string;
+
+  control: string;
+  shift: string;
+}
+
+const DEFAULT_INPUT_MAP: InputMap = {
+  useMain: 'leftclick',
+  useSecondary: 'rightclick',
+  up: 'w',
+  down: 's',
+  left: 'a',
+  right: 'd',
+  jump: ' ',
+  control: 'ctrl',
+  shift: 'shift'
+};
+
+interface UserInputs {
+  // left and right click, respectively
+  useMain: boolean;
+  useSecondary: boolean;
+  // integer representing number of scrolls where positive is up
+  scroll: number;
+  // pointer position on screen where 0 represents bottom or left and 1 represents top or right
+  pointerX: number;
+  pointerY: number;
+
+  // directional inputs
+  right: boolean;
+  left: boolean;
+  up: boolean;
+  down: boolean;
+
+  jump: boolean;
+
+  // ctrl + shift
+  control: boolean;
+  shift: boolean;
+}
+
 
 async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDown: string) => void, (keyUp: string) => void]> {
   const app = new PIXI.Application<HTMLCanvasElement>({ background: '#7acdeb', width: SCREEN_WIDTH, height: SCREEN_HEIGHT });

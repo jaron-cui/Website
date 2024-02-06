@@ -5,11 +5,13 @@ import { XDirection, ArmaturePiecePose } from "../world";
 
 const JUMP_BUFFER_TICKS = 2;
 const COYOTE_TIMER_TICKS = 3;
+const WALLJUMP_TIMER_TICKS = 3;
+const WALLJUMP_COOLDOWN = 6;
 const JUMP_SPEED = 0.4;
 const JUMP_HOLDING = GRAVITY * -0.4;
 const JUMP_WALK_BOOST = 0.1;
 
-const MAX_WALK_SPEED = 0.2;
+const MAX_WALK_SPEED = 0.14;
 const WALK_ACCELERATION = 0.02;
 const GROUND_FRICTION = 0.04;
 const AIR_FRICTION = 0.005;
@@ -25,6 +27,9 @@ interface PlayerData extends Inertial {
 
   jumpBuffer: number;
   coyoteTimer: number;
+  wallJumpTimer: number;
+  wallJumpCooldown: number;
+  lastWall: XDirection | undefined;
 
   inventory: PlayerInventory;
 }
@@ -46,6 +51,9 @@ export class Player extends BaseEntity<PlayerData> {
       jumping: false,
       jumpBuffer: 0,
       coyoteTimer: 0,
+      wallJumpTimer: 0,
+      wallJumpCooldown: 0,
+      lastWall: undefined,
       inventory: {
         selected: 0,
         slots: [undefined, undefined, undefined, undefined, undefined]
@@ -79,8 +87,14 @@ export class Player extends BaseEntity<PlayerData> {
   }
 
   private handleWallJump() {
-    if (this.data.hittingWall && this.data.jumping && this.data.jumpBuffer === 0 && !this.data.onGround) {
-      this.data.vx = this.data.hittingWall === 'left' ? WALL_JUMP_SPEED : -WALL_JUMP_SPEED;
+    this.data.lastWall = this.data.hittingWall || this.data.lastWall;
+    this.data.wallJumpTimer = this.data.hittingWall ? WALLJUMP_TIMER_TICKS : Math.max(0, this.data.wallJumpTimer - 1);
+    this.data.wallJumpCooldown = this.data.onGround ? WALLJUMP_COOLDOWN : Math.max(0, this.data.wallJumpCooldown - 1);
+    const timely = this.data.wallJumpTimer && !this.data.wallJumpCooldown;
+    const ungrounded = !this.data.coyoteTimer && this.data.jumpBuffer === 0 && !this.data.onGround;
+    if (this.data.jumping && timely && ungrounded) {
+      this.data.wallJumpCooldown = WALLJUMP_COOLDOWN;
+      this.data.vx = this.data.lastWall === 'left' ? WALL_JUMP_SPEED : -WALL_JUMP_SPEED;
       this.data.vy = JUMP_SPEED;
     }
   }

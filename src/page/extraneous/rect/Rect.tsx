@@ -70,10 +70,58 @@ const DEFAULT_INPUT_MAP: InputMap = {
   down: 's',
   left: 'a',
   right: 'd',
-  jump: ' ',
-  control: 'ctrl',
-  shift: 'shift'
+  jump: 'w',
+  control: 'Control',
+  shift: 'Shift'
 };
+
+function addEventHandler(
+  target: {addEventListener: (type: string, trigger: any, bool?: boolean) => any},
+  type: string,
+  callback: (pressed: boolean) => void
+): [string, (event: any) => void][] {
+  const pressedTrigger = () => callback(true);
+  switch(type) {
+    case 'leftclick':
+      target.addEventListener('click', pressedTrigger, false);
+      return [['leftclick', pressedTrigger]];
+    case 'rightclick':
+      target.addEventListener('rightclick', pressedTrigger, false);
+      return [['rightclick', pressedTrigger]];
+    default:
+      const keyDownHandler = (event: KeyboardEvent) => event.key === type && callback(true);
+      const keyUpHandler = (event: KeyboardEvent) => event.key === type && callback(false);
+      document.addEventListener('keydown', keyDownHandler, false);
+      document.addEventListener('keyup', keyUpHandler, false);
+      return [
+        ['keydown', keyDownHandler],
+        ['keyup', keyUpHandler]
+      ];
+  }
+}
+
+class InputHandler {
+  app: PIXI.Application<HTMLCanvasElement>
+  handlers: [string, (event: Event) => void][];
+  triggers: InputTriggers;
+
+  constructor(app: PIXI.Application<HTMLCanvasElement>, triggers: InputTriggers) {
+    this.app = app;
+    this.triggers = triggers;
+    this.handlers = [];
+  }
+
+  updateHandlers(inputMap: InputMap) {
+    this.clearHandlers();
+    const handlers = addEventHandler(this.app.stage, inputMap.jump, this.triggers.onJumpChange);
+    handlers.forEach(pairing => this.handlers.push(pairing));
+  }
+
+  clearHandlers() {
+    this.handlers.forEach(([trigger, handler]) => this.app.stage.removeEventListener(trigger, handler));
+    this.handlers = [];
+  }
+}
 
 interface UserInputs {
   // left and right click, respectively
@@ -98,9 +146,72 @@ interface UserInputs {
   shift: boolean;
 }
 
+interface InputTriggers {
+  onPrimaryUseChange: (pressed: boolean) => void;
+  onSecondaryUseChange: (pressed: boolean) => void;
+  onScroll: (upBy: number) => void;
+  onPointerMove: (screenX: number, screenY: number) => void;
+
+  onUpChange: (pressed: boolean) => void;
+  onLeftChange: (pressed: boolean) => void;
+  onDownChange: (pressed: boolean) => void;
+  onRightChange: (pressed: boolean) => void;
+
+  onJumpChange: (pressed: boolean) => void;
+
+  onControlChange: (pressed: boolean) => void;
+  onShiftChange: (pressed: boolean) => void;
+}
+
+function updateWalking(heldInputs: UserInputs, player: Player) {
+  const netWalk = +!!heldInputs.right - +!!heldInputs.left;
+  if (netWalk > 0) {
+    player.data.walking = 'right';
+  } else if (netWalk < 0) {
+    player.data.walking = 'left';
+  } else {
+    player.data.walking = undefined;
+  }
+}
+
+function defineInputTriggers(game: Game, heldInputs: UserInputs): InputTriggers{
+  const onXChange = () => updateWalking(heldInputs, game.player);
+  return {
+    onPrimaryUseChange: (pressed: boolean) => { },
+    onSecondaryUseChange: (pressed: boolean) => {
+      if (pressed) {
+        game.actionQueue.push(() => {
+          handleSlotUse({
+            user: game.player,
+            game: game,
+            slotNumber: game.player.data.inventory.selected
+          })
+        });
+      }
+    },
+    onScroll: (upBy: number) => {
+      const inventory = game.player.data.inventory;
+      inventory.selected = mod((inventory.selected - upBy), inventory.slots.length);
+      game.renderer.updateInventory(inventory);
+    },
+    onPointerMove: (screenX: number, screenY: number) => { },
+    onUpChange: (pressed: boolean) => {
+      
+    },
+    onLeftChange: onXChange,
+    onDownChange: () => { },
+    onRightChange: onXChange,
+    onJumpChange: () => {
+      game.player.data.jumping = heldInputs.jump;
+    },
+    onControlChange: () => { },
+    onShiftChange: () => { },
+  }
+}
 
 async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDown: string) => void, (keyUp: string) => void]> {
   const app = new PIXI.Application<HTMLCanvasElement>({ background: '#7acdeb', width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
+  // app.renderer.addListener('mousepos', (event: MouseEvent) => console.log(event.clientX));
   let t = 0;
   // Listen for animate update
   app.ticker.minFPS = 40;
@@ -161,10 +272,26 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
     // console.log(thing.fuse)
   });
 
-  const keyStatuses: Record<string, boolean> = {};
+  const keyStatuses: Set<string> = new Set();
+  const userInputs: UserInputs = {
+    useMain: false,
+    useSecondary: false,
+    scroll: 0,
+    pointerX: 0,
+    pointerY: 0,
+    right: false,
+    left: false,
+    up: false,
+    down: false,
+    jump: false,
+    control: false,
+    shift: false
+  }
+  const inputHandler = new InputHandler(app, defineInputTriggers(game, userInputs));
+  inputHandler.updateHandlers(DEFAULT_INPUT_MAP);
 
   function onPressUpdate() {
-    const netWalk = +!!keyStatuses['d'] - +!!keyStatuses['a'];
+    const netWalk = +!!keyStatuses.has('d') - +!!keyStatuses.has('a');
     if (netWalk > 0) {
       player.data.walking = 'right';
     } else if (netWalk < 0) {
@@ -172,16 +299,16 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
     } else {
       player.data.walking = undefined;
     }
-    player.data.jumping = keyStatuses['w'] || keyStatuses[' '];
+    userInputs.jump = keyStatuses.has('w') || keyStatuses.has(' ');
   }
 
   function onKeyDown(key: string) {
-    keyStatuses[key] = true;
+    keyStatuses.add(key);
     onPressUpdate();
   }
 
   function onKeyUp(key: string) {
-    keyStatuses[key] = false;
+    keyStatuses.delete(key);
     onPressUpdate();
   }
 

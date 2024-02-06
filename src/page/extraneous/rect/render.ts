@@ -354,7 +354,7 @@ function getThrowingTrajectory(theta: number, strength: number): (i: number, cou
   return (i: number, count: number) => {
     const fraction = i / count;
     const t = fraction * maxTime;
-    console.log(i + ' ' + t + ' ' + (strength * t * Math.cos(theta)) + ' ' + (GRAVITY * t * t / 2 + strength * t * Math.sin(theta)));
+    // console.log(i + ' ' + t + ' ' + (strength * t * Math.cos(theta)) + ' ' + (GRAVITY * t * t / 2 + strength * t * Math.sin(theta)));
     return [strength * t * Math.cos(theta), GRAVITY * t * t / 2 + strength * t * Math.sin(theta)];
   }
 }

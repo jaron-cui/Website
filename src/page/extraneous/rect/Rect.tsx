@@ -65,7 +65,7 @@ interface UserInputs {
   shift: boolean;
 }
 
-async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDown: string) => void, (keyUp: string) => void]> {
+async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
   const app = new PIXI.Application<HTMLCanvasElement>({ background: '#7acdeb', width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
   // app.renderer.addListener('mousepos', (event: MouseEvent) => console.log(event.clientX));
   let t = 0;
@@ -128,31 +128,8 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
     // console.log(thing.fuse)
   });
 
-  const keyStatuses: Set<string> = new Set();
   const inputHandler = new InputHandler(app, game.getControlInterface());
   inputHandler.updateHandlers(DEFAULT_INPUT_MAP);
-
-  function onPressUpdate() {
-    const netWalk = +!!keyStatuses.has('d') - +!!keyStatuses.has('a');
-    if (netWalk > 0) {
-      player.data.walking = 'right';
-    } else if (netWalk < 0) {
-      player.data.walking = 'left';
-    } else {
-      player.data.walking = undefined;
-    }
-    // userInputs.jump = keyStatuses.has('w') || keyStatuses.has(' ');
-  }
-
-  function onKeyDown(key: string) {
-    keyStatuses.add(key);
-    onPressUpdate();
-  }
-
-  function onKeyUp(key: string) {
-    keyStatuses.delete(key);
-    onPressUpdate();
-  }
 
   app.stage.eventMode = 'static';
   app.stage.hitArea = app.screen;
@@ -161,34 +138,21 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
     inventory.selected = mod((inventory.selected + sign), inventory.slots.length);
     renderer.updateInventory(inventory);
   });
-  app.stage.addEventListener('rightclick', (event: MouseEvent) => {
-    game.actionQueue.push(() => {
-      handleSlotUse({
-        user: player,
-        game: game,
-        slotNumber: player.data.inventory.selected
-      })
-    })
-  });
-  return [app, onKeyDown, onKeyUp];
+  return app;
 };
 
 export const Rect = () => {
   const gameRef = useRef<HTMLDivElement>(null);
-  const keyDownRef = useRef<(key: string) => void>(() => null);
-  const keyUpRef = useRef<(key: string) => void>(() => null);
 
   useEffect(() => {
     const myDomElement = createApp();
     
-    myDomElement.then(([app, onKeyDown, onKeyUp]) => {
-      keyDownRef.current = onKeyDown;
-      keyUpRef.current = onKeyUp;
+    myDomElement.then((app) => {
       gameRef.current?.appendChild(app.view);
     });
  
     return () => {
-      myDomElement.then(([app]) => {
+      myDomElement.then((app) => {
         gameRef.current?.removeChild(app.view);
         app.destroy();
       });
@@ -197,10 +161,6 @@ export const Rect = () => {
 
   return (
     <div ref={gameRef} onContextMenu={e => e.preventDefault()} onMouseDown={e => e.preventDefault()}>
-      <TypingHandler
-        onKeyDown={(key: string) => keyDownRef.current && keyDownRef.current(key)}
-        onKeyUp={(key: string) => keyUpRef.current && keyUpRef.current(key)}
-      />
     </div>
   );
 }

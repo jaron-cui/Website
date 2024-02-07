@@ -88,7 +88,7 @@ export class Game {
           
         },
         left: onXChange,
-        right: () => { },
+        right: onXChange,
         down: onXChange,
         jump: (_: boolean, inputState: InputState) => {
           this.player.data.jumping = inputState.buttonsDown.jump;

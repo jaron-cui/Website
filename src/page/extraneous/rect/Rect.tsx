@@ -181,8 +181,8 @@ interface UserInputs {
   shift: boolean;
 }
 
-function updateWalking(heldInputs: UserInputs, player: Player) {
-  const netWalk = +!!heldInputs.right - +!!heldInputs.left;
+function updateWalking(inputState: InputState, player: Player) {
+  const netWalk = +!!inputState.buttonsDown.right - +!!inputState.buttonsDown.left;
   if (netWalk > 0) {
     player.data.walking = 'right';
   } else if (netWalk < 0) {
@@ -192,11 +192,11 @@ function updateWalking(heldInputs: UserInputs, player: Player) {
   }
 }
 
-function defineInputTriggers(game: Game, inputContext: UserInputs): InputTriggers{
-  const onXChange = () => updateWalking(inputContext, game.player);
+function defineInputTriggers(game: Game): InputTriggers {
+  const onXChange = (_: boolean, inputState: InputState) => updateWalking(inputState, game.player);
   return {
     onButtonPress: {
-      useMain: (pressed: boolean) => { },
+      useMain: (_: boolean) => { },
       useSecondary: (pressed: boolean) => {
         if (pressed) {
           game.actionQueue.push(() => {
@@ -220,8 +220,8 @@ function defineInputTriggers(game: Game, inputContext: UserInputs): InputTrigger
       left: onXChange,
       right: () => { },
       down: onXChange,
-      jump: () => {
-        game.player.data.jumping = inputContext.jump;
+      jump: (_: boolean, inputState: InputState) => {
+        game.player.data.jumping = inputState.buttonsDown.jump;
       },
       control: () => { },
       shift: () => { },
@@ -308,7 +308,7 @@ async function createApp(): Promise<[PIXI.Application<HTMLCanvasElement>, (keyDo
     control: false,
     shift: false
   }
-  const inputHandler = new InputHandler(app, defineInputTriggers(game, userInputs));
+  const inputHandler = new InputHandler(app, defineInputTriggers(game));
   inputHandler.updateHandlers(DEFAULT_INPUT_MAP);
 
   function onPressUpdate() {

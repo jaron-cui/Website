@@ -12,7 +12,7 @@ defineItem('dynamite', 'Dynamite', 1, condition => {
   // if already ignited, throw the dynamite
   if (item.data['ignited']) {
     const dynamite = new Dynamite(user.x, user.y, item.data['fuse'], item.data['fuseTick']);
-    [dynamite.data.vx, dynamite.data.vy] = [0.7 * Math.cos(user.aiming) + user.vx, 0.7 * Math.sin(user.aiming) + user.vy];
+    [dynamite.data.vx, dynamite.data.vy] = [user.aimEffort * Math.cos(user.aimTheta || 0), user.aimEffort * Math.sin(user.aimTheta || 0)];
     condition.game.spawn(dynamite);
 
     item.quantity -= 1;

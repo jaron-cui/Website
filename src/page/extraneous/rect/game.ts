@@ -1,9 +1,9 @@
 import { mod } from "../../../util/util";
 import { Entity } from "./entity";
-import { Player } from "./entity/player";
-import { InputState, InputTriggers } from "./input";
+import { Player, PlayerData } from "./entity/player";
+import { EMPTY_INPUT_STATE, InputState, InputTriggers } from "./input";
 import { ITEMS, handleSlotUse } from "./item";
-import { stepPhysics } from "./physics";
+import { distance, stepPhysics } from "./physics";
 import { Renderer, screenToGamePosition } from "./render";
 import { Block, World } from "./world";
 
@@ -16,6 +16,8 @@ export class Game {
   terrainOutOfDate: boolean;
   actionQueue: (() => void)[];
 
+  inputState: InputState;
+
   constructor(player: Player, world: World, renderer: Renderer) {
     this.player = player;
     this.world = world;
@@ -23,6 +25,7 @@ export class Game {
     this.entityCount = 0;
     this.actionQueue = [];
     this.terrainOutOfDate = true;
+    this.inputState = EMPTY_INPUT_STATE;
   }
 
   spawn(thing: Entity) {
@@ -56,6 +59,7 @@ export class Game {
     
     this.renderer.updateAmbient();
     this.renderer.updateEntities();
+    this.updateTrajectory();
     this.renderer.updateInventory(this.player.data.inventory);
     if (this.terrainOutOfDate) {
       this.renderer.updateTerrain();
@@ -63,16 +67,19 @@ export class Game {
     }
   }
 
-  updateTrajectory(theta: number | false) {
+  updateTrajectory() {
     if (this.player.data.inventory.slots[this.player.data.inventory.selected]?.id === 'dynamite') {
-      this.renderer.setThrowing(theta, this.player.data.x, this.player.data.y);
+      const aimGoal = screenToGamePosition(this.inputState.mousePosition);
+      [this.player.data.aimTheta, this.player.data.aimEffort] = calculateThrowingParameters(this.player, aimGoal);
     } else {
-      this.renderer.setThrowing(false);
+      this.player.data.aimTheta = undefined;
     }
+    this.renderer.updateThrowingTrajectory(this.player.data);
   }
 
-  getControlInterface(): InputTriggers {
-    const onXChange = (_: boolean, inputState: InputState) => updateWalking(inputState, this.player);
+  getControlInterface(inputState: InputState): InputTriggers {
+    this.inputState = inputState;
+    const onXChange = (_: boolean) => updateWalking(inputState, this.player);
     const onScroll = (sign: number) => (pressed: boolean) => {
       if (pressed) {
         const inventory = this.player.data.inventory;
@@ -106,7 +113,7 @@ export class Game {
         left: onXChange,
         right: onXChange,
         down: onXChange,
-        jump: (_: boolean, inputState: InputState) => {
+        jump: (_: boolean) => {
           this.player.data.jumping = inputState.buttonsDown.jump;
         },
         control: () => { },
@@ -116,15 +123,25 @@ export class Game {
       },
       onType: () => {},
       onPointerMove: ([screenX, screenY]) => {
-        console.log(screenX + ' ' + screenY);
-        const [x, y] = screenToGamePosition([screenX, screenY]);
-        const player = this.player.data;
-        const theta = Math.atan2(y - player.y, x - player.x);
-        this.updateTrajectory(theta);
-        player.aiming = theta;
+        // console.log(screenX + ' ' + screenY);
+        // const [x, y] = screenToGamePosition([screenX, screenY]);
+        // const player = this.player.data;
+        // const theta = Math.atan2(y - player.y, x - player.x);
+        // this.updateTrajectory(theta);
+        // player.aimTheta = theta;
       }
     }
   }
+}
+
+function calculateThrowingParameters(player: Player, [aimX, aimY]: [number, number]): [number, number] {
+  // TODO: make this less weird
+  const range = Math.min(1, distance([player.data.x, player.data.y], [aimX, aimY]) / 9);
+  const strength = range * 0.7 + 0.2;
+  const [dy, dx] = [aimY - player.data.y, aimX - player.data.x];
+  const theta = Math.atan2(dy + 2 * range, dx - 2 * dx / 5);
+
+  return [theta, strength];
 }
 
 function updateWalking(inputState: InputState, player: Player) {

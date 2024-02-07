@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { Game } from './game';
 
 export const DEFAULT_INPUT_MAP: InputMap = {
   useMain: 'leftclick',
@@ -12,6 +13,25 @@ export const DEFAULT_INPUT_MAP: InputMap = {
   shift: 'Shift',
   scrollUp: 'scrollup',
   scrollDown: 'scrolldown'
+};
+
+export const EMPTY_INPUT_STATE: InputState = {
+  leftClick: false,
+  rightClick: false,
+  mousePosition: [0, 0],
+  buttonsDown: {
+    useMain: false,
+    useSecondary: false,
+    up: false,
+    left: false,
+    down: false,
+    right: false,
+    jump: false,
+    control: false,
+    shift: false,
+    scrollUp: false,
+    scrollDown: false
+  }
 };
 
 export interface InputState {
@@ -43,9 +63,8 @@ export class InputHandler {
   triggers: InputTriggers;
   inputState: InputState;
 
-  constructor(app: PIXI.Application<HTMLCanvasElement>, triggers: InputTriggers) {
+  constructor(app: PIXI.Application<HTMLCanvasElement>, game: Game) {
     this.app = app;
-    this.triggers = triggers;
     this.handlers = [];
     this.inputState = {
       leftClick: false,
@@ -65,6 +84,7 @@ export class InputHandler {
         scrollDown: false
       }
     }
+    this.triggers = game.getControlInterface(this.inputState);
   }
 
   updateHandlers(inputMap: InputMap) {
@@ -118,8 +138,8 @@ export class InputHandler {
       });
     };
     const mouseMove = (event: MouseEvent) => {
-      this.inputState.mousePosition = [event.clientX, event.clientY];
-      this.triggers.onPointerMove([event.clientX, event.clientY]);
+      this.inputState.mousePosition = [event.screenX, event.screenY];
+      this.triggers.onPointerMove([event.screenX, event.screenY]);
     };
 
     this.app.stage.addEventListener('mousedown', mouseDown);

@@ -61,7 +61,7 @@ async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
   renderer.updateTerrain();
   const game = new Game(player, world, renderer);
 
-  const inputHandler = new InputHandler(app, game.getControlInterface());
+  const inputHandler = new InputHandler(app, game);
   inputHandler.updateHandlers(DEFAULT_INPUT_MAP);
 
   const d = new Dynamite(14, 24);

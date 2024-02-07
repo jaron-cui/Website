@@ -18,13 +18,14 @@ const AIR_FRICTION = 0.005;
 const WALL_FRICTION = GRAVITY * -0.9;
 const WALL_JUMP_SPEED = JUMP_SPEED * 0.6;
 
-interface PlayerData extends Inertial {
+export interface PlayerData extends Inertial {
   walkStage: number;
 
   walking: XDirection | undefined;
   facing: XDirection;
   jumping: boolean;
-  aiming: number;
+  aimTheta?: number;
+  aimEffort: number;
 
   jumpBuffer: number;
   coyoteTimer: number;
@@ -59,7 +60,7 @@ export class Player extends BaseEntity<PlayerData> {
         selected: 0,
         slots: [undefined, undefined, undefined, undefined, undefined]
       },
-      aiming: 0
+      aimEffort: 0
     });
   }
 

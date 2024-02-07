@@ -5,6 +5,7 @@ import { ItemStack, PlayerInventory } from './item';
 // BEGIN EXPERIMENT IMPORTS
 import { Entity } from './entity';
 import { GRAVITY } from './physics';
+import { PlayerData } from './entity/player';
 // END EXPERIMENT IMPORTS
 
 export const SCREEN_WIDTH = 960;
@@ -346,17 +347,20 @@ class Armature {
   // }
 }
 
-interface Trajectory {
+interface TrajectoryParameters {
   x: number;
   y: number;
   pointCount: number;
   function: (i: number, count: number) => [number, number];
+}
+
+interface TrajectorySprites {
   spriteGroup: PIXI.ParticleContainer;
   sprites: PIXI.Sprite[];
 }
 
 function getThrowingTrajectory(theta: number, strength: number): (i: number, count: number) => [number, number] {
-  const maxTime = 40;
+  const maxTime = 24;
   return (i: number, count: number) => {
     const fraction = i / count;
     const t = fraction * maxTime;
@@ -379,7 +383,7 @@ export class Renderer {
   terrainLayer: PIXI.Mesh<PIXI.Shader>;
   entityArmatures: Map<number, Armature>;
   inventorySlots: InventorySlotSprites[];
-  trajectory: Trajectory;
+  trajectorySprites: TrajectorySprites;
 
   constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
@@ -400,49 +404,32 @@ export class Renderer {
     
     const particles = new PIXI.ParticleContainer();
     this.app.stage.addChild(particles);
-    this.trajectory = {
-      x: 0,
-      y: 0,
-      pointCount: 0,
-      function: getThrowingTrajectory(Math.PI / 4, 0.7),
+    this.trajectorySprites = {
       sprites: [],
       spriteGroup: particles
     }
   }
 
-  setThrowing(theta: number | false, x?: number, y?: number) {
-    if (theta === false) {
-      this.updateTrajectory({
-        x: 0,
-        y: 0,
-        pointCount: 0,
-        function: getThrowingTrajectory(Math.PI / 4, 0.7),
-        sprites: [],
-        spriteGroup: this.trajectory.spriteGroup
-      });
-    } else {
-      this.updateTrajectory({
-        x: x || 0,
-        y: y || 0,
-        pointCount: 40,
-        function: getThrowingTrajectory(theta, 0.7),
-        sprites: [],
-        spriteGroup: this.trajectory.spriteGroup
-      });
-    }
+  updateThrowingTrajectory(player: PlayerData) {
+    this.updateTrajectory({
+      x: player.x,
+      y: player.y,
+      pointCount: player.aimTheta === undefined ? 0 : 10,
+      function: getThrowingTrajectory(player.aimTheta || 0, player.aimEffort)
+    })
   }
 
-  updateTrajectory(trajectory: Trajectory) {
-    for (let i = trajectory.sprites.length; i < trajectory.pointCount; i += 1) {
+  updateTrajectory(trajectory: TrajectoryParameters) {
+    for (let i = this.trajectorySprites.sprites.length; i < trajectory.pointCount; i += 1) {
       const sprite = PIXI.Sprite.from('point.png');
-      this.trajectory.spriteGroup.addChild(sprite);
-      this.trajectory.sprites.push(sprite);
+      this.trajectorySprites.spriteGroup.addChild(sprite);
+      this.trajectorySprites.sprites.push(sprite);
     }
-    for (let i = this.trajectory.sprites.length - 1; i >= trajectory.pointCount; i -= 1) {
-      const sprite = this.trajectory.sprites.pop();
-      sprite && this.trajectory.spriteGroup.removeChild(sprite);
+    for (let i = this.trajectorySprites.sprites.length - 1; i >= trajectory.pointCount; i -= 1) {
+      const sprite = this.trajectorySprites.sprites.pop();
+      sprite && this.trajectorySprites.spriteGroup.removeChild(sprite);
     }
-    this.trajectory.sprites.forEach((sprite, i) => {
+    this.trajectorySprites.sprites.forEach((sprite, i) => {
       const [x, y] = trajectory.function(i, trajectory.pointCount);
       const [screenX, screenY] = gameToScreenPosition([x + trajectory.x, y + trajectory.y]);
       sprite.x = screenX;

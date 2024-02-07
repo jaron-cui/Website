@@ -9,7 +9,9 @@ export const DEFAULT_INPUT_MAP: InputMap = {
   right: 'd',
   jump: 'w',
   control: 'Control',
-  shift: 'Shift'
+  shift: 'Shift',
+  scrollUp: 'scrollup',
+  scrollDown: 'scrolldown'
 };
 
 export interface InputState {
@@ -21,7 +23,7 @@ export interface InputState {
   }
 }
 
-type ButtonPressAction = 'useMain' | 'useSecondary' | 'up' | 'left' | 'down' | 'right' | 'jump' | 'control' | 'shift';
+type ButtonPressAction = 'useMain' | 'useSecondary' | 'up' | 'left' | 'down' | 'right' | 'jump' | 'control' | 'shift' | 'scrollUp' | 'scrollDown';
 
 type InputMap = {
   [key in ButtonPressAction]: string;
@@ -57,7 +59,9 @@ export class InputHandler {
         right: false,
         jump: false,
         control: false,
-        shift: false
+        shift: false,
+        scrollUp: false,
+        scrollDown: false
       }
     }
   }
@@ -67,13 +71,22 @@ export class InputHandler {
 
     const leftClickTriggers: ButtonPressAction[] = [];
     const rightClickTriggers: ButtonPressAction[] = [];
+    const scrollUpTriggers: ButtonPressAction[] = [];
+    const scrollDownTriggers: ButtonPressAction[] = [];
     const keyboardTriggers: [string, ButtonPressAction][] = [];
+
+    const mouseButtonTriggers: Record<string, ButtonPressAction[]> = {
+      leftclick: leftClickTriggers,
+      rightclick: rightClickTriggers,
+      scrollup: scrollUpTriggers,
+      scrolldown: scrollDownTriggers
+    };
 
     let input: ButtonPressAction;
     for (input in inputMap) {
       const binding = inputMap[input];
-      const mouseTriggers = {leftclick: leftClickTriggers, rightclick: rightClickTriggers}[binding];
-      mouseTriggers ? mouseTriggers.push(input) : keyboardTriggers.push([binding, input]);
+      const mouseButtonTrigger = mouseButtonTriggers[binding];
+      mouseButtonTrigger ? mouseButtonTrigger.push(input) : keyboardTriggers.push([binding, input]);
     }
     const mouseDown = () => leftClickTriggers.forEach(trigger => this.triggers.onButtonPress[trigger](true, this.inputState));
     const mouseUp = () => leftClickTriggers.forEach(trigger => this.triggers.onButtonPress[trigger](false, this.inputState));
@@ -95,11 +108,20 @@ export class InputHandler {
         }
       });
     }
+    const scroll = (event: WheelEvent) => {
+      const sign = Math.sign(event.deltaY);
+      const triggers = sign > 0 ? scrollUpTriggers : scrollDownTriggers;
+      triggers.forEach(trigger => {
+        this.triggers.onButtonPress[trigger](true, this.inputState);
+        this.triggers.onButtonPress[trigger](false, this.inputState);
+      });
+    };
 
     this.app.stage.addEventListener('mousedown', mouseDown);
     this.app.stage.addEventListener('mouseup', mouseUp);
     this.app.stage.addEventListener('rightdown', rightDown);
     this.app.stage.addEventListener('rightup', rightUp);
+    this.app.stage.addEventListener('wheel', scroll);
     document.addEventListener('keydown', keyDown);
     document.addEventListener('keyup', keyUp);
 
@@ -107,8 +129,9 @@ export class InputHandler {
     this.handlers.push([this.app.stage, 'mouseup', mouseUp]);
     this.handlers.push([this.app.stage, 'rightdown', rightDown]);
     this.handlers.push([this.app.stage, 'rightup', rightUp]);
+    this.handlers.push([this.app.stage, 'wheel', scroll]);
     this.handlers.push([document, 'keydown', keyDown]);
-    this.handlers.push([this.app.stage, 'keyup', keyUp]);
+    this.handlers.push([document, 'keyup', keyUp]);
   }
 
   clearHandlers() {

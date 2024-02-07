@@ -1,3 +1,4 @@
+import { mod } from "../../../util/util";
 import { Entity } from "./entity";
 import { Player } from "./entity/player";
 import { InputState, InputTriggers } from "./input";
@@ -64,6 +65,14 @@ export class Game {
 
   getControlInterface(): InputTriggers {
     const onXChange = (_: boolean, inputState: InputState) => updateWalking(inputState, this.player);
+    const onScroll = (sign: number) => (pressed: boolean) => {
+      if (pressed) {
+        const inventory = this.player.data.inventory;
+        inventory.selected = mod((inventory.selected + sign), inventory.slots.length);
+        this.renderer.updateInventory(inventory);
+      }
+    };
+
     return {
       onButtonPress: {
         useMain: (_: boolean) => { },
@@ -74,7 +83,7 @@ export class Game {
                 user: this.player,
                 game: this,
                 slotNumber: this.player.data.inventory.selected
-              })
+              });
             });
           }
         },
@@ -84,8 +93,7 @@ export class Game {
         //   game.renderer.updateInventory(inventory);
         // },
         // onPointerMove: (screenX: number, screenY: number) => { },
-        up: (pressed: boolean) => {
-          
+        up: (_: boolean) => {
         },
         left: onXChange,
         right: onXChange,
@@ -95,6 +103,8 @@ export class Game {
         },
         control: () => { },
         shift: () => { },
+        scrollUp: onScroll(1),
+        scrollDown: onScroll(-1)
       },
       onType: () => {}
     }

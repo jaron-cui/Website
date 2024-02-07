@@ -73,6 +73,9 @@ async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
   app.ticker.minFPS = 40;
   app.ticker.maxFPS = 40;
 
+  app.stage.eventMode = 'static';
+  app.stage.hitArea = app.screen;
+
   const world = new World(WORLD);
 
   await loadTextures();
@@ -82,6 +85,9 @@ async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
   const renderer = new Renderer(world, app);
   renderer.updateTerrain();
   const game = new Game(player, world, renderer);
+
+  const inputHandler = new InputHandler(app, game.getControlInterface());
+  inputHandler.updateHandlers(DEFAULT_INPUT_MAP);
 
   const d = new Dynamite(14, 24);
   d.data.vx = -0.01;
@@ -104,39 +110,7 @@ async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
   player.data.inventory = inventory;
 
   app.ticker.add((delta: number) => {
-    t += 1;
-    if (t % 1 !== 0) {
-      return;
-    }
-    // renderer.updateAmbient();
-    // renderer.updateEntities();
-    // renderer.updateInventory(player.inventory);
-    // //quad.shader.uniforms.wind = Math.sin(t / 30) * 2.2;
-    // stepPhysics(world);
     game.tick();
-    // if (t % 100 === 0) {
-    //   (world.things.get(0) as Inertial).vy = 1;
-    // }
-    if (t % 10 === 0) {
-      // thing.fuse += 1;
-      // thing.fuse = thing.fuse % 10;
-    }
-    // if (t % 2 === 0) {
-    //   player.walkStage += 1;
-    // player.walkStage = player.walkStage % 7;
-    // }
-    // console.log(thing.fuse)
-  });
-
-  const inputHandler = new InputHandler(app, game.getControlInterface());
-  inputHandler.updateHandlers(DEFAULT_INPUT_MAP);
-
-  app.stage.eventMode = 'static';
-  app.stage.hitArea = app.screen;
-  app.stage.addEventListener('wheel', (event: WheelEvent) => {
-    const sign = Math.sign(event.deltaY);
-    inventory.selected = mod((inventory.selected + sign), inventory.slots.length);
-    renderer.updateInventory(inventory);
   });
   return app;
 };

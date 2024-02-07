@@ -411,7 +411,6 @@ export class Renderer {
       this.trajectory.sprites.push(sprite);
     }
     for (let i = this.trajectory.sprites.length - 1; i >= trajectory.pointCount; i -= 1) {
-      console.log('PURGING')
       const sprite = this.trajectory.sprites.pop();
       sprite && this.trajectory.spriteGroup.removeChild(sprite);
     }

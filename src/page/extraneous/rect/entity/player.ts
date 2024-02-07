@@ -24,6 +24,7 @@ interface PlayerData extends Inertial {
   walking: XDirection | undefined;
   facing: XDirection;
   jumping: boolean;
+  aiming: number;
 
   jumpBuffer: number;
   coyoteTimer: number;
@@ -57,7 +58,8 @@ export class Player extends BaseEntity<PlayerData> {
       inventory: {
         selected: 0,
         slots: [undefined, undefined, undefined, undefined, undefined]
-      }
+      },
+      aiming: 0
     });
   }
 

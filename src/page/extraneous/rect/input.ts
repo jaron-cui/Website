@@ -119,7 +119,7 @@ export class InputHandler {
     };
     const mouseMove = (event: MouseEvent) => {
       this.inputState.mousePosition = [event.clientX, event.clientY];
-      this.triggers.onPointerMove([event.clientX, event.clientY - 56]);
+      this.triggers.onPointerMove([event.clientX, event.clientY]);
     };
 
     this.app.stage.addEventListener('mousedown', mouseDown);

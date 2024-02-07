@@ -40,29 +40,6 @@ worldData.wrapMode = PIXI.WRAP_MODES.CLAMP;
 worldData.mipmap = PIXI.MIPMAP_MODES.OFF;
 worldData.scaleMode = PIXI.SCALE_MODES.NEAREST;
 
-interface UserInputs {
-  // left and right click, respectively
-  useMain: boolean;
-  useSecondary: boolean;
-  // integer representing number of scrolls where positive is up
-  scroll: number;
-  // pointer position on screen where 0 represents bottom or left and 1 represents top or right
-  pointerX: number;
-  pointerY: number;
-
-  // directional inputs
-  right: boolean;
-  left: boolean;
-  up: boolean;
-  down: boolean;
-
-  jump: boolean;
-
-  // ctrl + shift
-  control: boolean;
-  shift: boolean;
-}
-
 async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
   const app = new PIXI.Application<HTMLCanvasElement>({ background: '#7acdeb', width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
   // app.renderer.addListener('mousepos', (event: MouseEvent) => console.log(event.clientX));

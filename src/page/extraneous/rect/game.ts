@@ -121,6 +121,7 @@ export class Game {
         const player = this.player.data;
         const theta = Math.atan2(y - player.y, x - player.x);
         this.updateTrajectory(theta);
+        player.aiming = theta;
       }
     }
   }

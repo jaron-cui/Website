@@ -11,7 +11,10 @@ defineItem('dynamite', 'Dynamite', 1, condition => {
   const item = user.inventory.slots[condition.slotNumber] as ItemStack;
   // if already ignited, throw the dynamite
   if (item.data['ignited']) {
-    condition.game.spawn(new Dynamite(user.x, user.y, item.data['fuse'], item.data['fuseTick']));
+    const dynamite = new Dynamite(user.x, user.y, item.data['fuse'], item.data['fuseTick']);
+    [dynamite.data.vx, dynamite.data.vy] = [0.7 * Math.cos(user.aiming), 0.7 * Math.sin(user.aiming)];
+    condition.game.spawn(dynamite);
+
     item.quantity -= 1;
     item.data = {};
     return true;

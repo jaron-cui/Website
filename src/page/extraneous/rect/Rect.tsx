@@ -2,13 +2,11 @@ import * as PIXI from 'pixi.js';
 import { useEffect, useRef } from 'react';
 import { World, Block, Terrain, WORLD_HEIGHT, WORLD_WIDTH } from './world';
 import { Renderer, SCREEN_HEIGHT, SCREEN_WIDTH, loadTextures } from './render';
-import TypingHandler from '../../../component/TypingHandler';
-import { PlayerInventory, handleSlotUse } from './item';
-import { mod } from '../../../util/util';
+import { PlayerInventory } from './item';
 import { Game } from './game';
 import { Player } from './entity/player';
 import { Dynamite } from "./entity/dynamite";
-import { DEFAULT_INPUT_MAP, InputHandler, InputState, InputTriggers } from './input';
+import { DEFAULT_INPUT_MAP, InputHandler } from './input';
 
 const WORLD = new Terrain(WORLD_WIDTH, WORLD_HEIGHT);
 for (let x = 0; x < WORLD_WIDTH; x += 1) {

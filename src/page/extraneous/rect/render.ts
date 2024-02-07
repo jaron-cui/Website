@@ -3,8 +3,7 @@ import { SpriteSet, ArmaturePiecePose, World, Terrain, Block, WORLD_WIDTH, WORLD
 import { vertexShader, fragmentShader } from './shaders';
 import { ItemStack, PlayerInventory } from './item';
 // BEGIN EXPERIMENT IMPORTS
-import { Entity, EntityType } from './entity';
-import { Entity as Ent } from './entity';
+import { Entity } from './entity';
 import { GRAVITY } from './physics';
 // END EXPERIMENT IMPORTS
 
@@ -17,33 +16,12 @@ const GUI_TEXTURES: Record<string, SpriteSet> = {};
 
 export const DYNAMITE_FUSE_STATES = 9;
 
-// export abstract class AnimatedEntity implements Renderable {
-//   x: number;
-//   y: number;
-//   renderable: true;
-//   armaturePieceSprites: Record<string, SpriteSet>;
-  
-//   constructor(x: number, y: number) {
-//     this.x = x;
-//     this.y = y;
-
-//     this.armaturePieceSprites = {};
-//     const armatureSpriteSpecification = this.specifyArmatureSprites();
-//     for (const armaturePiece in armatureSpriteSpecification) {
-//       const armaturePiecesTexture = SPRITE_TEXTURES[armatureSpriteSpecification[armaturePiece]];
-//       if (!armaturePiecesTexture) {
-//         console.error('Could not find the sprite set ' + armatureSpriteSpecification[armaturePiece]);
-//       }
-//       this.armaturePieceSprites[armaturePiece] = armaturePiecesTexture;
-//     }
-
-//     this.renderable = true;
-//   }
-
-//   protected abstract specifyArmatureSprites(): Record<string, string>;
-
-//   abstract getArmaturePoses(): Record<string, ArmaturePiecePose>;
-// }
+export function gameToScreenPosition([x, y]: [number, number]): [number, number] {
+  return [(x + 0.5) * 20, SCREEN_HEIGHT - (y + 0.5) * 20];
+}
+export function screenToGamePosition([x, y]: [number, number]): [number, number] {
+  return [x / 20 - 0.5, (SCREEN_HEIGHT - y) / 20 - 0.5];
+}
 
 function getItemFrame(item: ItemStack | undefined): number {
   const sprites = ITEM_TEXTURES[''];
@@ -321,9 +299,9 @@ class Armature {
         continue;
       }
       const pose = poses[bone];
-
-      piece.x = (this.x + (pose.rx || 0) + 0.5) * 20;
-      piece.y = SCREEN_HEIGHT - (this.y + (pose.ry || 0) + 0.5) * 20;
+      const [screenX, screenY] = gameToScreenPosition([this.x + (pose.rx || 0), this.y + (pose.ry || 0)]);
+      piece.x = screenX;
+      piece.y = screenY;
 
       piece.currentFrame = this.template[bone].getFrameIndex(pose.animation, pose.frame);
 
@@ -373,7 +351,7 @@ export class Renderer {
   terrainLayer: PIXI.Mesh<PIXI.Shader>;
   entityArmatures: Map<number, Armature>;
   inventorySlots: InventorySlotSprites[];
-  trajectory?: Trajectory;
+  trajectory: Trajectory;
 
   constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
@@ -394,31 +372,54 @@ export class Renderer {
     
     const particles = new PIXI.ParticleContainer();
     this.app.stage.addChild(particles);
-    this.updateTrajectory({
+    this.trajectory = {
       x: 0,
       y: 0,
-      pointCount: 40,
+      pointCount: 0,
       function: getThrowingTrajectory(Math.PI / 4, 0.7),
       sprites: [],
       spriteGroup: particles
-    })
+    }
+  }
+
+  setThrowing(theta: number | false, x?: number, y?: number) {
+    if (theta === false) {
+      this.updateTrajectory({
+        x: 0,
+        y: 0,
+        pointCount: 0,
+        function: getThrowingTrajectory(Math.PI / 4, 0.7),
+        sprites: [],
+        spriteGroup: this.trajectory.spriteGroup
+      });
+    } else {
+      this.updateTrajectory({
+        x: x || 0,
+        y: y || 0,
+        pointCount: 40,
+        function: getThrowingTrajectory(theta, 0.7),
+        sprites: [],
+        spriteGroup: this.trajectory.spriteGroup
+      });
+    }
   }
 
   updateTrajectory(trajectory: Trajectory) {
-    this.trajectory = trajectory;
     for (let i = trajectory.sprites.length; i < trajectory.pointCount; i += 1) {
       const sprite = PIXI.Sprite.from('point.png');
-      trajectory.spriteGroup.addChild(sprite);
-      trajectory.sprites.push(sprite);
+      this.trajectory.spriteGroup.addChild(sprite);
+      this.trajectory.sprites.push(sprite);
     }
-    for (let i = trajectory.sprites.length - 1; i >= trajectory.pointCount; i -= 1) {
-      const sprite = trajectory.sprites.pop();
-      sprite && trajectory.spriteGroup.removeChild(sprite);
+    for (let i = this.trajectory.sprites.length - 1; i >= trajectory.pointCount; i -= 1) {
+      console.log('PURGING')
+      const sprite = this.trajectory.sprites.pop();
+      sprite && this.trajectory.spriteGroup.removeChild(sprite);
     }
-    trajectory.sprites.forEach((sprite, i) => {
+    this.trajectory.sprites.forEach((sprite, i) => {
       const [x, y] = trajectory.function(i, trajectory.pointCount);
-      sprite.x = 100 + x * 20;
-      sprite.y = SCREEN_HEIGHT - (100 + y * 20);
+      const [screenX, screenY] = gameToScreenPosition([x + trajectory.x, y + trajectory.y]);
+      sprite.x = screenX;
+      sprite.y = screenY;
     });
   }
 

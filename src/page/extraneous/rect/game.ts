@@ -4,7 +4,7 @@ import { Player } from "./entity/player";
 import { InputState, InputTriggers } from "./input";
 import { ITEMS, handleSlotUse } from "./item";
 import { stepPhysics } from "./physics";
-import { Renderer } from "./render";
+import { Renderer, screenToGamePosition } from "./render";
 import { Block, World } from "./world";
 
 export class Game {
@@ -63,6 +63,14 @@ export class Game {
     }
   }
 
+  updateTrajectory(theta: number | false) {
+    if (this.player.data.inventory.slots[this.player.data.inventory.selected]?.id === 'dynamite') {
+      this.renderer.setThrowing(theta, this.player.data.x, this.player.data.y);
+    } else {
+      this.renderer.setThrowing(false);
+    }
+  }
+
   getControlInterface(): InputTriggers {
     const onXChange = (_: boolean, inputState: InputState) => updateWalking(inputState, this.player);
     const onScroll = (sign: number) => (pressed: boolean) => {
@@ -106,7 +114,14 @@ export class Game {
         scrollUp: onScroll(1),
         scrollDown: onScroll(-1)
       },
-      onType: () => {}
+      onType: () => {},
+      onPointerMove: ([screenX, screenY]) => {
+        console.log(screenX + ' ' + screenY);
+        const [x, y] = screenToGamePosition([screenX, screenY]);
+        const player = this.player.data;
+        const theta = Math.atan2(y - player.y, x - player.x);
+        this.updateTrajectory(theta);
+      }
     }
   }
 }

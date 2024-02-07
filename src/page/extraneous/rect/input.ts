@@ -34,6 +34,7 @@ export type InputTriggers = {
     [key in ButtonPressAction]: (buttonDown: boolean, inputState: InputState) => void;
   }
   onType: (key: string) => void;
+  onPointerMove: (screenPosition: [number, number]) => void;
 }
 
 export class InputHandler {
@@ -116,12 +117,17 @@ export class InputHandler {
         this.triggers.onButtonPress[trigger](false, this.inputState);
       });
     };
+    const mouseMove = (event: MouseEvent) => {
+      this.inputState.mousePosition = [event.clientX, event.clientY];
+      this.triggers.onPointerMove([event.clientX, event.clientY - 56]);
+    };
 
     this.app.stage.addEventListener('mousedown', mouseDown);
     this.app.stage.addEventListener('mouseup', mouseUp);
     this.app.stage.addEventListener('rightdown', rightDown);
     this.app.stage.addEventListener('rightup', rightUp);
     this.app.stage.addEventListener('wheel', scroll);
+    this.app.stage.addEventListener('mousemove', mouseMove);
     document.addEventListener('keydown', keyDown);
     document.addEventListener('keyup', keyUp);
 
@@ -130,6 +136,7 @@ export class InputHandler {
     this.handlers.push([this.app.stage, 'rightdown', rightDown]);
     this.handlers.push([this.app.stage, 'rightup', rightUp]);
     this.handlers.push([this.app.stage, 'wheel', scroll]);
+    this.handlers.push([this.app.stage, 'mousemove', mouseMove]);
     this.handlers.push([document, 'keydown', keyDown]);
     this.handlers.push([document, 'keyup', keyUp]);
   }

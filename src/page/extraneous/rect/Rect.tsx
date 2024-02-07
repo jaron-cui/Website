@@ -45,80 +45,115 @@ interface InputState {
   leftClick: boolean;
   rightClick: boolean;
   mousePosition: [number, number];
-  buttonsDown: Set<string>;
+  buttonsDown: {
+    [key in ButtonPressAction]: boolean;
+  }
 }
 
-interface InputMap {
-  useMain: string;
-  useSecondary: string;
-  // TODO: let scrolling be reconfigurable
-  up: string;
-  down: string;
-  left: string;
-  right: string;
+type ButtonPressAction = 'useMain' | 'useSecondary' | 'up' | 'left' | 'down' | 'right' | 'jump' | 'control' | 'shift';
 
-  jump: string;
+type InputMap = {
+  [key in ButtonPressAction]: string;
+};
 
-  control: string;
-  shift: string;
+type InputTriggers = {
+  onButtonPress: {
+    [key in ButtonPressAction]: (buttonDown: boolean, inputState: InputState) => void;
+  }
+  onType: (key: string) => void;
 }
 
 const DEFAULT_INPUT_MAP: InputMap = {
   useMain: 'leftclick',
   useSecondary: 'rightclick',
   up: 'w',
-  down: 's',
   left: 'a',
+  down: 's',
   right: 'd',
   jump: 'w',
   control: 'Control',
   shift: 'Shift'
 };
 
-function addEventHandler(
-  target: {addEventListener: (type: string, trigger: any, bool?: boolean) => any},
-  type: string,
-  callback: (pressed: boolean) => void
-): [string, (event: any) => void][] {
-  const pressedTrigger = () => callback(true);
-  switch(type) {
-    case 'leftclick':
-      target.addEventListener('click', pressedTrigger, false);
-      return [['leftclick', pressedTrigger]];
-    case 'rightclick':
-      target.addEventListener('rightclick', pressedTrigger, false);
-      return [['rightclick', pressedTrigger]];
-    default:
-      const keyDownHandler = (event: KeyboardEvent) => event.key === type && callback(true);
-      const keyUpHandler = (event: KeyboardEvent) => event.key === type && callback(false);
-      document.addEventListener('keydown', keyDownHandler, false);
-      document.addEventListener('keyup', keyUpHandler, false);
-      return [
-        ['keydown', keyDownHandler],
-        ['keyup', keyUpHandler]
-      ];
-  }
-}
-
 class InputHandler {
   app: PIXI.Application<HTMLCanvasElement>
-  handlers: [string, (event: Event) => void][];
+  handlers: [any, string, (event: any) => void][];
   triggers: InputTriggers;
+  inputState: InputState;
 
   constructor(app: PIXI.Application<HTMLCanvasElement>, triggers: InputTriggers) {
     this.app = app;
     this.triggers = triggers;
     this.handlers = [];
+    this.inputState = {
+      leftClick: false,
+      rightClick: false,
+      mousePosition: [0, 0],
+      buttonsDown: {
+        useMain: false,
+        useSecondary: false,
+        up: false,
+        left: false,
+        down: false,
+        right: false,
+        jump: false,
+        control: false,
+        shift: false
+      }
+    }
   }
 
   updateHandlers(inputMap: InputMap) {
     this.clearHandlers();
-    const handlers = addEventHandler(this.app.stage, inputMap.jump, this.triggers.onJumpChange);
-    handlers.forEach(pairing => this.handlers.push(pairing));
+
+    const leftClickTriggers: ButtonPressAction[] = [];
+    const rightClickTriggers: ButtonPressAction[] = [];
+    const keyboardTriggers: [string, ButtonPressAction][] = [];
+
+    let input: ButtonPressAction;
+    for (input in inputMap) {
+      const binding = inputMap[input];
+      const mouseTriggers = {leftclick: leftClickTriggers, rightclick: rightClickTriggers}[binding];
+      mouseTriggers ? mouseTriggers.push(input) : keyboardTriggers.push([binding, input]);
+    }
+    const mouseDown = () => leftClickTriggers.forEach(trigger => this.triggers.onButtonPress[trigger](true, this.inputState));
+    const mouseUp = () => leftClickTriggers.forEach(trigger => this.triggers.onButtonPress[trigger](false, this.inputState));
+    const rightDown = () => rightClickTriggers.forEach(trigger => this.triggers.onButtonPress[trigger](true, this.inputState));
+    const rightUp = () => rightClickTriggers.forEach(trigger => this.triggers.onButtonPress[trigger](false, this.inputState));
+    const keyDown = (event: KeyboardEvent) => {
+      keyboardTriggers.forEach(([key, trigger]) => {
+        if (event.key === key) {
+          this.inputState.buttonsDown[trigger] = true;
+          this.triggers.onButtonPress[trigger](true, this.inputState);
+        }
+      });
+    }
+    const keyUp = (event: KeyboardEvent) => {
+      keyboardTriggers.forEach(([key, trigger]) => {
+        if (event.key === key) {
+          this.inputState.buttonsDown[trigger] = false;
+          this.triggers.onButtonPress[trigger](false, this.inputState);
+        }
+      });
+    }
+
+    this.app.stage.addEventListener('mousedown', mouseDown);
+    this.app.stage.addEventListener('mouseup', mouseUp);
+    this.app.stage.addEventListener('rightdown', rightDown);
+    this.app.stage.addEventListener('rightup', rightUp);
+    document.addEventListener('keydown', keyDown);
+    document.addEventListener('keyup', keyUp);
+
+    this.handlers.push([this.app.stage, 'mousedown', mouseDown]);
+    this.handlers.push([this.app.stage, 'mouseup', mouseUp]);
+    this.handlers.push([this.app.stage, 'rightdown', rightDown]);
+    this.handlers.push([this.app.stage, 'rightup', rightUp]);
+    this.handlers.push([document, 'keydown', keyDown]);
+    this.handlers.push([this.app.stage, 'keyup', keyUp]);
   }
 
   clearHandlers() {
-    this.handlers.forEach(([trigger, handler]) => this.app.stage.removeEventListener(trigger, handler));
+    this.handlers.forEach(([container, trigger, handler]) => container.removeEventListener(trigger, handler));
     this.handlers = [];
   }
 }
@@ -146,23 +181,6 @@ interface UserInputs {
   shift: boolean;
 }
 
-interface InputTriggers {
-  onPrimaryUseChange: (pressed: boolean) => void;
-  onSecondaryUseChange: (pressed: boolean) => void;
-  onScroll: (upBy: number) => void;
-  onPointerMove: (screenX: number, screenY: number) => void;
-
-  onUpChange: (pressed: boolean) => void;
-  onLeftChange: (pressed: boolean) => void;
-  onDownChange: (pressed: boolean) => void;
-  onRightChange: (pressed: boolean) => void;
-
-  onJumpChange: (pressed: boolean) => void;
-
-  onControlChange: (pressed: boolean) => void;
-  onShiftChange: (pressed: boolean) => void;
-}
-
 function updateWalking(heldInputs: UserInputs, player: Player) {
   const netWalk = +!!heldInputs.right - +!!heldInputs.left;
   if (netWalk > 0) {
@@ -174,38 +192,41 @@ function updateWalking(heldInputs: UserInputs, player: Player) {
   }
 }
 
-function defineInputTriggers(game: Game, heldInputs: UserInputs): InputTriggers{
-  const onXChange = () => updateWalking(heldInputs, game.player);
+function defineInputTriggers(game: Game, inputContext: UserInputs): InputTriggers{
+  const onXChange = () => updateWalking(inputContext, game.player);
   return {
-    onPrimaryUseChange: (pressed: boolean) => { },
-    onSecondaryUseChange: (pressed: boolean) => {
-      if (pressed) {
-        game.actionQueue.push(() => {
-          handleSlotUse({
-            user: game.player,
-            game: game,
-            slotNumber: game.player.data.inventory.selected
-          })
-        });
-      }
+    onButtonPress: {
+      useMain: (pressed: boolean) => { },
+      useSecondary: (pressed: boolean) => {
+        if (pressed) {
+          game.actionQueue.push(() => {
+            handleSlotUse({
+              user: game.player,
+              game: game,
+              slotNumber: game.player.data.inventory.selected
+            })
+          });
+        }
+      },
+      // onScroll: (upBy: number) => {
+      //   const inventory = game.player.data.inventory;
+      //   inventory.selected = mod((inventory.selected - upBy), inventory.slots.length);
+      //   game.renderer.updateInventory(inventory);
+      // },
+      // onPointerMove: (screenX: number, screenY: number) => { },
+      up: (pressed: boolean) => {
+        
+      },
+      left: onXChange,
+      right: () => { },
+      down: onXChange,
+      jump: () => {
+        game.player.data.jumping = inputContext.jump;
+      },
+      control: () => { },
+      shift: () => { },
     },
-    onScroll: (upBy: number) => {
-      const inventory = game.player.data.inventory;
-      inventory.selected = mod((inventory.selected - upBy), inventory.slots.length);
-      game.renderer.updateInventory(inventory);
-    },
-    onPointerMove: (screenX: number, screenY: number) => { },
-    onUpChange: (pressed: boolean) => {
-      
-    },
-    onLeftChange: onXChange,
-    onDownChange: () => { },
-    onRightChange: onXChange,
-    onJumpChange: () => {
-      game.player.data.jumping = heldInputs.jump;
-    },
-    onControlChange: () => { },
-    onShiftChange: () => { },
+    onType: () => {}
   }
 }
 

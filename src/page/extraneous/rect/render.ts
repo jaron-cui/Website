@@ -34,6 +34,8 @@ function getItemFrame(item: ItemStack | undefined): number {
       const fuseState = item.data['fuse'] === undefined ? 0 : Math.floor(fuseMax * (1 - item.data['fuse']));
       // console.log(fuseState + ' ' + item.data['fuse'])
       return sprites.getFrameIndex('dynamite', Math.max(0, Math.min(fuseMax, fuseState)));
+    case 'pickaxe':
+      return sprites.getFrameIndex('pickaxe', 0);
     default:
       return sprites.getFrameIndex('unknown', 0);
   }
@@ -114,6 +116,22 @@ const GUI_TEXTURE_SCHEMA = {
   }
 }
 
+const TOOL_TEXTURE_SCHEMA = {
+  frames: {
+    'pickaxe': frame(0, 0, 8, 8),
+    'spear': frame(0, 8, 8, 8),
+    'knife': frame(0, 16, 8, 8),
+    'rapier': frame(0, 24, 8, 8),
+    'broadsword': frame(0, 32, 8, 8)
+  },
+  meta: {
+    image: 'tool.png',
+    format: 'RGBA8888',
+    size: {w: 8, h: 40},
+    scale: '1'
+  }
+}
+
 export async function loadTextures() {
   // async function loadFromSchema(spriteSet: string, schema: any) {
   //   const sprites = new PIXI.Spritesheet(PIXI.BaseTexture.from(schema.meta.image), schema);
@@ -157,8 +175,18 @@ export async function loadTextures() {
   });
   PIXI.utils.clearTextureCache();
 
+  const toolTex = PIXI.BaseTexture.from(TOOL_TEXTURE_SCHEMA.meta.image);
+  toolTex.scaleMode = PIXI.SCALE_MODES.NEAREST;
+  const toolSprites = new PIXI.Spritesheet(toolTex, TOOL_TEXTURE_SCHEMA);
+  await toolSprites.parse();
+
   const itemSprites = new SpriteSet({
     dynamite: dynamiteSprites.animations.ignition,
+    pickaxe: [toolSprites.textures['pickaxe']],
+    spear: [toolSprites.textures['spear']],
+    knife: [toolSprites.textures['knife']],
+    rapier: [toolSprites.textures['rapier']],
+    broadsword: [toolSprites.textures['broadsword']],
     unknown: [PIXI.Texture.from('unknown.png')],
     none: [PIXI.Texture.EMPTY]
   });
@@ -459,9 +487,10 @@ export class Renderer {
       // set selection indicator
       const selection = i === inventory.selected ? 'selected' : 'unselected';
       const sprites = this.inventorySlots[i];
+      const count = inventory.slots[i]?.quantity;
       sprites.slot.currentFrame = GUI_TEXTURES['inventory'].getFrameIndex(selection, 0);
       sprites.item.currentFrame = getItemFrame(inventory.slots[i]);
-      sprites.count.modify((inventory.slots[i]?.quantity || '') + '');
+      sprites.count.modify((count || 0) > 1 ? count + '' : '');
     }
   }
 

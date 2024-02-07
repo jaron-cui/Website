@@ -77,7 +77,11 @@ async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
         quantity: 5,
         data: {}
       },
-      undefined,
+      {
+        id: 'pickaxe',
+        quantity: 1,
+        data: {}
+      },
       undefined,
       undefined
     ]

@@ -1,4 +1,4 @@
-import { Entity, EntityType, Inertial } from "./entity";
+import { Entity, EntityData, EntityType, Inertial } from "./entity";
 import { Game } from "./game";
 import { World, Block } from "./world";
 
@@ -17,6 +17,64 @@ type CollisionResponse = 'bounce' | 'block' | 'stick';
 // block + block ->   block each other - inelastic collision, pushing
 // block + stick  ->  stick to each other (stick overrides block)
 // stick + stick   -> stick to each other
+
+// between timeframes, convert forces to impulses.
+// impulses differ from forces, but we calculate forces with impulse logic
+// every impulse may have a reaction impulse.
+
+// forces are updated externally and then persist through the frame:
+// 1. walking - hangs around
+// 2. friction/normal: added in response to other forces.
+// 3. wind
+// forces are cleared at the end of the frame so external sources can
+// continue applying them or not
+
+// impulses appear at the beginning of the frame and are converted to momentum
+// they do not induce continuous friction, just response impulses. maybe instantaneous friction
+// 1. knockback
+// 2. explosions
+// 3. reactions to collisions
+
+// we should process collisions and contact differently.
+// detect collision (|relative velocity| > 0, contact doesn't matter, forces don't matter) -> apply reaction impulse instantaneously
+// detect contact (relative velocity = 0, contacting surfaces, forces into surface) -> update reaction forces
+
+export interface Forces {
+  external: [number, number][];
+  reaction: [number, number][];
+}
+
+function netExternalForce(forces: Forces): [number, number] {
+  return forces.external.reduce(([totalX, totalY], [x, y]) => [totalX + x, totalY + y], [0, 0]);
+}
+
+function netForce(forces: Forces): [number, number] {
+  return forces.external.concat(forces.reaction).reduce(([totalX, totalY], [x, y]) => [totalX + x, totalY + y], [0, 0]);
+}
+
+function applyNetForces(inertial: Inertial) {
+  const [fx, fy] = netForce(inertial.netForces);
+  inertial.vx += fx / inertial.mass;
+  inertial.vy += fy / inertial.mass;
+  inertial.netForces.external.splice(0);
+  inertial.netForces.reaction.splice(0);
+}
+
+function momentum(inertial: Inertial) {
+  return [inertial.vx * inertial.mass, inertial.vy * inertial.mass];
+}
+
+export function impartDirectionalForce(inertial: Inertial, f: number, theta: number) {
+  impartForce(inertial, [f * Math.cos(theta), f * Math.sin(theta)]);
+}
+
+export function impartForce(inertial: Inertial, [xf, yf]: [number, number]) {
+  inertial.netForces.external.push([xf, yf]);
+}
+
+function impartReaction(inertial: Inertial, [xf, yf]: [number, number]) {
+  inertial.netForces.reaction.push([xf, yf]);
+}
 
 type ThingCollisionEvent = {
   time: number;
@@ -235,9 +293,6 @@ function getNextTerrainCollision(world: World, inertials: Entity[]): TerrainColl
       }
     }
       
-    if ((tx !== Infinity || ty!== Infinity) && vy > 0) {
-      console.log(tx + ' ' + ty);
-    }
     if (tx < ty) {
       if (tx < nextCollision.time) {
         nextCollision = { time: tx, id: thing.id, axis: [xa, 0] };
@@ -254,10 +309,21 @@ function getNextTerrainCollision(world: World, inertials: Entity[]): TerrainColl
 function stepEverythingBy(time: number, world: World, exclude?: number) {
   for (const thing of world.things.values()) {
     if (thing.inertial) {
+      applyNetForces(thing.data);
       thing.data.x += thing.data.vx * time;
       thing.data.y += thing.data.vy * time;
     }
   }
+}
+
+function calculateFriction(relativeMomentum: number, normal: number, friction1: number, friction2: number) {
+  const fs = (friction1 + friction2) / 2;
+  const fd = fs;
+  if (relativeMomentum === 0) {
+    const maxStaticFriction = fs * Math.abs(normal);
+
+  }
+
 }
 
 function processTerrainCollision(collision: TerrainCollisionEvent, world: World) {
@@ -271,13 +337,14 @@ function processTerrainCollision(collision: TerrainCollisionEvent, world: World)
     return;
   }
   // TODO: make more complex collision interactions such as bounce
+  const moment = momentum(thing.data);
   if (collision.axis[0] !== 0) {
     thing.data.x += collision.time * thing.data.vx;
     thing.data.hittingWall = collision.axis[0] === -1 ? 'left' : 'right';
-    thing.data.vx = 0;
+    impartReaction(thing.data, [-moment[0], 0]);
   } else {
     thing.data.y += collision.time * thing.data.vy;
-    thing.data.vy = 0;
+    impartReaction(thing.data, [0, -moment[1]]);
     thing.data.onGround = collision.axis[1] === -1;
   }
   stepEverythingBy(collision.time, world, collision.id);

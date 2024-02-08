@@ -67,7 +67,11 @@ export class Player extends BaseEntity<PlayerData> {
         mortal: true
       },
       health: 100,
-      maxHealth: 100
+      maxHealth: 100,
+      netForces: {
+        external: [],
+        reaction: []
+      }
     });
   }
 

@@ -1,4 +1,4 @@
-import { Entity, Inertial } from "./entity";
+import { Entity, EntityType, Inertial } from "./entity";
 import { Game } from "./game";
 import { World, Block } from "./world";
 
@@ -7,6 +7,16 @@ export const GRAVITY = -0.05;
 export function distance(a: [number, number], b: [number, number]): number {
   return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
 }
+
+type CollisionResponse = 'bounce' | 'block' | 'stick';
+// terrain collision will usually be 'block'
+// combinations:
+// bounce + bounce -> bounce off each other w some threshold
+// bounce + block ->  bounce off each other (bounce overrides block)
+// bounce + stick ->  stick to each other (stick overrides bounce)
+// block + block ->   block each other - inelastic collision, pushing
+// block + stick  ->  stick to each other (stick overrides block)
+// stick + stick   -> stick to each other
 
 type ThingCollisionEvent = {
   time: number;
@@ -34,9 +44,14 @@ function rangesOverlap(a0: number, a1: number, b0: number, b1: number): boolean 
   );
 }
 
+function cornersTouch(a0: number, a1: number, b0: number, b1: number): boolean {
+  return a0 === b1 || a1 === b0;
+}
+
 function calculateThingCollision(id1: number, thing1: Inertial, id2: number, thing2: Inertial): ThingCollisionEvent {
   const { x: x1, y: y1, w: w1, h: h1, vx: vx1, vy: vy1 } = thing1;
   const { x: x2, y: y2, w: w2, h: h2, vx: vx2, vy: vy2 } = thing2;
+  let cornerCollision = false;
   // difference in velocity on x and y axes
   const dvx = vx2 - vx1;
   const dvy = vy2 - vy1;
@@ -55,7 +70,11 @@ function calculateThingCollision(id1: number, thing1: Inertial, id2: number, thi
     const lo2 = y2 - h2 / 2 + tx * vy2;
     const hi2 = y2 + h2 / 2 + tx * vy2;
     if(!rangesOverlap(lo1, hi1, lo2, hi2)) {
-      tx = Infinity;
+      if (cornersTouch(lo1, hi1, lo2, hi2)) {
+        cornerCollision = true;
+      } else {
+        tx = Infinity;
+      }
     }
   }
 
@@ -70,11 +89,22 @@ function calculateThingCollision(id1: number, thing1: Inertial, id2: number, thi
     const lo2 = x2 - w2 / 2 + ty * vx2;
     const hi2 = x2 + w2 / 2 + ty * vx2;
     if(!rangesOverlap(lo1, hi1, lo2, hi2)) {
-      ty = Infinity;
+      if (cornersTouch(lo1, hi1, lo2, hi2)) {
+        cornerCollision = true;
+      } else {
+        ty = Infinity;
+      }
     }
   }
 
   const axis: [number, number] = [0, 0];
+  if (tx == ty) {
+    if (Math.abs(dvx) < Math.abs(dvy)) {
+      ty = Infinity;
+    } else {
+      tx = Infinity;
+    }
+  }
   if (tx < ty) {
     axis[0] = xa;
   } else {
@@ -101,6 +131,10 @@ function getNextThingCollision(inertials: Entity[]): ThingCollisionEvent {
   return nextCollision;
 }
 
+function solidBlock(block: Block): boolean {
+  return block != Block.Air && block != Block.Grasses;
+}
+
 function getNextTerrainCollision(world: World, inertials: Entity[]): TerrainCollisionEvent {
   let nextCollision: TerrainCollisionEvent = { time: Infinity, id: -1, axis: [0, 0] };
   for (const thing of inertials) {
@@ -108,29 +142,42 @@ function getNextTerrainCollision(world: World, inertials: Entity[]): TerrainColl
     const xa = vx < 0 ? -1 : 1;
     const ya = vy < 0 ? -1 : 1;
     let tx = Infinity;
-    {
+    if (vx !== 0) {
       const hitboxEdge = x + xa * w / 2;
       let nextBlock = xa === 1 ? Math.ceil(hitboxEdge + 0.5) : Math.floor(hitboxEdge - 0.5);
       while (true) {
         let t = (nextBlock - xa * 0.5 - hitboxEdge) / vx;
+        let collision = false;
         if (t > 1) {
           break;
         }
-        // TODO: there is going to be some assymetry into how block corner collisions are handled
-        // Fix this by explicity handling the 0.5 case, for which round has a 50/50 variability
         const bottom = y - h / 2 + t * vy;
         const top = y + h / 2 + t * vy;
-        const minY = Math.round(bottom);
-        const maxY = Math.floor(top);
-        let collision = false;
-        for (let by = minY; by <= maxY; by += 1) {
-          const block = world.terrain.at(nextBlock, by);
-          if (block != Block.Air && block != Block.Grasses) {
+
+        if (bottom - Math.floor(bottom) === 0.5) {
+          const block = world.terrain.at(nextBlock, Math.floor(bottom));
+          if (Math.abs(vx) < Math.abs(vy) && solidBlock(block)) {
             tx = t;
             collision = true;
-            if (thing.id === 2) {
-              //console.log('colliding with ' + nextBlock + ' position ' + thing.x);
-            }
+            break;
+          } 
+        }
+        if (top - Math.floor(top) === 0.5) {
+          const block = world.terrain.at(nextBlock, Math.ceil(top));
+          if (Math.abs(vx) < Math.abs(vy) && solidBlock(block)) {
+            tx = t;
+            collision = true;
+            break;
+          }
+        }
+
+        const minY = Math.round(bottom);
+        const maxY = -Math.round(-top);
+        for (let by = minY; by <= maxY; by += 1) {
+          const block = world.terrain.at(nextBlock, by);
+          if (solidBlock(block)) {
+            tx = t;
+            collision = true;
             break;
           }
         }
@@ -141,36 +188,55 @@ function getNextTerrainCollision(world: World, inertials: Entity[]): TerrainColl
       }
     }
 
-    const hitboxEdge = y + ya * h / 2;
-    let nextBlock = ya === 1 ? Math.ceil(hitboxEdge + 0.5) : Math.floor(hitboxEdge - 0.5);
     let ty = Infinity;
-    while (true) {
-      let t = (nextBlock - ya * 0.5 - hitboxEdge) / vy;
-      if (t > 1) {
-        break;
-      }
-      // TODO: there is going to be some assymetry into how block corner collisions are handled
-      // Fix this by explicity handling the 0.5 case, for which round has a 50/50 variability
-      const bottom = x - w / 2 + t * vx;
-      const top = x + w / 2 + t * vx;
-      const minX = Math.round(bottom);
-      const maxX = -Math.round(-top);
-      let collision = false;
-      for (let bx = minX; bx <= maxX; bx += 1) {
-        const block = world.terrain.at(bx, nextBlock);
-        if (block != Block.Air && block != Block.Grasses) {
-          ty = t;
-          collision = true;
-          // if (thing.id === 2) {
-          //   console.log('y colliding with ' + nextBlock + ' position ' + thing.x + ', ' + thing.y);
-          // }
+    if (vy !== 0) {
+      const hitboxEdge = y + ya * h / 2;
+      let nextBlock = ya === 1 ? Math.ceil(hitboxEdge + 0.5) : Math.floor(hitboxEdge - 0.5);
+      while (true) {
+        let t = (nextBlock - ya * 0.5 - hitboxEdge) / vy;
+        let collision = false;
+        if (t > 1) {
           break;
         }
+        const bottom = x - w / 2 + t * vx;
+        const top = x + w / 2 + t * vx;
+
+        if (bottom - Math.floor(bottom) === 0.5) {
+          const block = world.terrain.at(nextBlock, Math.floor(bottom));
+          if (Math.abs(vx) >= Math.abs(vy) && solidBlock(block)) {
+            ty = t;
+            collision = true;
+            break;
+          } 
+        }
+        if (top - Math.floor(top) === 0.5) {
+          const block = world.terrain.at(nextBlock, Math.ceil(top));
+          if (Math.abs(vx) >= Math.abs(vy) && solidBlock(block)) {
+            ty = t;
+            collision = true;
+            break;
+          }
+        }
+
+        const minX = Math.round(bottom);
+        const maxX = -Math.round(-top);
+        for (let bx = minX; bx <= maxX; bx += 1) {
+          const block = world.terrain.at(bx, nextBlock);
+          if (block != Block.Air && block != Block.Grasses) {
+            ty = t;
+            collision = true;
+            break;
+          }
+        }
+        if (collision) {
+          break;
+        }
+        nextBlock += ya;
       }
-      if (collision) {
-        break;
-      }
-      nextBlock += ya;
+    }
+      
+    if ((tx !== Infinity || ty!== Infinity) && vy > 0) {
+      console.log(tx + ' ' + ty);
     }
     if (tx < ty) {
       if (tx < nextCollision.time) {
@@ -231,7 +297,6 @@ export function stepPhysics(game: Game) {
       thing.data.vy += GRAVITY;
       thing.data.onGround = false;
       thing.data.hittingWall = undefined;
-      // console.log(JSON.stringify(thing));
     }
   }
   let timeLeft = 1.0;

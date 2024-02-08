@@ -5,10 +5,7 @@ import { distance } from "../physics";
 import { DYNAMITE_FUSE_STATES } from "../render";
 import { ArmaturePiecePose, Block } from "../world";
 
-interface DynamiteData extends Inertial {
-  explosionRadius: number;
-  maxExplosionDamage: number;
-
+type DynamiteData = Inertial & Explosive & {
   fuse: number;
   fuseTick: number;
 }
@@ -28,7 +25,12 @@ export class Dynamite extends BaseEntity<DynamiteData> {
       x: x,
       y: y,
       w: 0.5,
-      h: 1
+      h: 1,
+      implements: {
+        physical: true,
+        inertial: true,
+        explosive: true
+      }
     });
   }
 

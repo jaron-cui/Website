@@ -1,4 +1,4 @@
-import { BaseEntity, Inertial } from "../entity";
+import { BaseEntity, Inertial, Mortal } from "../entity";
 import { PlayerInventory } from "../item";
 import { GRAVITY } from "../physics";
 import { XDirection, ArmaturePiecePose } from "../world";
@@ -18,7 +18,7 @@ const AIR_FRICTION = 0.005;
 const WALL_FRICTION = GRAVITY * -0.9;
 const WALL_JUMP_SPEED = JUMP_SPEED * 0.6;
 
-export interface PlayerData extends Inertial {
+export type PlayerData = Inertial & Mortal & {
   walkStage: number;
 
   walking: XDirection | undefined;
@@ -60,7 +60,14 @@ export class Player extends BaseEntity<PlayerData> {
         selected: 0,
         slots: [undefined, undefined, undefined, undefined, undefined]
       },
-      aimEffort: 0
+      aimEffort: 0,
+      implements: {
+        physical: true,
+        inertial: true,
+        mortal: true
+      },
+      health: 100,
+      maxHealth: 100
     });
   }
 

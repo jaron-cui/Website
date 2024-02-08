@@ -7,14 +7,20 @@ import { XDirection, ArmaturePiecePose, SpriteSet } from "./world";
 export const DYNAMITE_FUSE_RATE = 1/18;
 export const DYNAMITE_FUSE_TICK = 10;
 
-export interface Physical {
+export type Physical = {
+  implements: {
+    physical: true
+  },
   x: number;
   y: number;
   w: number;
   h: number;
 }
 
-export interface Inertial extends Physical {
+export type Inertial = Physical & {
+  implements: {
+    inertial: true
+  },
   vx: number;
   vy: number;
   mass: number;
@@ -22,21 +28,38 @@ export interface Inertial extends Physical {
   hittingWall?: XDirection;
 }
 
-export interface Explosive extends Physical {
+export type Explosive = Physical & {
+  implements: {
+    explosive: true
+  }
   explosionRadius: number;
   maxExplosionDamage: number;
 }
 
-export interface Mortal {
-  mortal: true;
+export type Mortal = {
+  implements: {
+    mortal: true
+  },
   health: number;
   maxHealth: number;
-  damage(amount: number): void;
-  heal(amount: number): void;
-  onDeath(): void;
 }
 
-type EntityData = (Inertial);
+export namespace EntityType {
+  export function physical(entity: EntityData): entity is Physical {
+    return (entity as any).implements.physical;
+  }
+  export function inertial(entity: EntityData): entity is Inertial {
+    return (entity as any).implements.inertial;
+  }
+  export function explosive(entity: EntityData): entity is Explosive {
+    return (entity as any).implements.explosive;
+  }
+  export function mortal(entity: EntityData): entity is Mortal {
+    return (entity as any).implements.mortal;
+  }
+}
+
+type EntityData = Physical | Inertial | Explosive | Mortal;
 
 export type Entity = Player | Dynamite;
 

@@ -31,7 +31,7 @@ uniform vec2 uGridSize;
 uniform int uBlockTypes;
 uniform sampler2D uTerrain;
 
-uniform int wind;
+uniform float wind;
 
 void main() {
   vec2 pixelPos = ((vPos + 1.0) * 0.5) * uScreenSize;
@@ -46,17 +46,22 @@ void main() {
     return;
   }
   int blockType = int(255.0 * texture2D(uTerrain, c / uGridSize).a);
-  int textureVariant = blockType == 1 || blockType == 2 ? wind + 2 : 0;
+  int textureVariant = blockType == 1 || blockType == 2 ? int(wind) + 2 : 0;
 
+  float period = 50.0;
+
+  float theta = (blockPos.x / period + wind) * 2.0 * 3.14159;
+  int w = int(floor((sin(theta) + 1.0) * 2.0 + 0.5));
+  
   int blockTexX, blockTexY;
   if (blockType == 1) {
     // grass
     blockTexY = 0;
-    blockTexX = wind + 2;
+    blockTexX = w;
   } else if (blockType == 2) {
     // tall grass
     blockTexY = 1;
-    blockTexX = wind + 2;
+    blockTexX = w;
   } else if (blockType == 3) {
     // concrete
     blockTexY = 2;

@@ -513,6 +513,6 @@ export class Renderer {
 
   updateAmbient() {
     this.time += 1;
-    this.terrainLayer.shader.uniforms.wind = Math.sin(this.time / 30) * 2.2;
+    this.terrainLayer.shader.uniforms.wind = Math.floor(((this.time % 400) / 400) * 30) / 30;
   }
 }

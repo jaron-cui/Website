@@ -203,7 +203,7 @@ function convertTerrainDataToTexture(terrain: Terrain): PIXI.BaseTexture<PIXI.Bu
 }
 
 function createInitialUniforms() {
-  const blockTextures = PIXI.Texture.from('blocks2.png');
+  const blockTextures = PIXI.Texture.from('blocks3.png');
   blockTextures.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
   return {
     uBlockTextures: blockTextures,
@@ -211,7 +211,7 @@ function createInitialUniforms() {
     uBlockOffset: [0, 0],
     uGridSize: [WORLD_WIDTH, WORLD_HEIGHT],
     uBlockSize: 20,
-    uBlockTypes: Object.keys(Block).length / 2 - 1,
+    uBlockTypes: 5,
     uTerrain: null,
     wind: 0
   };

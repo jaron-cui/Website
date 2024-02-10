@@ -47,6 +47,36 @@ void main() {
   }
   int blockType = int(255.0 * texture2D(uTerrain, c / uGridSize).a);
   int textureVariant = blockType == 1 || blockType == 2 ? wind + 2 : 0;
+
+  int blockTexX, blockTexY;
+  if (blockType == 1) {
+    // grass
+    blockTexY = 0;
+    blockTexX = wind + 2;
+  } else if (blockType == 2) {
+    // tall grass
+    blockTexY = 1;
+    blockTexX = wind + 2;
+  } else if (blockType == 3) {
+    // concrete
+    blockTexY = 2;
+    blockTexX = 0;
+  } else if (blockType == 4) {
+    // soil
+    blockTexY = 2;
+    blockTexX = 1;
+  } else if (blockType == 5) {
+    // sand
+    blockTexY = 2;
+    blockTexX = 2;
+  } else if (blockType == 6) {
+    // brick
+    blockTexY = 2;
+    blockTexX = 3;
+  }
+  // blockTexX = 1;
+  // blockTexY = 1;
+
   if (blockType == 0) {
     discard;
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
@@ -54,7 +84,7 @@ void main() {
   }
   vec2 subTextureOffset = blockPos - c;
 
-  vec2 textureOffset = vec2((subTextureOffset.x + float(textureVariant)) / 5.0, (1.0 - subTextureOffset.y + float(blockType - 1)) / float(uBlockTypes));
+  vec2 textureOffset = vec2((subTextureOffset.x + float(blockTexX)), (1.0 - subTextureOffset.y + float(blockTexY))) / float(uBlockTypes);
 
   gl_FragColor = vec4(texture2D(uBlockTextures, textureOffset));
 }

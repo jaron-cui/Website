@@ -5,7 +5,7 @@ export const WORLD_WIDTH = 64;
 export const WORLD_HEIGHT = 64;
 
 export enum Block {
-  Air, Grass, Grasses, Stone, Soil, Placeholder
+  Air, Grass, Grasses, Stone, Soil, Sand, Brick
 };
 
 // represents a 2D grid-based terrain

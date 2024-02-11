@@ -14,6 +14,7 @@ import WordlePage from './page/extraneous/Wordle';
 import Tetris from './page/extraneous/Tetris';
 import Groc from './page/extraneous/Grocery';
 import { Rect } from './page/extraneous/rect/Rect';
+import { Chess } from './page/extraneous/chess/view';
 
 const paths = [
   ['/', () => <Home />],
@@ -28,7 +29,8 @@ const paths = [
   ['/#/wordle/{}', ([ cipher ]: string[]) => <WordlePage cipherText={cipher}/>],
   ['/#/tetris', () => <Tetris />],
   ['/#/screen', () => <Groc />],
-  ['/#/rect', () => <Rect />]
+  ['/#/rect', () => <Rect />],
+  ['/#/chess', () => <Chess/>]
 ]
 
 function App() {

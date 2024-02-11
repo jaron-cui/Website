@@ -5,7 +5,7 @@ type Color = 'white' | 'black';
 export type ChessPiece = 'freshPawn' | 'pawn' | 'rook' | 'knight' | 'bishop' | 'king' | 'queen';
 
 type BoardCoordinate = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
-type BoardLocation = [BoardCoordinate, BoardCoordinate];
+export type BoardLocation = [BoardCoordinate, BoardCoordinate];
 
 interface PotentialMove {
   from: BoardLocation;
@@ -14,7 +14,7 @@ interface PotentialMove {
   color: Color;
 }
 
-interface BoardSpace {
+export interface BoardSpace {
   piece?: {
     name: ChessPiece;
     color: Color;
@@ -24,7 +24,7 @@ interface BoardSpace {
 
 type Row = [BoardSpace, BoardSpace, BoardSpace, BoardSpace, BoardSpace, BoardSpace, BoardSpace, BoardSpace];
 
-interface ChessBoard {
+export interface ChessBoard {
   board: [Row, Row, Row, Row, Row, Row, Row, Row];
 }
 
@@ -85,7 +85,7 @@ function linearAttack(board: ChessBoard, color: Color, [x, y]: BoardLocation, [x
     const [tx, ty] = [x + xStep * offset, y + yStep * offset];
     const targetSpace = at(board, tx, ty);
     if (!targetSpace) {
-      continue;
+      break;
     }
     if (targetSpace.piece) {
       updateMoveInfo(targetSpace, [x, y], color, targetSpace.piece.color === enemy(color));
@@ -157,7 +157,7 @@ function clearPieceMoves(board: ChessBoard, [x, y]: BoardLocation) {
   });
 }
 
-function removePiece(board: ChessBoard, [x, y]: BoardLocation, avoidUpdateOthers?: boolean) {
+export function removePiece(board: ChessBoard, [x, y]: BoardLocation, avoidUpdateOthers?: boolean) {
   const formerSpace = at(board, x, y) as BoardSpace;
   formerSpace.piece = undefined;
   clearPieceMoves(board, [x, y]);
@@ -166,7 +166,7 @@ function removePiece(board: ChessBoard, [x, y]: BoardLocation, avoidUpdateOthers
   }
 }
 
-function placePiece(board: ChessBoard, piece: ChessPiece, color: Color, [x, y]: BoardLocation) {
+export function placePiece(board: ChessBoard, piece: ChessPiece, color: Color, [x, y]: BoardLocation) {
   const space = at(board, x, y) as BoardSpace;
   space.piece = { name: piece, color: color };
   cachePieceMoves(board, [x, y]);
@@ -181,7 +181,7 @@ function updateAssociatedPieces(board: ChessBoard, [x, y]: BoardLocation) {
   });
 }
 
-function movePiece(board: ChessBoard, [fx, fy]: BoardLocation, [tx, ty]: BoardLocation) {
+export function movePiece(board: ChessBoard, [fx, fy]: BoardLocation, [tx, ty]: BoardLocation) {
   const piece = at(board, fx, fy)?.piece;
   if (!piece) {
     return;
@@ -195,7 +195,7 @@ function sameLocation([x1, y1]: BoardLocation, [x2, y2]: BoardLocation): boolean
   return x1 === x2 && y1 === y2;
 }
 
-function legalMove(board: ChessBoard, color: Color, from: BoardLocation, [tx, ty]: BoardLocation): boolean {
+export function legalMove(board: ChessBoard, color: Color, from: BoardLocation, [tx, ty]: BoardLocation): boolean {
   // if move in set of cached moves
   for (let move of (at(board, tx, ty) as BoardSpace).potentialMoves) {
     if (sameLocation(move.from, from) && move.currentlyAllowed) {

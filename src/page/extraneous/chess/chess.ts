@@ -4,8 +4,7 @@ type Color = 'white' | 'black';
 
 export type ChessPiece = 'freshPawn' | 'pawn' | 'rook' | 'knight' | 'bishop' | 'king' | 'queen';
 
-type BoardCoordinate = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
-export type BoardLocation = [BoardCoordinate, BoardCoordinate];
+export type BoardLocation = [number, number];
 
 interface PotentialMove {
   from: BoardLocation;
@@ -71,9 +70,7 @@ function pawnMoves(fresh: boolean) {
     const leftFlank = at(board, x - 1, y + forward(color));
     const rightFlank = at(board, x + 1, y + forward(color));
     [leftFlank, rightFlank].forEach(flank => {
-      if (flank?.piece?.color === enemy(color)) {
-        updateMoveInfo(flank, [x, y], color, true);
-      }
+      flank && updateMoveInfo(flank, [x, y], color, flank.piece?.color === enemy(color));
     });
   };
 }
@@ -150,8 +147,7 @@ function clearPieceMoves(board: ChessBoard, [x, y]: BoardLocation) {
     row.forEach(space => {
       // remove potential moves stemming from the piece
       space.potentialMoves = new Set([...space.potentialMoves].filter(move => {
-        const [sourceX, sourceY] = move.from;
-        return !(sourceX === x && sourceY === y);
+        return !sameLocation(move.from, [x, y]);
       }));
     });
   });
@@ -167,6 +163,7 @@ export function removePiece(board: ChessBoard, [x, y]: BoardLocation, avoidUpdat
 }
 
 export function placePiece(board: ChessBoard, piece: ChessPiece, color: Color, [x, y]: BoardLocation) {
+  // clearPieceMoves(board, [x, y]);
   const space = at(board, x, y) as BoardSpace;
   space.piece = { name: piece, color: color };
   cachePieceMoves(board, [x, y]);
@@ -177,7 +174,7 @@ function updateAssociatedPieces(board: ChessBoard, [x, y]: BoardLocation) {
   const space = at(board, x, y) as BoardSpace;
   space.potentialMoves.forEach(move => {
     clearPieceMoves(board, move.from);
-    cachePieceMoves(board, move.from)
+    cachePieceMoves(board, move.from);
   });
 }
 
@@ -187,7 +184,7 @@ export function movePiece(board: ChessBoard, [fx, fy]: BoardLocation, [tx, ty]: 
     return;
   }
   removePiece(board, [fx, fy], true);
-  placePiece(board, piece.name, piece.color, [tx, ty]);
+  placePiece(board, piece.name === 'freshPawn' ? 'pawn' : piece.name, piece.color, [tx, ty]);
   updateAssociatedPieces(board, [fx, fy]);
 }
 

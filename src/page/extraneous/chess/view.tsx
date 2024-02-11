@@ -53,11 +53,21 @@ class Renderer {
   board: ChessBoard;
   app: PIXI.Application<HTMLCanvasElement>;
   pieceSprites: Map<number, PIXI.Sprite>;
+  layers: PIXI.Container[];
 
   constructor(app: PIXI.Application<HTMLCanvasElement>, board: ChessBoard) {
     this.app = app;
     this.board = board;
     this.pieceSprites = new Map();
+
+    const boardTex = PIXI.BaseTexture.from('chessboard.png');
+    boardTex.scaleMode = PIXI.SCALE_MODES.NEAREST;
+    const boardSprite = PIXI.Sprite.from(boardTex);
+    boardSprite.scale.set(10);
+    app.stage.addChild(boardSprite);
+
+    this.layers = [0, 0, 0, 0, 0, 0, 0, 0].map(_ => new PIXI.Container());
+    this.app.stage.addChild(...this.layers);
   }
 
   rerender() {
@@ -74,7 +84,7 @@ class Renderer {
         sprite.y = (y + 0.5) * 50;
         const hash = y * 8 + x;
         this.pieceSprites.set(hash, sprite);
-        this.app.stage.addChild(sprite);
+        this.layers[y].addChild(sprite);
       }
     }));
   }
@@ -91,10 +101,12 @@ class Renderer {
     this.pieceSprites.delete(fromHash);
     const pieceTaken = this.pieceSprites.get(toHash);
     if (pieceTaken) {
-      this.app.stage.removeChild(pieceTaken);
+      this.layers[ty].removeChild(pieceTaken);
     }
 
     this.pieceSprites.set(toHash, sprite);
+    this.layers[fy].removeChild(sprite);
+    this.layers[ty].addChild(sprite);
     sprite.x = (tx + 0.5) * 50;
     sprite.y = (ty + 0.5) * 50;
   }
@@ -180,14 +192,6 @@ async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
     }
   })
 
-  const boardTex = PIXI.BaseTexture.from('chessboard.png');
-  boardTex.scaleMode = PIXI.SCALE_MODES.NEAREST;
-  const boardSprite = PIXI.Sprite.from(boardTex);
-  boardSprite.scale.set(10);
-  // const pawnSprite = PIXI.Sprite.from('blocks.png');
-  // pawnSprite.scale.set(5);
-  // pawnSprite.anchor.set(0.5);
-  app.stage.addChild(boardSprite);
   renderer.rerender();
   // app.stage.addChild(pawnSprite);
 

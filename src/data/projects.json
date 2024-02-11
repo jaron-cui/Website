@@ -291,7 +291,7 @@
     "repository": "https://github.com/jaron-cui/minecraft-in-cplusplus",
     "title": "Minecraft in C++",
     "date": "2023-11-18",
-    "status": "ACTIVE",
+    "status": "COMPLETED",
     "technologies": ["C++", "OpenGL", "SDL2"],
     "features": [
       "OpenGL rendering",
@@ -309,5 +309,41 @@
       "Eventually, I hope to add other entities, inventory, and multiplayer to the game."
     ],
     "video": "https://youtube.com/embed/H6CSRfh5ud8?rel=0"
+  }, {
+    "id": "rect",
+    "repository": "https://github.com/jaron-cui/jaron-cui.github.io/tree/master/src/page/extraneous/rect",
+    "title": "Get Rect Remastered",
+    "date": "2024-01-04",
+    "status": "ACTIVE",
+    "technologies": ["TypeScript", "PixiJS", "WebGL"],
+    "features": [
+      "Custom 2D physics engine",
+      "WebGL shader terrain rendering",
+      "Platformer movement"
+    ],
+    "paragraphs": [
+      "Try the WIP version at https://jaron-cui.github.io/#/rect",
+      "This is an attempt to recreate the first game I made, \"get_rect()\".",
+      "The original game was PVP with destructible tiled terrain. There were numerous weapons and props at the player's disposal.",
+      "It was multiplayer in the sense that two players would control their avatars from the same device, one using WASD, and the other using the arrow keys.",
+      "Fireworks, TNT, bow & arrows, swords, throwable logs were acquirable by parachuted crates falling from the sky. I made that version so I could play with my sisters.",
+      "Being the first game I had created, the physics were simplistically and not so carefully crafted. The implementations were incredible far from optimal. One early mistake I made was loading each block texture from file for every single block on the screen, every frame.",
+      "This new version will use the arsenal of programming skills and mathematical knowledge I've gained since high school to build a better, faster, and even more fun online multiplayer game in the same spirit."
+    ]
+  }, {
+    "id": "chess",
+    "repository": "https://github.com/jaron-cui/jaron-cui.github.io/tree/master/src/page/extraneous/chess",
+    "title": "Chess",
+    "date": "2024-02-10",
+    "status": "ACTIVE",
+    "technologies": ["TypeScript", "PixiJS"],
+    "features": [
+      "Not much right now"
+    ],
+    "paragraphs": [
+      "Try the WIP version at https://jaron-cui.github.io/#/chess",
+      "Chess is an interesting game. I've lately been playing with friends at chess.com.",
+      "I'll try my hand at building an efficient and clean implementation."
+    ]
   }
 ]

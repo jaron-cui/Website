@@ -2,17 +2,17 @@ import * as PIXI from 'pixi.js';
 import { Game } from './game';
 
 export const DEFAULT_INPUT_MAP: InputMap = {
-  useMain: 'leftclick',
-  useSecondary: 'rightclick',
-  up: 'w',
-  left: 'a',
-  down: 's',
-  right: 'd',
-  jump: 'w',
-  control: 'Control',
-  shift: 'Shift',
-  scrollUp: 'scrollup',
-  scrollDown: 'scrolldown'
+  useMain: ['leftclick'],
+  useSecondary: ['rightclick'],
+  up: ['w'],
+  left: ['a'],
+  down: ['s'],
+  right: ['d'],
+  jump: ['w', ' '],
+  control: ['Control'],
+  shift: ['Shift'],
+  scrollUp: ['scrollup', 'ArrowRight'],
+  scrollDown: ['scrolldown', 'ArrowLeft']
 };
 
 export const EMPTY_INPUT_STATE: InputState = {
@@ -46,7 +46,7 @@ export interface InputState {
 type ButtonPressAction = 'useMain' | 'useSecondary' | 'up' | 'left' | 'down' | 'right' | 'jump' | 'control' | 'shift' | 'scrollUp' | 'scrollDown';
 
 type InputMap = {
-  [key in ButtonPressAction]: string;
+  [key in ButtonPressAction]: string[];
 };
 
 export type InputTriggers = {
@@ -105,9 +105,11 @@ export class InputHandler {
 
     let input: ButtonPressAction;
     for (input in inputMap) {
-      const binding = inputMap[input];
-      const mouseButtonTrigger = mouseButtonTriggers[binding];
-      mouseButtonTrigger ? mouseButtonTrigger.push(input) : keyboardTriggers.push([binding, input]);
+      const bindings = inputMap[input];
+      bindings.forEach(binding => {
+        const mouseButtonTrigger = mouseButtonTriggers[binding];
+        mouseButtonTrigger ? mouseButtonTrigger.push(input) : keyboardTriggers.push([binding, input]);
+      })
     }
     const mouseDown = () => leftClickTriggers.forEach(trigger => this.triggers.onButtonPress[trigger](true, this.inputState));
     const mouseUp = () => leftClickTriggers.forEach(trigger => this.triggers.onButtonPress[trigger](false, this.inputState));

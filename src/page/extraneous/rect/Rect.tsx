@@ -5,7 +5,6 @@ import { Renderer, SCREEN_HEIGHT, SCREEN_WIDTH, loadTextures } from './render';
 import { PlayerInventory } from './item';
 import { Game } from './game';
 import { Player } from './entity/player';
-import { Dynamite } from "./entity/dynamite";
 import { InputHandler } from './input';
 
 const template = [
@@ -101,11 +100,6 @@ async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
   const inputHandler = new InputHandler(app);
   const game = new Game(player, world, renderer, inputHandler);
 
-  // inputHandler.updateHandlers(DEFAULT_INPUT_MAP);
-
-  // const d = new Dynamite(14, 24);
-  // d.data.vx = -0.01;
-  // game.spawn(d);
   game.spawn(player);
 
   const inventory: PlayerInventory = {

@@ -1,7 +1,7 @@
 import { mod } from "../../../util/util";
 import { Entity } from "./entity";
 import { Player } from "./entity/player";
-import { ActionMap, EMPTY_INPUT_STATE, InputButtonMap, InputController, InputHandler, InputState, InputStatee } from "./input";
+import { ActionMap, InputButtonMap, InputController, InputHandler, InputState } from "./input";
 import { ITEMS, handleSlotUse } from "./item";
 import { distance, stepPhysics } from "./physics";
 import { Renderer, screenToGamePosition } from "./render";
@@ -33,7 +33,6 @@ export class Game {
   actionQueue: (() => void)[];
 
   inputHandler: InputHandler;
-  inputState: InputState;
 
   playerInput: InputController<Record<ButtonPressAction, never>>;
 
@@ -67,7 +66,6 @@ export class Game {
       enabled: true
     };
     this.inputHandler.registerInputListeners(this.playerInput);
-    this.inputState = EMPTY_INPUT_STATE;
   }
 
   spawn(thing: Entity) {
@@ -111,7 +109,7 @@ export class Game {
 
   updateTrajectory() {
     if (this.player.data.inventory.slots[this.player.data.inventory.selected]?.id === 'dynamite') {
-      const aimGoal = screenToGamePosition(this.inputState.mousePosition);
+      const aimGoal = screenToGamePosition(this.playerInput.inputState.cursorPosition);
       [this.player.data.aimTheta, this.player.data.aimEffort] = calculateThrowingParameters(this.player, aimGoal);
     } else {
       this.player.data.aimTheta = undefined;
@@ -176,7 +174,7 @@ export class Game {
   // }
 
   private initializePlayerControls(): ActionMap<Record<ButtonPressAction, never>> {
-    const onXChange = (_: boolean, inputState: InputStatee<Record<ButtonPressAction, never>>) => updateWalking(inputState, this.player);
+    const onXChange = (_: boolean, inputState: InputState<Record<ButtonPressAction, never>>) => updateWalking(inputState, this.player);
     const onScroll = (sign: number) => (pressed: boolean) => {
       if (pressed) {
         const inventory = this.player.data.inventory;
@@ -230,7 +228,7 @@ function calculateThrowingParameters(player: Player, [aimX, aimY]: [number, numb
   return [theta, strength];
 }
 
-function updateWalking(inputState: InputStatee<Record<ButtonPressAction, never>>, player: Player) {
+function updateWalking(inputState: InputState<Record<ButtonPressAction, never>>, player: Player) {
   const netWalk = +!!inputState.buttons.right - +!!inputState.buttons.left;
   if (netWalk > 0) {
     player.data.walking = 'right';

@@ -1,49 +1,65 @@
 import * as PIXI from 'pixi.js';
 import { Game } from './game';
 
-export const DEFAULT_INPUT_MAP: InputMap = {
-  useMain: ['leftclick'],
-  useSecondary: ['rightclick'],
-  up: ['w'],
-  left: ['a'],
-  down: ['s'],
-  right: ['d'],
-  jump: ['w', ' '],
-  control: ['Control'],
-  shift: ['Shift'],
-  scrollUp: ['scrollup', 'ArrowRight'],
-  scrollDown: ['scrolldown', 'ArrowLeft']
-};
 
-type InputListener<T> = {
-  type: 'leftclick' | 'rightclick';
-  handler: (clickEnded: boolean, inputState: InputStatee<T>) => void;
-} | {
-  type: 'scrollup' | 'scrolldown';
-  handler: (inputState: InputStatee<T>) => void;
-} | {
-  type: 'keyChange';
-  key: string;
-  handler: (pressed: boolean, inputState: InputStatee<T>) => void;
-} | {
-  type: 'typed';
-  key: string;
-  handler: (key: string, inputState: InputStatee<T>) => void;
+
+export enum MouseAction {
+  leftclick = 'leftclick',
+  rightclick = 'rightclick',
+  scrollup = 'scrollup',
+  scrolldown = 'scrolldown'
 }
 
-type InputMapp<T> = {
-  [key in keyof T]: InputListener<T>;
+export type InputButtonMap<T> = {
+  [key in keyof T]: (MouseAction | string)[];
 }
 
-type InputStatee<T> = {
+export type ActionMap<T> = {
+  [key in keyof T]: (pressed: boolean, inputState: InputStatee<T>) => void;
+}
+
+// function convertActionsToListeners<T>(actionMap: ActionMap<T>, inputMap: InputButtonMap<T>): InputListenerSet<T> {
+//   const bindings = Object.keys(actionMap) as (keyof T)[];
+//   const buttons = {};
+//   bindings.forEach(binding => {
+//     inputMap[binding].forEach(input => {
+//       buttons[]
+//     })
+//   })
+//   return {
+//     buttons: Object.fromEntries(bindings.map(binding => {
+//       const inputs = inputMap[binding];
+//       inputs.forEach(input => {
+
+//       })
+//       return [binding, inputMap[binding]];
+//     }))
+//   }
+// }
+
+// type InputListener<T> = {
+//   type: 'leftclick' | 'rightclick';
+//   handler: (pressed: boolean, inputState: InputStatee<T>) => void;
+// } | {
+//   type: 'scrollup' | 'scrolldown';
+//   handler: (inputState: InputStatee<T>) => void;
+// } | {
+//   type: 'keyChange';
+//   key: string;
+//   handler: (pressed: boolean, inputState: InputStatee<T>) => void;
+// }
+
+export type InputStatee<T> = {
   buttons: {
     [key in keyof T]: boolean;
   };
   cursorPosition: [number, number];
 }
 
-interface InputListenerSet<T> {
-  listeners: InputMapp<T>;
+export interface InputController<T> {
+  inputButtonMap: InputButtonMap<T>;
+  actions: ActionMap<T>;
+  onType?: (key: string, inputState: InputStatee<T>) => void;
   inputState: InputStatee<T>;
   enabled: boolean;
 }
@@ -78,9 +94,9 @@ export interface InputState {
 
 type ButtonPressAction = 'useMain' | 'useSecondary' | 'up' | 'left' | 'down' | 'right' | 'jump' | 'control' | 'shift' | 'scrollUp' | 'scrollDown';
 
-type InputMap = {
-  [key in ButtonPressAction]: string[];
-};
+// type InputMap = {
+//   [key in ButtonPressAction]: string[];
+// };
 
 export type InputTriggers = {
   onButtonPress: {
@@ -94,7 +110,7 @@ export class InputHandler {
   app: PIXI.Application<HTMLCanvasElement>
   handlers: [any, string, (event: any) => void][];
   // triggers: InputTriggers;
-  inputListenerSets: InputListenerSet<any>[];
+  inputListenerSets: InputController<any>[];
 
   constructor(app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
@@ -104,10 +120,11 @@ export class InputHandler {
     // this.triggers = game.getControlInterface(this.inputState);
   }
 
-  registerInputListeners(inputListenerSet: InputListenerSet<unknown>) {
+  registerInputListeners(inputListenerSet: InputController<any>) {
     this.inputListenerSets.push(inputListenerSet);
   }
 
+  // TODO: maybe perform grouping so that each controller isn't fully iterated through for every input
   private initializeHandlers() {
     this.clearHandlers();
 
@@ -132,12 +149,14 @@ export class InputHandler {
     //     mouseButtonTrigger ? mouseButtonTrigger.push(input) : keyboardTriggers.push([binding, input]);
     //   })
     // }
-    const clickHandler = (clickType: 'leftclick' | 'rightclick', down: boolean) => () => this.inputListenerSets.forEach(inputListenerSet => {
-      Object.entries(inputListenerSet.listeners).forEach(([binding, listener]) => {
-        if (listener.type === clickType) {
-          inputListenerSet.inputState.buttons[binding] = down;
-          inputListenerSet.enabled && listener.handler(!down, inputListenerSet.inputState);
-        }
+    const clickHandler = (clickType: 'leftclick' | 'rightclick', down: boolean) => () => this.inputListenerSets.forEach(controller => {
+      Object.entries(controller.inputButtonMap).forEach(([binding, inputs]) => {
+        inputs.forEach(input => {
+          if (input === clickType) {
+            controller.inputState.buttons[binding] = down;
+            controller.enabled && controller.actions[binding](down, controller.inputState);
+          }
+        })
       });
     });
     const leftClick = clickHandler('leftclick', true);
@@ -145,16 +164,18 @@ export class InputHandler {
     const rightClick = clickHandler('rightclick', true);
     const rightUnClick = clickHandler('rightclick', false);
     const keyHandler = (down: boolean) => (event: KeyboardEvent) => {
-      this.inputListenerSets.forEach(inputListenerSet => {
-        Object.entries(inputListenerSet.listeners).forEach(([binding, listener]) => {
-          if (listener.type === 'keyChange' && listener.key.toLowerCase() === event.key.toLowerCase()) {
-            inputListenerSet.inputState.buttons[binding] = down;
-            inputListenerSet.enabled && listener.handler(down, inputListenerSet.inputState);
-          }
-          // TODO: probably move this into the proper typing handler...
-          if (!down && listener.type === 'typed') {
-            inputListenerSet.enabled && listener.handler(event.key, inputListenerSet.inputState);
-          }
+      this.inputListenerSets.forEach(controller => {
+        // TODO: probably move this into the proper typing handler...
+        if (!down) {
+          controller.enabled && controller.onType && controller.onType(event.key, controller.inputState);
+        }
+        Object.entries(controller.inputButtonMap).forEach(([binding, inputs]) => {
+          inputs.forEach(input => {
+            if (input.toLowerCase() === event.key.toLowerCase()) {
+              controller.inputState.buttons[binding] = down;
+              controller.enabled && controller.actions[binding](down, controller.inputState);
+            }
+          })
         });
       });
     }
@@ -163,10 +184,14 @@ export class InputHandler {
 
     const scroll = (event: WheelEvent) => {
       const sign = Math.sign(event.deltaY);
-      this.inputListenerSets.forEach(inputListenerSet => {
-        Object.entries(inputListenerSet.listeners).forEach(([binding, listener]) => {
-          sign > 0 && listener.type === 'scrollup' && listener.handler(inputListenerSet.inputState);
-          sign < 0 && listener.type === 'scrolldown' && listener.handler(inputListenerSet.inputState);
+      this.inputListenerSets.forEach(controller => {
+        Object.entries(controller.inputButtonMap).forEach(([binding, inputs]) => {
+          inputs.forEach(input => {
+            if ((sign > 0 && input === MouseAction.scrollup) || (sign < 0 && input === MouseAction.scrolldown)) {
+              controller.actions[binding](true, controller.inputState);
+              controller.actions[binding](false, controller.inputState);
+            }
+          })
         })
       })
     };

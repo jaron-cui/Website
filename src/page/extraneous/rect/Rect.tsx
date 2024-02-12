@@ -6,7 +6,7 @@ import { PlayerInventory } from './item';
 import { Game } from './game';
 import { Player } from './entity/player';
 import { Dynamite } from "./entity/dynamite";
-import { DEFAULT_INPUT_MAP, InputHandler } from './input';
+import { InputHandler } from './input';
 
 const template = [
   '            x                               ',
@@ -98,10 +98,10 @@ async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
 
   const renderer = new Renderer(world, app);
   renderer.updateTerrain();
-  const game = new Game(player, world, renderer);
+  const inputHandler = new InputHandler(app);
+  const game = new Game(player, world, renderer, inputHandler);
 
-  const inputHandler = new InputHandler(app, game);
-  inputHandler.updateHandlers(DEFAULT_INPUT_MAP);
+  // inputHandler.updateHandlers(DEFAULT_INPUT_MAP);
 
   // const d = new Dynamite(14, 24);
   // d.data.vx = -0.01;

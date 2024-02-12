@@ -133,7 +133,22 @@ const TOOL_TEXTURE_SCHEMA = {
   }
 }
 
+const MENU_TEXTURE_SCHEMA = {
+  frames: {
+    largeButton: frame(0, 0, 32, 8),
+    addButton: frame(0, 8, 7, 7),
+    minusButton: frame(7, 8, 7, 7)
+  },
+  meta: {
+    image: 'menubuttons.png',
+    format: 'RGBA8888',
+    size: {w: 32, h: 32},
+    scale: '1'
+  }
+}
+
 export async function loadTextures() {
+  // PIXI.settings.ROUND_PIXELS = true;
   // async function loadFromSchema(spriteSet: string, schema: any) {
   //   const sprites = new PIXI.Spritesheet(PIXI.BaseTexture.from(schema.meta.image), schema);
   //   await sprites.parse();
@@ -192,6 +207,12 @@ export async function loadTextures() {
     none: [PIXI.Texture.EMPTY]
   });
   ITEM_TEXTURES[''] = itemSprites;
+
+  const menuTex = PIXI.BaseTexture.from(MENU_TEXTURE_SCHEMA.meta.image);
+  menuTex.scaleMode = PIXI.SCALE_MODES.NEAREST;
+  const menuSprites = new PIXI.Spritesheet(menuTex, MENU_TEXTURE_SCHEMA);
+  await menuSprites.parse();
+  GUI_TEXTURES['menu'] = new SpriteSet(Object.fromEntries(Object.entries(menuSprites.textures).map(([name, texture]) => [name, [texture]])))
 }
 
 function convertTerrainDataToTexture(terrain: Terrain): PIXI.BaseTexture<PIXI.BufferResource, PIXI.IAutoDetectOptions> {
@@ -223,15 +244,15 @@ class TextBox {
   scale: number;
   text: string;
   sprites: PIXI.Sprite[];
-  app: PIXI.Application<HTMLCanvasElement>;
+  layer: PIXI.Container;
 
-  constructor(x: number, y: number, text: string, app: PIXI.Application<HTMLCanvasElement>, scale?: number) {
+  constructor(x: number, y: number, text: string, layer: PIXI.Container, scale?: number) {
     this.x = x;
     this.y = y;
     this.scale = scale || 1;
     this.text = text;
     this.sprites = [];
-    this.app = app;
+    this.layer = layer;
     this.rerender();
   }
 
@@ -266,13 +287,13 @@ class TextBox {
       sprite.x = this.x + this.scale * 7 * i;
       sprite.y = this.y;
       sprite.scale.set(this.scale);
-      this.app.stage.addChild(sprite);
+      this.layer.addChild(sprite);
       this.sprites.push(sprite);
     }
   }
 
-  private deleteSprites() {
-    this.sprites.forEach(sprite => this.app.stage.removeChild(sprite));
+  deleteSprites() {
+    this.sprites.forEach(sprite => this.layer.removeChild(sprite));
     this.sprites = [];
   }
 }
@@ -375,6 +396,78 @@ interface InventorySlotSprites {
   count: TextBox;
 }
 
+type MenuScreen = 'pause' | 'controls';
+
+class Menu {
+  layer: PIXI.Container;
+  buttons: [PIXI.Sprite, TextBox, () => void][];
+  onClose: () => void;
+  clickHandler: (event: PIXI.FederatedPointerEvent) => void;
+
+  constructor(layer: PIXI.Container, onClose: () => void) {
+    this.layer = layer;
+    this.buttons = [];
+    this.onClose = onClose;
+    this.clickHandler = (event: PIXI.FederatedPointerEvent) => {
+      this.buttons.forEach(([sprite, _, onClick]) => {
+        console.log('detected click...')
+        if (event.screenX >= sprite.x - sprite.anchor.x * sprite.width && event.screenX < sprite.x + (1 - sprite.anchor.x) * sprite.width
+          && event.screenY >= sprite.y - sprite.anchor.y * sprite.height && event.screenY < sprite.y + (1 - sprite.anchor.y) * sprite.height) {
+            console.log('activating a handler!');
+            onClick();
+          }
+      })
+    }
+    this.layer.addEventListener('click', this.clickHandler)
+  }
+
+  setScreen(screen: MenuScreen) {
+    this.clearButtons();
+    const largeButton = GUI_TEXTURES['menu'].frames[GUI_TEXTURES['menu'].getFrameIndex('largeButton', 0)];
+    if (screen === 'pause') {
+      this.setButtons([
+        [PIXI.Sprite.from(largeButton), 'Resume', () => this.close()],
+        [PIXI.Sprite.from(largeButton), 'Controls', () => this.setScreen('controls')]
+      ]);
+    } else if (screen === 'controls') {
+      this.setButtons([
+        [PIXI.Sprite.from(largeButton), 'Back', () => this.setScreen('pause')],
+        [PIXI.Sprite.from(largeButton), 'Bind', () => alert('idk man')]
+      ]);
+    }
+  }
+
+  private setButtons(buttons: [PIXI.Sprite, string, () => void][]) {
+    this.buttons = buttons.map(([sprite, text, onClick], i) => {
+      this.layer.addChild(sprite);
+      sprite.anchor.set(0.5);
+      sprite.scale.set(6);
+      sprite.x = SCREEN_WIDTH / 2;
+      sprite.y = 100 + 50 * i;
+      const textbox = new TextBox(sprite.x - 60, sprite.y - 8, text, this.layer, 2);
+      return [sprite, textbox, onClick];
+    });
+  }
+
+  private clearButtons() {
+    this.buttons.forEach(([sprite, text, _]) => {
+      this.layer.removeChild(sprite);
+      text.deleteSprites();
+    });
+    this.buttons = [];
+  }
+
+  private close() {
+    this.cleanup();
+    this.onClose();
+  }
+
+  cleanup() {
+    this.clearButtons();
+    this.layer.removeEventListener('click', this.clickHandler);
+  }
+}
+
 export class Renderer {
   app: PIXI.Application<HTMLCanvasElement>;
 
@@ -384,23 +477,35 @@ export class Renderer {
   entityArmatures: Map<number, Armature>;
   inventorySlots: InventorySlotSprites[];
   trajectorySprites: TrajectorySprites;
+  menu?: Menu;
 
   constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
     this.world = world;
 
     this.time = 0;
+    const baseFilter = new PIXI.Filter();
+    const filter = new PIXI.ColorMatrixFilter();
+    filter.desaturate();
+    const filter2 = new PIXI.BlurFilter(2);
+    this.app.stage.filters = [baseFilter, filter, filter2];
+    filter.enabled = false;
+    filter2.enabled = false;
+    this.app.stage.filterArea = this.app.renderer.screen;
 
     const shader = PIXI.Shader.from(vertexShader, fragmentShader, createInitialUniforms());
     this.terrainLayer = new PIXI.Mesh(geometry, shader);
     this.terrainLayer.position.set(0, 0);
     this.terrainLayer.scale.set(2);
-    this.app.stage.addChild(this.terrainLayer);
+    const terrainLayer = new PIXI.Container();
+    this.app.stage.addChild(terrainLayer);
+    terrainLayer.addChild(this.terrainLayer);
+    // terrainLayer.filters = [filter];
 
     this.entityArmatures = new Map();
     this.inventorySlots = [];
     // testing
-    const text = new TextBox(100, 100, 'hello there', app);
+    const text = new TextBox(100, 100, 'Hey! This text is a test of my {([<custom font>]})! 100% $!^.":=+', app.stage, 1.4);
     
     const particles = new PIXI.ParticleContainer();
     this.app.stage.addChild(particles);
@@ -408,6 +513,12 @@ export class Renderer {
       sprites: [],
       spriteGroup: particles
     }
+    this.openMenu();
+  }
+
+  openMenu() {
+    this.menu = new Menu(this.app.stage, () => this.menu = undefined);
+    this.menu.setScreen('pause');
   }
 
   updateThrowingTrajectory(player: PlayerData) {
@@ -468,7 +579,7 @@ export class Renderer {
         this.inventorySlots.push({
           slot: slotSprite,
           item: itemSprite,
-          count: new TextBox(slotCenterX + textOffsetX, slotCenterY + textOffsetY, '', this.app, 2)
+          count: new TextBox(slotCenterX + textOffsetX, slotCenterY + textOffsetY, '', this.app.stage, 2)
         });
       }
       // set selection indicator

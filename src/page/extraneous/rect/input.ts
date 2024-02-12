@@ -117,7 +117,7 @@ export class InputHandler {
     const rightUp = () => rightClickTriggers.forEach(trigger => this.triggers.onButtonPress[trigger](false, this.inputState));
     const keyDown = (event: KeyboardEvent) => {
       keyboardTriggers.forEach(([key, trigger]) => {
-        if (event.key === key) {
+        if (event.key.toLowerCase() === key.toLowerCase()) {
           this.inputState.buttonsDown[trigger] = true;
           this.triggers.onButtonPress[trigger](true, this.inputState);
         }
@@ -125,7 +125,7 @@ export class InputHandler {
     }
     const keyUp = (event: KeyboardEvent) => {
       keyboardTriggers.forEach(([key, trigger]) => {
-        if (event.key === key) {
+        if (event.key.toLowerCase() === key.toLowerCase()) {
           this.inputState.buttonsDown[trigger] = false;
           this.triggers.onButtonPress[trigger](false, this.inputState);
         }

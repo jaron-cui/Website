@@ -15,6 +15,28 @@ export const DEFAULT_INPUT_MAP: InputMap = {
   scrollDown: ['scrolldown', 'ArrowLeft']
 };
 
+type MouseClickInput = 'leftclick' | 'rightclick';
+type MouseScrollInput = 'scrollup' | 'scrolldown';
+type KeyChangeInput = {
+  key: string;
+  pressed: boolean;
+};
+type TypedInput = {
+  key: string;
+}
+type InputType = MouseClickInput | MouseScrollInput | KeyChangeInput | TypedInput;
+type InputListener = (
+  [MouseClickInput, (screenPosition: [number, number], inputState: InputState) => void] |
+  [MouseScrollInput, (inputState: InputState) => void] |
+  [KeyChangeInput, (pressed: boolean, inputState: InputState) => void] |
+  [TypedInput, (key: string, inputState: InputState) => void]
+);
+
+interface InputListenerSet {
+  listeners: InputListener[];
+  enabled: boolean;
+}
+
 export const EMPTY_INPUT_STATE: InputState = {
   leftClick: false,
   rightClick: false,

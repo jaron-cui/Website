@@ -69,7 +69,7 @@ export class MenuController implements ActionMap<Record<Blah, never>> {
   screen?: MScreen;
   clickBoxes: ClickBox[];
   layer: PIXI.Container;
-  sprites: PIXI.AnimatedSprite[];
+  sprites: PIXI.Sprite[];
 
   constructor(layer: PIXI.Container) {
     this.clickBoxes = [];
@@ -80,33 +80,60 @@ export class MenuController implements ActionMap<Record<Blah, never>> {
 
   rerender() {
     this.clickBoxes = [];
+    this.sprites.forEach(sprite => this.layer.removeChild(sprite));
     if (!this.screen) {
       return;
     }
     const reload = () => this.rerender();
     const largeButtonTexture = GUI_TEXTURES['menu'].frames[GUI_TEXTURES['menu'].getFrameIndex('largeButton', 0)];
+    const addButtonTexture = GUI_TEXTURES['menu'].frames[GUI_TEXTURES['menu'].getFrameIndex('addButton', 0)];
+    const minusButtonTexture = GUI_TEXTURES['menu'].frames[GUI_TEXTURES['menu'].getFrameIndex('minusButton', 0)];
 
     this.screen.entries.forEach((entry, i) => {
       const yOffset = i * MENU_BUTTON_HEIGHT + MENU_VERTICAL_OFFSET;
       const leftMargin = screenCenter - MENU_BUTTON_WIDTH / 2;
       if (entry.type === 'button') {
-        this.clickBoxes.push({
-          x: leftMargin,
-          y: yOffset,
-          w: MENU_BUTTON_WIDTH,
-          h: MENU_BUTTON_HEIGHT,
-          onClick() {
-            entry.onClick();
-          }
-        });
+        // this.clickBoxes.push({
+        //   x: leftMargin,
+        //   y: yOffset,
+        //   w: MENU_BUTTON_WIDTH,
+        //   h: MENU_BUTTON_HEIGHT,
+        //   onClick() {
+        //     entry.onClick();
+        //   }
+        // });
         const buttonSprite = PIXI.AnimatedSprite.from(largeButtonTexture);
-        // buttonSprite.
+        buttonSprite.scale.set(4);
+        buttonSprite.x = leftMargin;
+        buttonSprite.y = yOffset;
+
+        buttonSprite.onclick = entry.onClick;
+        this.layer.addChild(buttonSprite);
+        this.sprites.push(buttonSprite);
       } else if (entry.type === 'keybind') {
         const buttonStart = leftMargin + LABEL_WIDTH;
         // keybind buttons
         entry.bindings.forEach((_, i) => {
           // editing and delete buttons
           const buttonLeft = buttonStart + KEYBIND_BUTTON_WIDTH * i;
+          const keybindButton = PIXI.AnimatedSprite.from(largeButtonTexture);
+          keybindButton.scale.set(4);
+          keybindButton.x = buttonLeft;
+          keybindButton.y = yOffset;
+          keybindButton.onclick = () => entry.editing = i;
+          this.layer.addChild(keybindButton);
+          this.sprites.push(keybindButton);
+          const deleteButton = PIXI.AnimatedSprite.from(minusButtonTexture);
+          deleteButton.scale.set(4);
+          deleteButton.x = buttonLeft + KEYBIND_BUTTON_WIDTH - KEYBIND_X_WIDTH;
+          deleteButton.y = yOffset;
+          deleteButton.onclick = () => {
+            entry.bindings.splice(i, 1);
+            reload();
+          }
+          this.layer.addChild(keybindButton);
+          this.sprites.push(keybindButton);
+
           this.clickBoxes.push({
             x: buttonLeft,
             y: yOffset,
@@ -127,6 +154,19 @@ export class MenuController implements ActionMap<Record<Blah, never>> {
           });
         });
         // add button
+        const addButton = PIXI.AnimatedSprite.from(addButtonTexture);
+        addButton.scale.set(4);
+        addButton.x = buttonStart + KEYBIND_BUTTON_WIDTH * entry.bindings.length;
+        addButton.y = yOffset;
+        addButton.onclick = () => {
+          if (entry.bindings.length < MAX_BINDS) {
+            entry.bindings.push('');
+            reload();
+          }
+        };
+        this.layer.addChild(addButton);
+        this.sprites.push(addButton);
+
         this.clickBoxes.push({
           x: buttonStart + KEYBIND_BUTTON_WIDTH * entry.bindings.length,
           y: yOffset,
@@ -138,9 +178,9 @@ export class MenuController implements ActionMap<Record<Blah, never>> {
               reload();
             }
           }
-        })
+        });
       }
-    })
+    });
   }
 
   navigateMain() {
@@ -180,6 +220,7 @@ export class MenuController implements ActionMap<Record<Blah, never>> {
 
   close() {
     this.screen = undefined;
+    this.rerender();
   }
 
   select(pressed: boolean, inputState: InputState<Record<Blah, never>>) {
@@ -189,7 +230,7 @@ export class MenuController implements ActionMap<Record<Blah, never>> {
     const [x, y] = inputState.cursorPosition;
     this.clickBoxes.forEach(clickBox => {
       if (x > clickBox.x && x < clickBox.x + clickBox.w && y > clickBox.y && y < clickBox.y + clickBox.x) {
-        clickBox.onClick();
+        // clickBox.onClick();
       }
     });
   }

@@ -8,7 +8,7 @@ export enum MouseAction {
 }
 
 export type InputButtonMap<T> = {
-  [key in keyof T]: (MouseAction | string)[];
+  [key in keyof T]: (MouseAction | string | 'any')[];
 }
 
 export type ActionMap<T> = {
@@ -35,17 +35,23 @@ export class InputHandler {
   handlers: [any, string, (event: any) => void][];
   // triggers: InputTriggers;
   inputListenerSets: InputController<any>[];
+  cachedActions: [boolean, InputState<any>, (down: boolean, input: InputState<any>) => void][];
 
   constructor(app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
     this.handlers = [];
     this.inputListenerSets = [];
+    this.cachedActions = [];
     this.initializeHandlers();
-    // this.triggers = game.getControlInterface(this.inputState);
   }
 
   registerInputListeners(inputListenerSet: InputController<any>) {
     this.inputListenerSets.push(inputListenerSet);
+  }
+
+  processInput() {
+    this.cachedActions.forEach(([down, input, action]) => action(down, input));
+    this.cachedActions = [];
   }
 
   // TODO: maybe perform grouping so that each controller isn't fully iterated through for every input
@@ -57,7 +63,7 @@ export class InputHandler {
         inputs.forEach(input => {
           if (input === clickType) {
             controller.inputState.buttons[binding] = down;
-            controller.enabled && controller.actions[binding](down, controller.inputState);
+            controller.enabled && this.cachedActions.push([down, controller.inputState, controller.actions[binding]]);
           }
         })
       });
@@ -74,9 +80,9 @@ export class InputHandler {
         }
         Object.entries(controller.inputButtonMap).forEach(([binding, inputs]) => {
           inputs.forEach(input => {
-            if (input.toLowerCase() === event.key.toLowerCase()) {
+            if (input === 'any' || (input.toLowerCase() === event.key.toLowerCase()) && controller.inputState.buttons[binding] !== down) {
               controller.inputState.buttons[binding] = down;
-              controller.enabled && controller.actions[binding](down, controller.inputState);
+              controller.enabled && this.cachedActions.push([down, controller.inputState, controller.actions[binding]]);
             }
           })
         });
@@ -91,8 +97,8 @@ export class InputHandler {
         Object.entries(controller.inputButtonMap).forEach(([binding, inputs]) => {
           inputs.forEach(input => {
             if ((sign > 0 && input === MouseAction.scrollup) || (sign < 0 && input === MouseAction.scrolldown)) {
-              controller.actions[binding](true, controller.inputState);
-              controller.actions[binding](false, controller.inputState);
+              this.cachedActions.push([true, controller.inputState, controller.actions[binding]]);
+              this.cachedActions.push([false, controller.inputState, controller.actions[binding]]);
             }
           })
         })

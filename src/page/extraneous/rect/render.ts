@@ -7,11 +7,10 @@ import { Entity } from './entity';
 import { GRAVITY } from './physics';
 import { PlayerData } from './entity/player';
 import { ActionMap, InputState } from './input';
+import { MenuController } from './menu';
+import { GRAPHICAL_SCALE, SCREEN_HEIGHT, SCREEN_WIDTH } from './constants';
 // END EXPERIMENT IMPORTS
 
-export const SCREEN_WIDTH = 960;
-export const SCREEN_HEIGHT = 540;
-export const GRAPHICAL_SCALE = 20/8;
 export const SPRITE_TEXTURES: Record<string, SpriteSet> = {};
 const ITEM_TEXTURES: Record<string, SpriteSet> = {};
 export const GUI_TEXTURES: Record<string, SpriteSet> = {};
@@ -397,199 +396,6 @@ interface InventorySlotSprites {
   count: TextBox;
 }
 
-type MenuScreen = 'pause' | 'controls';
-
-type Entry = {
-  type: 'button',
-  title: string;
-  onClick: () => void;
-} | {
-  type: 'keybind',
-  title: string;
-  bindings: string[];
-  editing?: number;
-  onAdd: () => void;
-} | {
-  type: 'slider',
-  title: string;
-  setting: number;
-}
-
-interface MScreen {
-  title: string;
-  entries: Entry[];
-}
-
-type Blah = 'select' | 'resume' | 'type';
-
-interface ClickBox {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  onClick: () => void;
-}
-
-interface MenuDimensions {
-  buttonWidth: number;
-  buttonHeight: number;
-}
-
-// function makeClickBoxes(entries: Entry[]): ClickBox[] {
-//   return entries.map(entry => {
-//     if (entry.type ===)
-//   })
-// }
-
-class MenuController implements ActionMap<Record<Blah, never>> {
-  screen!: MScreen;
-
-  constructor() {
-    this.navigateMain();
-  }
-
-  navigateMain() {
-    this.screen = {
-      title: 'Options',
-      entries: [
-        {
-          type: 'button',
-          title: 'Resume',
-          onClick: () => this.close()
-        }, {
-          type: 'button',
-          title: 'Controls',
-          onClick: () => this.navigateControls()
-        }
-      ]
-    }
-  }
-
-  navigateControls() {
-    this.screen = {
-      title: 'Controls',
-      entries: [
-        {
-          type: 'keybind',
-          title: 'Walk',
-          bindings: ['w'],
-          editing: undefined,
-          onAdd() {
-            this.bindings.push('');
-            this.editing = this.bindings.length - 1;
-          }
-        }
-      ]
-    }
-  }
-
-  close() {
-
-  }
-
-  select(pressed: boolean, inputState: InputState<Record<Blah, never>>) {
-    if (pressed) {
-      return;
-    }
-    const [x, y] = inputState.cursorPosition;
-    this.screen.entries.forEach((entry, i) => {
-      const MENU_BUTTON_HEIGHT = 50;
-      const MENU_VERTICAL_OFFSET = 200;
-      const MENU_BUTTON_WIDTH = 200;
-      const LABEL_WIDTH = 50;
-      const KEYBIND_BUTTON_WIDTH = 50;
-      const MAX_BINDS = 3;
-      const screenCenter = SCREEN_WIDTH / 2;
-      const yOffset = i * MENU_BUTTON_HEIGHT + MENU_VERTICAL_OFFSET;
-      const xOffset = screenCenter - MENU_BUTTON_WIDTH / 2;
-      if (entry.type === 'button') {
-        if (x >= xOffset && x <= xOffset + MENU_BUTTON_WIDTH && y >= yOffset && y <= yOffset + MENU_BUTTON_HEIGHT) {
-          entry.onClick();
-        }
-      } else if (entry.type === 'keybind') {
-        const buttonLeft = xOffset + LABEL_WIDTH;
-        const buttonRight = buttonLeft + entry.bindings.length * KEYBIND_BUTTON_WIDTH;
-        const addRight = buttonRight + KEYBIND_BUTTON_WIDTH;
-        // editing keybind
-        if (x >= buttonLeft && x < buttonRight && y >= yOffset && y <= yOffset + MENU_BUTTON_HEIGHT) {
-          entry.editing = Math.floor((x - buttonLeft) / KEYBIND_BUTTON_WIDTH);
-        }
-      }
-    });
-  }
-  resume(pressed: boolean, inputState: InputState<Record<Blah, never>>) {
-
-  }
-
-  type(pressed: boolean, inputState: InputState<Record<Blah, never>>) {
-
-  }
-}
-
-class Menu {
-  layer: PIXI.Container;
-  buttons: [PIXI.Sprite, TextBox, () => void][];
-  onClose: () => void;
-
-  constructor(layer: PIXI.Container, onClose: () => void) {
-    this.layer = layer;
-    this.buttons = [];
-    this.onClose = onClose;
-  }
-
-  handleClick([x, y]: [number, number]) {
-    this.buttons.forEach(([sprite, _, onClick]) => {
-      console.log('detected click...')
-      if (x >= sprite.x - sprite.anchor.x * sprite.width && x < sprite.x + (1 - sprite.anchor.x) * sprite.width
-        && y >= sprite.y - sprite.anchor.y * sprite.height && y < sprite.y + (1 - sprite.anchor.y) * sprite.height) {
-          console.log('activating a handler!');
-          onClick();
-        }
-    })
-  }
-
-  setScreen(screen: MenuScreen) {
-    this.clearButtons();
-    const largeButton = GUI_TEXTURES['menu'].frames[GUI_TEXTURES['menu'].getFrameIndex('largeButton', 0)];
-    if (screen === 'pause') {
-      this.setButtons([
-        [PIXI.Sprite.from(largeButton), 'Resume', () => this.close()],
-        [PIXI.Sprite.from(largeButton), 'Controls', () => this.setScreen('controls')]
-      ]);
-    } else if (screen === 'controls') {
-      this.setButtons([
-        [PIXI.Sprite.from(largeButton), 'Back', () => this.setScreen('pause')],
-        [PIXI.Sprite.from(largeButton), 'Bind', () => alert('idk man')]
-      ]);
-    }
-  }
-
-  private setButtons(buttons: [PIXI.Sprite, string, () => void][]) {
-    this.buttons = buttons.map(([sprite, text, onClick], i) => {
-      this.layer.addChild(sprite);
-      sprite.anchor.set(0.5);
-      sprite.scale.set(6);
-      sprite.x = SCREEN_WIDTH / 2;
-      sprite.y = 100 + 50 * i;
-      const textbox = new TextBox(sprite.x - 60, sprite.y - 8, text, this.layer, 2);
-      return [sprite, textbox, onClick];
-    });
-  }
-
-  private clearButtons() {
-    this.buttons.forEach(([sprite, text, _]) => {
-      this.layer.removeChild(sprite);
-      text.deleteSprites();
-    });
-    this.buttons = [];
-  }
-
-  close() {
-    this.clearButtons();
-    this.onClose();
-  }
-}
-
 export class Renderer {
   app: PIXI.Application<HTMLCanvasElement>;
 
@@ -599,7 +405,7 @@ export class Renderer {
   entityArmatures: Map<number, Armature>;
   inventorySlots: InventorySlotSprites[];
   trajectorySprites: TrajectorySprites;
-  menu?: Menu;
+  menu: MenuController;
 
   constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
@@ -635,25 +441,19 @@ export class Renderer {
       sprites: [],
       spriteGroup: particles
     }
+    const menuLayer = new PIXI.Container();
+    this.app.stage.addChild(menuLayer);
+    this.menu = new MenuController(menuLayer);
     this.openMenu();
   }
 
   openMenu() {
-    console.log('opneing menu')
-    if (this.menu) {
-      return;
-    }
-    this.menu = new Menu(this.app.stage, () => this.menu = undefined);
-    console.log('set menu')
-    this.menu.setScreen('pause');
+    console.log('opneing menu');
+    this.menu.navigateMain();
   }
 
   closeMenu() {
-    if (!this.menu) {
-      return;
-    }
     this.menu.close();
-    this.menu = undefined;
   }
 
   updateThrowingTrajectory(player: PlayerData) {

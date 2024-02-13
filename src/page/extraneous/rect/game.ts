@@ -146,7 +146,7 @@ export class Game {
       select: (pressed: boolean, i) => {
         console.log('selecttt')
         if (pressed) {
-          this.renderer.menu?.handleClick(i.cursorPosition);
+          // this.renderer.menu?.handleClick(i.cursorPosition);
         }
       },
       escape: (pressed: boolean) => {

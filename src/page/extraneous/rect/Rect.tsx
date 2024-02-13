@@ -1,11 +1,12 @@
 import * as PIXI from 'pixi.js';
 import { useEffect, useRef } from 'react';
 import { World, Block, Terrain, WORLD_HEIGHT, WORLD_WIDTH } from './world';
-import { Renderer, SCREEN_HEIGHT, SCREEN_WIDTH, loadTextures } from './render';
+import { Renderer, loadTextures } from './render';
 import { PlayerInventory } from './item';
 import { Game } from './game';
 import { Player } from './entity/player';
 import { InputHandler } from './input';
+import { SCREEN_WIDTH, SCREEN_HEIGHT } from './constants';
 
 const template = [
   '            x                               ',

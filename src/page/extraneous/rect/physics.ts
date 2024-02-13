@@ -26,8 +26,8 @@ type CollisionResponse = 'bounce' | 'block' | 'stick';
 // 1. walking - hangs around
 // 2. friction/normal: added in response to other forces.
 // 3. wind
-// forces are cleared at the end of the frame so external sources can
-// continue applying them or not
+// forces are applied, turned into velocity, and cleared at the beginning of the frame
+// velocity is needed in order to calculate collisions
 
 // impulses appear at the beginning of the frame and are converted to momentum
 // they do not induce continuous friction, just response impulses. maybe instantaneous friction
@@ -35,29 +35,92 @@ type CollisionResponse = 'bounce' | 'block' | 'stick';
 // 2. explosions
 // 3. reactions to collisions
 
-// we should process collisions and contact differently.
-// detect collision (|relative velocity| > 0, contact doesn't matter, forces don't matter) -> apply reaction impulse instantaneously
-// detect contact (relative velocity = 0, contacting surfaces, forces into surface) -> update reaction forces
+// forces and impulses are not really different here
 
-export interface Forces {
-  external: [number, number][];
-  reaction: [number, number][];
+// the following approach treats constant forces as impulses applied once every frame
+// collisions are purely calculated via changes in velocity
+
+// 1. find contacting surfaces
+// 2. calculate normal/friction forces based on applied forces
+//    - can do this by finding contacting surfaces and 
+////    if relative velocity = 0, ( < 0?) 
+//      [<-][<--][->]
+//      [<=][<=][->]
+
+//      [<--][<-][<-]   ar(-), bl(++), br(-), cl(-)
+//      [<--][<-][<-]   ar+bl=(+) -> overall left. br+cl=(-) -> no transfer
+
+//      [-->][->] ar(++), bl(-)
+//    - this probably requires iteratively combining net forces until none are left:
+//      [<-][-][->][<---]
+
+//                ar+bl=(+) -> overall right. net = a+b=(++)+(+)
+// 3. apply all net forces, converted into velocity
+// 4. resolve collisions with velocity only as in old approach
+
+// function netExternalForce(forces: Forces): [number, number] {
+//   return forces.external.reduce(([totalX, totalY], [x, y]) => [totalX + x, totalY + y], [0, 0]);
+// }
+
+// function netForce(forces: Forces): [number, number] {
+//   return forces.external.concat(forces.reaction).reduce(([totalX, totalY], [x, y]) => [totalX + x, totalY + y], [0, 0]);
+// }
+
+// function applyNetForces(inertial: Inertial) {
+//   const [fx, fy] = netForce(inertial.netForces);
+//   inertial.vx += fx / inertial.mass;
+//   inertial.vy += fy / inertial.mass;
+//   inertial.netForces.external.splice(0);
+//   inertial.netForces.reaction.splice(0);
+// }
+
+function handleForces(entities: Entity[]) {
+  findOpposingSurfaceGroups(entities).forEach(applyNormalForces);
 }
 
-function netExternalForce(forces: Forces): [number, number] {
-  return forces.external.reduce(([totalX, totalY], [x, y]) => [totalX + x, totalY + y], [0, 0]);
+interface OpposingSurfaceGroup {
+  entities: Entity[];
+  terrain?: 0 | 1;
+  bounds: [number, number];
+  netMomentum: number;
 }
 
-function netForce(forces: Forces): [number, number] {
-  return forces.external.concat(forces.reaction).reduce(([totalX, totalY], [x, y]) => [totalX + x, totalY + y], [0, 0]);
+function applyNormalForces(group: OpposingSurfaceGroup) {
+
 }
 
-function applyNetForces(inertial: Inertial) {
-  const [fx, fy] = netForce(inertial.netForces);
-  inertial.vx += fx / inertial.mass;
-  inertial.vy += fy / inertial.mass;
-  inertial.netForces.external.splice(0);
-  inertial.netForces.reaction.splice(0);
+function findOpposingSurfaceGroups(entities: Entity[]): OpposingSurfaceGroup[] {
+  let groups = convertToOpposingSurfaceGroups(entities);
+  let priorCount = groups.length + 1;
+  while (groups.length < priorCount) {
+    priorCount = groups.length;
+    groups = combineOpposingSurfaceGroups(groups);
+  }
+  return groups;
+}
+
+function convertToOpposingSurfaceGroups(entities: Entity[]): OpposingSurfaceGroup[] {
+  return [];
+}
+
+// this must be done in a tree-like fashion
+function combineOpposingSurfaceGroups(groups: OpposingSurfaceGroup[]): OpposingSurfaceGroup[] {
+  const starts = new Map<number, OpposingSurfaceGroup[]>();
+  const ends = new Map<number, OpposingSurfaceGroup[]>();
+  groups.forEach(group => {
+    const [start, end] = group.bounds;
+    const that = ends.get(start);
+    if (that) {
+      const thisMomentum = -group.netMomentum;
+      // const thatMomentum = that.netMomentum;
+      // const normalForce = (thisMomentum + thatMomentum) / 2;
+      // const groupsArePushing = normalForce >= 0;
+      // if (groupsArePushing) {
+      //   ends.delete()
+      // }
+    }
+  });
+  return [];
 }
 
 function momentum(inertial: Inertial) {
@@ -68,12 +131,16 @@ export function impartDirectionalForce(inertial: Inertial, f: number, theta: num
   impartForce(inertial, [f * Math.cos(theta), f * Math.sin(theta)]);
 }
 
-export function impartForce(inertial: Inertial, [xf, yf]: [number, number]) {
-  inertial.netForces.external.push([xf, yf]);
+export function impartForce(inertial: Inertial, [fx, fy]: [number, number]) {
+  const [fxi, fyi] = inertial.netForce;
+  inertial.netForce = [fxi + fx, fyi + fy];
 }
 
-function impartReaction(inertial: Inertial, [xf, yf]: [number, number]) {
-  inertial.netForces.reaction.push([xf, yf]);
+function applyForces(inertial: Inertial) {
+  const [fx, fy] = inertial.netForce;
+  inertial.vx += fx / inertial.mass;
+  inertial.vy += fy / inertial.mass;
+  inertial.netForce = [0, 0];
 }
 
 type ThingCollisionEvent = {
@@ -214,7 +281,7 @@ function getNextTerrainCollision(world: World, inertials: Entity[]): TerrainColl
 
         if (bottom - Math.floor(bottom) === 0.5) {
           const block = world.terrain.at(nextBlock, Math.floor(bottom));
-          if (Math.abs(vx) < Math.abs(vy) && solidBlock(block)) {
+          if (Math.abs(vx) <= Math.abs(vy) && solidBlock(block)) {
             tx = t;
             collision = true;
             break;
@@ -222,7 +289,7 @@ function getNextTerrainCollision(world: World, inertials: Entity[]): TerrainColl
         }
         if (top - Math.floor(top) === 0.5) {
           const block = world.terrain.at(nextBlock, Math.ceil(top));
-          if (Math.abs(vx) < Math.abs(vy) && solidBlock(block)) {
+          if (Math.abs(vx) <= Math.abs(vy) && solidBlock(block)) {
             tx = t;
             collision = true;
             break;
@@ -261,7 +328,7 @@ function getNextTerrainCollision(world: World, inertials: Entity[]): TerrainColl
 
         if (bottom - Math.floor(bottom) === 0.5) {
           const block = world.terrain.at(nextBlock, Math.floor(bottom));
-          if (Math.abs(vx) >= Math.abs(vy) && solidBlock(block)) {
+          if (Math.abs(vx) > Math.abs(vy) && solidBlock(block)) {
             ty = t;
             collision = true;
             break;
@@ -269,7 +336,7 @@ function getNextTerrainCollision(world: World, inertials: Entity[]): TerrainColl
         }
         if (top - Math.floor(top) === 0.5) {
           const block = world.terrain.at(nextBlock, Math.ceil(top));
-          if (Math.abs(vx) >= Math.abs(vy) && solidBlock(block)) {
+          if (Math.abs(vx) > Math.abs(vy) && solidBlock(block)) {
             ty = t;
             collision = true;
             break;
@@ -309,7 +376,7 @@ function getNextTerrainCollision(world: World, inertials: Entity[]): TerrainColl
 function stepEverythingBy(time: number, world: World, exclude?: number) {
   for (const thing of world.things.values()) {
     if (thing.inertial) {
-      applyNetForces(thing.data);
+      applyForces(thing.data);
       thing.data.x += thing.data.vx * time;
       thing.data.y += thing.data.vy * time;
     }
@@ -337,14 +404,14 @@ function processTerrainCollision(collision: TerrainCollisionEvent, world: World)
     return;
   }
   // TODO: make more complex collision interactions such as bounce
-  const moment = momentum(thing.data);
+  const [mx, my] = momentum(thing.data);
   if (collision.axis[0] !== 0) {
     thing.data.x += collision.time * thing.data.vx;
     thing.data.hittingWall = collision.axis[0] === -1 ? 'left' : 'right';
-    impartReaction(thing.data, [-moment[0], 0]);
+    impartForce(thing.data, [-mx, 0])
   } else {
     thing.data.y += collision.time * thing.data.vy;
-    impartReaction(thing.data, [0, -moment[1]]);
+    impartForce(thing.data, [0, -my])
     thing.data.onGround = collision.axis[1] === -1;
   }
   stepEverythingBy(collision.time, world, collision.id);

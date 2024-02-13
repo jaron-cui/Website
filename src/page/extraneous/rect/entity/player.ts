@@ -43,7 +43,7 @@ export class Player extends BaseEntity<PlayerData> {
       x: x,
       y: y,
       w: 0.875,
-      h: 2,
+      h: 30/16,
       vx: 0,
       vy: 0,
       mass: 1,
@@ -68,10 +68,7 @@ export class Player extends BaseEntity<PlayerData> {
       },
       health: 100,
       maxHealth: 100,
-      netForces: {
-        external: [],
-        reaction: []
-      }
+      netForce: [0, 0]
     });
   }
 
@@ -109,7 +106,7 @@ export class Player extends BaseEntity<PlayerData> {
     if (this.data.jumping && timely && ungrounded) {
       this.data.wallJumpCooldown = WALLJUMP_COOLDOWN;
       this.data.vx = this.data.lastWall === 'left' ? WALL_JUMP_SPEED : -WALL_JUMP_SPEED;
-      this.data.vy = JUMP_SPEED;
+      this.data.vy = JUMP_SPEED * 0.8;
     }
   }
 

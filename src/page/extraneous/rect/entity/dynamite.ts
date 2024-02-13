@@ -31,10 +31,7 @@ export class Dynamite extends BaseEntity<DynamiteData> {
         inertial: true,
         explosive: true
       },
-      netForces: {
-        external: [],
-        reaction: []
-      }
+      netForce: [0, 0]
     });
   }
 

@@ -3,7 +3,6 @@ import type { Dynamite } from "./entity/dynamite";
 import type { Game } from "./game";
 import { SPRITE_TEXTURES } from "./render";
 import { XDirection, ArmaturePiecePose, SpriteSet } from "./world";
-import { Forces } from "./physics";
 
 export const DYNAMITE_FUSE_RATE = 1/18;
 export const DYNAMITE_FUSE_TICK = 10;
@@ -25,7 +24,7 @@ export type Inertial = Physical & {
   vx: number;
   vy: number;
   mass: number;
-  netForces: Forces;
+  netForce: [number, number];
   // coefficient of friction
   // this will be averaged with that of colliding surface
   surfaceFriction?: number;

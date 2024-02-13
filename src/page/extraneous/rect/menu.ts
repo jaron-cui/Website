@@ -66,187 +66,196 @@ const KEYBIND_X_WIDTH = 20;
 const MAX_BINDS = 3;
 const screenCenter = SCREEN_WIDTH / 2;
 
-export class MenuController implements ActionMap<Record<Blah, never>> {
+export class MenuController extends PIXI.Container implements ActionMap<Record<Blah, never>> {
   screen?: MScreen;
   clickBoxes: ClickBox[];
-  layer: PIXI.Container;
   sprites: PIXI.Sprite[];
+  onClose: () => void;
 
-  constructor(layer: PIXI.Container) {
+  constructor(onClose: () => void) {
+    super();
     this.clickBoxes = [];
-    this.layer = layer;
     this.sprites = [];
-    this.navigateMain();
+    this.onClose = onClose;
+    navigateMain(this);
   }
 
-  rerender() {
-    this.clickBoxes = [];
-    this.sprites.forEach(sprite => this.layer.removeChild(sprite));
+  close = () => {
     if (!this.screen) {
       return;
     }
-    const reload = () => this.rerender();
-    const largeButtonTexture = GUI_TEXTURES['menu'].frames[GUI_TEXTURES['menu'].getFrameIndex('largeButton', 0)];
-    const addButtonTexture = GUI_TEXTURES['menu'].frames[GUI_TEXTURES['menu'].getFrameIndex('addButton', 0)];
-    const minusButtonTexture = GUI_TEXTURES['menu'].frames[GUI_TEXTURES['menu'].getFrameIndex('minusButton', 0)];
-
-    this.screen.entries.forEach((entry, i) => {
-      const yOffset = i * MENU_BUTTON_HEIGHT + MENU_VERTICAL_OFFSET;
-      const leftMargin = screenCenter - MENU_BUTTON_WIDTH / 2;
-      if (entry.type === 'button') {
-        // this.clickBoxes.push({
-        //   x: leftMargin,
-        //   y: yOffset,
-        //   w: MENU_BUTTON_WIDTH,
-        //   h: MENU_BUTTON_HEIGHT,
-        //   onClick() {
-        //     entry.onClick();
-        //   }
-        // });
-        const buttonSprite = PIXI.AnimatedSprite.from(largeButtonTexture);
-        buttonSprite.scale.set(4);
-        buttonSprite.x = leftMargin;
-        buttonSprite.y = yOffset;
-
-        buttonSprite.onclick = entry.onClick;
-        this.layer.addChild(buttonSprite);
-        this.sprites.push(buttonSprite);
-      } else if (entry.type === 'keybind') {
-        const buttonStart = leftMargin + LABEL_WIDTH;
-        // keybind buttons
-        entry.bindings.forEach((_, i) => {
-          // editing and delete buttons
-          const buttonLeft = buttonStart + KEYBIND_BUTTON_WIDTH * i;
-          const keybindButton = PIXI.AnimatedSprite.from(largeButtonTexture);
-          keybindButton.scale.set(4);
-          keybindButton.x = buttonLeft;
-          keybindButton.y = yOffset;
-          keybindButton.onclick = () => entry.editing = i;
-          this.layer.addChild(keybindButton);
-          this.sprites.push(keybindButton);
-          const deleteButton = PIXI.AnimatedSprite.from(minusButtonTexture);
-          deleteButton.scale.set(4);
-          deleteButton.x = buttonLeft + KEYBIND_BUTTON_WIDTH - KEYBIND_X_WIDTH;
-          deleteButton.y = yOffset;
-          deleteButton.onclick = () => {
-            entry.bindings.splice(i, 1);
-            reload();
-          }
-          this.layer.addChild(keybindButton);
-          this.sprites.push(keybindButton);
-
-          this.clickBoxes.push({
-            x: buttonLeft,
-            y: yOffset,
-            w: KEYBIND_BUTTON_WIDTH,
-            h: MENU_BUTTON_HEIGHT,
-            onClick() {
-              entry.editing = i;
-            }
-          }, {
-            x: buttonLeft + KEYBIND_BUTTON_WIDTH - KEYBIND_X_WIDTH,
-            y: yOffset,
-            w: KEYBIND_X_WIDTH,
-            h: MENU_BUTTON_HEIGHT,
-            onClick() {
-              entry.bindings.splice(i, 1);
-              reload();
-            }
-          });
-        });
-        // add button
-        const addButton = PIXI.AnimatedSprite.from(addButtonTexture);
-        addButton.scale.set(4);
-        addButton.x = buttonStart + KEYBIND_BUTTON_WIDTH * entry.bindings.length;
-        addButton.y = yOffset;
-        addButton.onclick = () => {
-          if (entry.bindings.length < MAX_BINDS) {
-            entry.bindings.push('');
-            reload();
-          }
-        };
-        this.layer.addChild(addButton);
-        this.sprites.push(addButton);
-
-        this.clickBoxes.push({
-          x: buttonStart + KEYBIND_BUTTON_WIDTH * entry.bindings.length,
-          y: yOffset,
-          w: KEYBIND_BUTTON_WIDTH,
-          h: MENU_BUTTON_HEIGHT,
-          onClick() {
-            if (entry.bindings.length < MAX_BINDS) {
-              entry.bindings.push('');
-              reload();
-            }
-          }
-        });
-      }
-    });
-  }
-
-  navigateMain() {
-    this.screen = {
-      title: 'Options',
-      entries: [
-        {
-          type: 'button',
-          title: 'Resume',
-          onClick: () => this.close()
-        }, {
-          type: 'button',
-          title: 'Controls',
-          onClick: () => this.navigateControls()
-        }
-      ]
-    }
-    this.rerender();
-  }
-
-  navigateControls() {
-    this.screen = {
-      title: 'Controls',
-      entries: [
-        {
-          type: 'keybind',
-          title: 'Walk',
-          bindings: ['w'],
-          editing: undefined,
-          onAdd() {
-            this.bindings.push('');
-            this.editing = this.bindings.length - 1;
-          }
-        }
-      ]
-    }
-    this.rerender();
-  }
-
-  close() {
     this.screen = undefined;
-    this.rerender();
+    rerender(this);
+    this.onClose();
   }
 
-  select(pressed: boolean, inputState: InputState<Record<Blah, never>>) {
+  select = (pressed: boolean, inputState: InputState<Record<Blah, never>>) => {
     if (pressed) {
       return;
     }
     const [x, y] = inputState.cursorPosition;
+    console.log(this);
     this.clickBoxes.forEach(clickBox => {
       if (x > clickBox.x && x < clickBox.x + clickBox.w && y > clickBox.y && y < clickBox.y + clickBox.x) {
-        // clickBox.onClick();
+        clickBox.onClick();
       }
     });
   }
 
-  resume(pressed: boolean, inputState: InputState<Record<Blah, never>>) {
+  resume = (pressed: boolean, inputState: InputState<Record<Blah, never>>) => {
     if (pressed) {
       this.close();
     }
   }
 
-  type(pressed: boolean, inputState: InputState<Record<Blah, never>>) {
+  type = (pressed: boolean, inputState: InputState<Record<Blah, never>>) => {
 
   }
+}
+
+function rerender(menu: MenuController) {
+  console.log('screen after ' + menu.screen);
+  menu.clickBoxes = [];
+  menu.sprites.forEach(sprite => menu.removeChild(sprite));
+  if (!menu.screen) {
+    return;
+  }
+  const reload = () => rerender(menu);
+  const largeButtonTexture = GUI_TEXTURES['menu'].frames[GUI_TEXTURES['menu'].getFrameIndex('largeButton', 0)];
+  const addButtonTexture = GUI_TEXTURES['menu'].frames[GUI_TEXTURES['menu'].getFrameIndex('addButton', 0)];
+  const minusButtonTexture = GUI_TEXTURES['menu'].frames[GUI_TEXTURES['menu'].getFrameIndex('minusButton', 0)];
+
+  menu.screen.entries.forEach((entry, i) => {
+    const yOffset = i * MENU_BUTTON_HEIGHT + MENU_VERTICAL_OFFSET;
+    const leftMargin = screenCenter - MENU_BUTTON_WIDTH / 2;
+    if (entry.type === 'button') {
+      menu.clickBoxes.push({
+        x: leftMargin,
+        y: yOffset,
+        w: MENU_BUTTON_WIDTH,
+        h: MENU_BUTTON_HEIGHT,
+        onClick() {
+          entry.onClick();
+        }
+      });
+      const buttonSprite = PIXI.AnimatedSprite.from(largeButtonTexture);
+      buttonSprite.scale.set(4);
+      buttonSprite.x = leftMargin;
+      buttonSprite.y = yOffset;
+
+      buttonSprite.onclick = () => console.log('clicked button!');//entry.onClick;
+      buttonSprite.on('click', () => console.log('clicked button!'));
+      menu.addChild(buttonSprite);
+      menu.sprites.push(buttonSprite);
+    } else if (entry.type === 'keybind') {
+      const buttonStart = leftMargin + LABEL_WIDTH;
+      // keybind buttons
+      entry.bindings.forEach((_, i) => {
+        // editing and delete buttons
+        const buttonLeft = buttonStart + KEYBIND_BUTTON_WIDTH * i;
+        const keybindButton = PIXI.AnimatedSprite.from(largeButtonTexture);
+        keybindButton.scale.set(4);
+        keybindButton.x = buttonLeft;
+        keybindButton.y = yOffset;
+        keybindButton.onclick = () => entry.editing = i;
+        menu.addChild(keybindButton);
+        menu.sprites.push(keybindButton);
+        const deleteButton = PIXI.AnimatedSprite.from(minusButtonTexture);
+        deleteButton.scale.set(4);
+        deleteButton.x = buttonLeft + KEYBIND_BUTTON_WIDTH - KEYBIND_X_WIDTH;
+        deleteButton.y = yOffset;
+        deleteButton.onclick = () => {
+          entry.bindings.splice(i, 1);
+          reload();
+        }
+        menu.addChild(keybindButton);
+        menu.sprites.push(keybindButton);
+
+        menu.clickBoxes.push({
+          x: buttonLeft,
+          y: yOffset,
+          w: KEYBIND_BUTTON_WIDTH,
+          h: MENU_BUTTON_HEIGHT,
+          onClick() {
+            entry.editing = i;
+          }
+        }, {
+          x: buttonLeft + KEYBIND_BUTTON_WIDTH - KEYBIND_X_WIDTH,
+          y: yOffset,
+          w: KEYBIND_X_WIDTH,
+          h: MENU_BUTTON_HEIGHT,
+          onClick() {
+            entry.bindings.splice(i, 1);
+            reload();
+          }
+        });
+      });
+      // add button
+      const addButton = PIXI.AnimatedSprite.from(addButtonTexture);
+      addButton.scale.set(4);
+      addButton.x = buttonStart + KEYBIND_BUTTON_WIDTH * entry.bindings.length;
+      addButton.y = yOffset;
+      addButton.onclick = () => {
+        if (entry.bindings.length < MAX_BINDS) {
+          entry.bindings.push('');
+          reload();
+        }
+      };
+      menu.addChild(addButton);
+      menu.sprites.push(addButton);
+
+      menu.clickBoxes.push({
+        x: buttonStart + KEYBIND_BUTTON_WIDTH * entry.bindings.length,
+        y: yOffset,
+        w: KEYBIND_BUTTON_WIDTH,
+        h: MENU_BUTTON_HEIGHT,
+        onClick() {
+          if (entry.bindings.length < MAX_BINDS) {
+            entry.bindings.push('');
+            reload();
+          }
+        }
+      });
+    }
+  });
+}
+
+export function navigateMain(menu: MenuController) {
+  menu.screen = {
+    title: 'Options',
+    entries: [
+      {
+        type: 'button',
+        title: 'Resume',
+        onClick: () => menu.close()
+      }, {
+        type: 'button',
+        title: 'Controls',
+        onClick: () => navigateControls(menu)
+      }
+    ]
+  }
+  console.log('screen now: ' + menu.screen);
+  rerender(menu);
+}
+
+function navigateControls(menu: MenuController) {
+  menu.screen = {
+    title: 'Controls',
+    entries: [
+      {
+        type: 'keybind',
+        title: 'Walk',
+        bindings: ['w'],
+        editing: undefined,
+        onAdd() {
+          this.bindings.push('');
+          this.editing = this.bindings.length - 1;
+        }
+      }
+    ]
+  }
+  rerender(menu);
 }
 
 class Menu {

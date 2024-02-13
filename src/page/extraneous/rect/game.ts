@@ -3,6 +3,7 @@ import { Entity } from "./entity";
 import { Player } from "./entity/player";
 import { ActionMap, InputButtonMap, InputController, InputHandler, InputState } from "./input";
 import { ITEMS, handleSlotUse } from "./item";
+import { MenuController, navigateMain } from "./menu";
 import { distance, stepPhysics } from "./physics";
 import { Renderer, screenToGamePosition } from "./render";
 import { Block, World } from "./world";
@@ -24,11 +25,12 @@ const DEFAULT_INPUT_MAP: InputButtonMap<Record<ButtonPressAction, never>> = {
   pause: ['Escape']
 };
 
-type MenuPressAction = 'select' | 'escape';
+type MenuPressAction = 'select' | 'resume' | 'type';
 
 const MENU_NAVIGATION_INPUTS: InputButtonMap<Record<MenuPressAction, never>> = {
   select: ['leftclick', 'rightclick'],
-  escape: ['Escape', 'Enter']
+  resume: ['Escape', 'Enter'],
+  type: ['any']
 }
 
 export class Game {
@@ -45,10 +47,17 @@ export class Game {
   playerInput: InputController<Record<ButtonPressAction, never>>;
   menuInput: InputController<Record<MenuPressAction, never>>;
 
+  menu: MenuController;
+
   constructor(player: Player, world: World, renderer: Renderer, inputHandler: InputHandler) {
     this.player = player;
     this.world = world;
     this.renderer = renderer;
+    this.menu = new MenuController(() => {
+      this.menuInput.enabled = false;
+      this.playerInput.enabled = true;
+    });
+    this.renderer.menuLayer.addChild(this.menu);
     this.entityCount = 0;
     this.actionQueue = [];
     this.terrainOutOfDate = true;
@@ -77,11 +86,12 @@ export class Game {
     };
     this.menuInput = {
       inputButtonMap: MENU_NAVIGATION_INPUTS,
-      actions: this.initializeMenuControls(),
+      actions: this.menu,
       inputState: {
         buttons: {
           select: false,
-          escape: false
+          resume: false,
+          type: false
         },
         cursorPosition: [0, 0]
       },
@@ -141,23 +151,23 @@ export class Game {
     this.renderer.updateThrowingTrajectory(this.player.data);
   }
 
-  private initializeMenuControls(): ActionMap<Record<MenuPressAction, never>> {
-    return {
-      select: (pressed: boolean, i) => {
-        console.log('selecttt')
-        if (pressed) {
-          // this.renderer.menu?.handleClick(i.cursorPosition);
-        }
-      },
-      escape: (pressed: boolean) => {
-        if (pressed) {
-          this.menuInput.enabled = false;
-          this.playerInput.enabled = true;
-          this.renderer.closeMenu();
-        }
-      }
-    }
-  }
+  // private initializeMenuControls(): ActionMap<Record<MenuPressAction, never>> {
+  //   return {
+  //     select: (pressed: boolean, i) => {
+  //       console.log('selecttt')
+  //       if (pressed) {
+  //         // this.renderer.menu.s(i.cursorPosition);
+  //       }
+  //     },
+  //     escape: (pressed: boolean) => {
+  //       if (pressed) {
+  //         this.menuInput.enabled = false;
+  //         this.playerInput.enabled = true;
+  //         this.renderer.closeMenu();
+  //       }
+  //     }
+  //   }
+  // }
 
   private initializePlayerControls(): ActionMap<Record<ButtonPressAction, never>> {
     const onXChange = (_: boolean, inputState: InputState<Record<ButtonPressAction, never>>) => updateWalking(inputState, this.player);
@@ -205,7 +215,7 @@ export class Game {
             console.log('pause')
             this.playerInput.enabled = false;
             this.menuInput.enabled = true;
-            this.renderer.openMenu();
+            navigateMain(this.menu);
           }
         }
     };

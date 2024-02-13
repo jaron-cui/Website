@@ -7,7 +7,7 @@ import { Entity } from './entity';
 import { GRAVITY } from './physics';
 import { PlayerData } from './entity/player';
 import { ActionMap, InputState } from './input';
-import { MenuController } from './menu';
+import { MenuController, navigateMain } from './menu';
 import { GRAPHICAL_SCALE, SCREEN_HEIGHT, SCREEN_WIDTH } from './constants';
 // END EXPERIMENT IMPORTS
 
@@ -402,10 +402,10 @@ export class Renderer {
   time: number;
   world: World;
   terrainLayer: PIXI.Mesh<PIXI.Shader>;
+  menuLayer: PIXI.Container;
   entityArmatures: Map<number, Armature>;
   inventorySlots: InventorySlotSprites[];
   trajectorySprites: TrajectorySprites;
-  menu: MenuController;
 
   constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
@@ -441,19 +441,8 @@ export class Renderer {
       sprites: [],
       spriteGroup: particles
     }
-    const menuLayer = new PIXI.Container();
-    this.app.stage.addChild(menuLayer);
-    this.menu = new MenuController(menuLayer);
-    this.openMenu();
-  }
-
-  openMenu() {
-    console.log('opneing menu');
-    this.menu.navigateMain();
-  }
-
-  closeMenu() {
-    this.menu.close();
+    this.menuLayer = new PIXI.Container();
+    this.app.stage.addChild(this.menuLayer);
   }
 
   updateThrowingTrajectory(player: PlayerData) {

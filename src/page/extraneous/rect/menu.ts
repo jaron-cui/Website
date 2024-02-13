@@ -1,7 +1,8 @@
 import * as PIXI from 'pixi.js';
-import { ButtonPressAction } from "./game";
+import { type ButtonPressAction } from "./game";
 import { ActionMap, InputButtonMap, InputState } from "./input";
-import { GUI_TEXTURES, SCREEN_WIDTH, TextBox } from "./render";
+import { GUI_TEXTURES, TextBox } from "./render";
+import { SCREEN_WIDTH } from './constants';
 
 interface Settings {
   setKeybindings(inputMap: InputButtonMap<Record<ButtonPressAction, never>>): void;
@@ -198,6 +199,7 @@ export class MenuController implements ActionMap<Record<Blah, never>> {
         }
       ]
     }
+    this.rerender();
   }
 
   navigateControls() {
@@ -216,6 +218,7 @@ export class MenuController implements ActionMap<Record<Blah, never>> {
         }
       ]
     }
+    this.rerender();
   }
 
   close() {

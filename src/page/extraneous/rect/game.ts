@@ -7,9 +7,9 @@ import { distance, stepPhysics } from "./physics";
 import { Renderer, screenToGamePosition } from "./render";
 import { Block, World } from "./world";
 
-type ButtonPressAction = 'useMain' | 'useSecondary' | 'up' | 'left' | 'down' | 'right' | 'jump' | 'control' | 'shift' | 'scrollUp' | 'scrollDown';
+export type ButtonPressAction = 'useMain' | 'useSecondary' | 'up' | 'left' | 'down' | 'right' | 'jump' | 'control' | 'shift' | 'scrollUp' | 'scrollDown' | 'pause';
 
-export const DEFAULT_INPUT_MAP: InputButtonMap<Record<ButtonPressAction, never>> = {
+const DEFAULT_INPUT_MAP: InputButtonMap<Record<ButtonPressAction, never>> = {
   useMain: ['leftclick'],
   useSecondary: ['rightclick'],
   up: ['w'],
@@ -20,8 +20,16 @@ export const DEFAULT_INPUT_MAP: InputButtonMap<Record<ButtonPressAction, never>>
   control: ['Control'],
   shift: ['Shift'],
   scrollUp: ['scrollup', 'ArrowRight'],
-  scrollDown: ['scrolldown', 'ArrowLeft']
+  scrollDown: ['scrolldown', 'ArrowLeft'],
+  pause: ['Escape']
 };
+
+type MenuPressAction = 'select' | 'escape';
+
+const MENU_NAVIGATION_INPUTS: InputButtonMap<Record<MenuPressAction, never>> = {
+  select: ['leftclick', 'rightclick'],
+  escape: ['Escape', 'Enter']
+}
 
 export class Game {
   player: Player;
@@ -35,6 +43,7 @@ export class Game {
   inputHandler: InputHandler;
 
   playerInput: InputController<Record<ButtonPressAction, never>>;
+  menuInput: InputController<Record<MenuPressAction, never>>;
 
   constructor(player: Player, world: World, renderer: Renderer, inputHandler: InputHandler) {
     this.player = player;
@@ -59,13 +68,27 @@ export class Game {
           control: false,
           shift: false,
           scrollUp: false,
-          scrollDown: false
+          scrollDown: false,
+          pause: false
         },
         cursorPosition: [0, 0]
       },
       enabled: true
     };
+    this.menuInput = {
+      inputButtonMap: MENU_NAVIGATION_INPUTS,
+      actions: this.initializeMenuControls(),
+      inputState: {
+        buttons: {
+          select: false,
+          escape: false
+        },
+        cursorPosition: [0, 0]
+      },
+      enabled: true
+    }
     this.inputHandler.registerInputListeners(this.playerInput);
+    this.inputHandler.registerInputListeners(this.menuInput);
   }
 
   spawn(thing: Entity) {
@@ -84,6 +107,7 @@ export class Game {
     stepPhysics(this);
     this.actionQueue.forEach(action => action());
     this.actionQueue = [];
+    this.inputHandler.processInput();
     this.player.data.inventory.slots.forEach((slot, i) => {
       const item = slot && ITEMS[slot.id];
       item?.onTick && item.onTick({
@@ -117,61 +141,23 @@ export class Game {
     this.renderer.updateThrowingTrajectory(this.player.data);
   }
 
-  // getControlInterface(inputState: InputState): InputTriggers {
-  //   this.inputState = inputState;
-  //   const onXChange = (_: boolean) => updateWalking(inputState, this.player);
-  //   const onScroll = (sign: number) => (pressed: boolean) => {
-  //     if (pressed) {
-  //       const inventory = this.player.data.inventory;
-  //       inventory.selected = mod((inventory.selected + sign), inventory.slots.length);
-  //       this.renderer.updateInventory(inventory);
-  //     }
-  //   };
-
-  //   return {
-  //     onButtonPress: {
-  //       useMain: (_: boolean) => { },
-  //       useSecondary: (pressed: boolean) => {
-  //         if (pressed) {
-  //           this.actionQueue.push(() => {
-  //             handleSlotUse({
-  //               user: this.player,
-  //               game: this,
-  //               slotNumber: this.player.data.inventory.selected
-  //             });
-  //           });
-  //         }
-  //       },
-  //       // onScroll: (upBy: number) => {
-  //       //   const inventory = game.player.data.inventory;
-  //       //   inventory.selected = mod((inventory.selected - upBy), inventory.slots.length);
-  //       //   game.renderer.updateInventory(inventory);
-  //       // },
-  //       // onPointerMove: (screenX: number, screenY: number) => { },
-  //       up: (_: boolean) => {
-  //       },
-  //       left: onXChange,
-  //       right: onXChange,
-  //       down: onXChange,
-  //       jump: (_: boolean) => {
-  //         this.player.data.jumping = inputState.buttonsDown.jump;
-  //       },
-  //       control: () => { },
-  //       shift: () => { },
-  //       scrollUp: onScroll(1),
-  //       scrollDown: onScroll(-1)
-  //     },
-  //     onType: () => {},
-  //     onPointerMove: ([screenX, screenY]) => {
-  //       // console.log(screenX + ' ' + screenY);
-  //       // const [x, y] = screenToGamePosition([screenX, screenY]);
-  //       // const player = this.player.data;
-  //       // const theta = Math.atan2(y - player.y, x - player.x);
-  //       // this.updateTrajectory(theta);
-  //       // player.aimTheta = theta;
-  //     }
-  //   }
-  // }
+  private initializeMenuControls(): ActionMap<Record<MenuPressAction, never>> {
+    return {
+      select: (pressed: boolean, i) => {
+        console.log('selecttt')
+        if (pressed) {
+          this.renderer.menu?.handleClick(i.cursorPosition);
+        }
+      },
+      escape: (pressed: boolean) => {
+        if (pressed) {
+          this.menuInput.enabled = false;
+          this.playerInput.enabled = true;
+          this.renderer.closeMenu();
+        }
+      }
+    }
+  }
 
   private initializePlayerControls(): ActionMap<Record<ButtonPressAction, never>> {
     const onXChange = (_: boolean, inputState: InputState<Record<ButtonPressAction, never>>) => updateWalking(inputState, this.player);
@@ -213,7 +199,15 @@ export class Game {
         control: () => { },
         shift: () => { },
         scrollUp: onScroll(1),
-        scrollDown: onScroll(-1)
+        scrollDown: onScroll(-1),
+        pause: (pressed: boolean) => {
+          if (pressed) {
+            console.log('pause')
+            this.playerInput.enabled = false;
+            this.menuInput.enabled = true;
+            this.renderer.openMenu();
+          }
+        }
     };
   }
 }

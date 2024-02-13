@@ -6,6 +6,7 @@ import { ItemStack, PlayerInventory } from './item';
 import { Entity } from './entity';
 import { GRAVITY } from './physics';
 import { PlayerData } from './entity/player';
+import { ActionMap, InputState } from './input';
 // END EXPERIMENT IMPORTS
 
 export const SCREEN_WIDTH = 960;
@@ -13,7 +14,7 @@ export const SCREEN_HEIGHT = 540;
 export const GRAPHICAL_SCALE = 20/8;
 export const SPRITE_TEXTURES: Record<string, SpriteSet> = {};
 const ITEM_TEXTURES: Record<string, SpriteSet> = {};
-const GUI_TEXTURES: Record<string, SpriteSet> = {};
+export const GUI_TEXTURES: Record<string, SpriteSet> = {};
 
 export const DYNAMITE_FUSE_STATES = 9;
 
@@ -238,7 +239,7 @@ function createInitialUniforms() {
   };
 }
 
-class TextBox {
+export class TextBox {
   x: number;
   y: number;
   scale: number;
@@ -398,27 +399,153 @@ interface InventorySlotSprites {
 
 type MenuScreen = 'pause' | 'controls';
 
+type Entry = {
+  type: 'button',
+  title: string;
+  onClick: () => void;
+} | {
+  type: 'keybind',
+  title: string;
+  bindings: string[];
+  editing?: number;
+  onAdd: () => void;
+} | {
+  type: 'slider',
+  title: string;
+  setting: number;
+}
+
+interface MScreen {
+  title: string;
+  entries: Entry[];
+}
+
+type Blah = 'select' | 'resume' | 'type';
+
+interface ClickBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  onClick: () => void;
+}
+
+interface MenuDimensions {
+  buttonWidth: number;
+  buttonHeight: number;
+}
+
+// function makeClickBoxes(entries: Entry[]): ClickBox[] {
+//   return entries.map(entry => {
+//     if (entry.type ===)
+//   })
+// }
+
+class MenuController implements ActionMap<Record<Blah, never>> {
+  screen!: MScreen;
+
+  constructor() {
+    this.navigateMain();
+  }
+
+  navigateMain() {
+    this.screen = {
+      title: 'Options',
+      entries: [
+        {
+          type: 'button',
+          title: 'Resume',
+          onClick: () => this.close()
+        }, {
+          type: 'button',
+          title: 'Controls',
+          onClick: () => this.navigateControls()
+        }
+      ]
+    }
+  }
+
+  navigateControls() {
+    this.screen = {
+      title: 'Controls',
+      entries: [
+        {
+          type: 'keybind',
+          title: 'Walk',
+          bindings: ['w'],
+          editing: undefined,
+          onAdd() {
+            this.bindings.push('');
+            this.editing = this.bindings.length - 1;
+          }
+        }
+      ]
+    }
+  }
+
+  close() {
+
+  }
+
+  select(pressed: boolean, inputState: InputState<Record<Blah, never>>) {
+    if (pressed) {
+      return;
+    }
+    const [x, y] = inputState.cursorPosition;
+    this.screen.entries.forEach((entry, i) => {
+      const MENU_BUTTON_HEIGHT = 50;
+      const MENU_VERTICAL_OFFSET = 200;
+      const MENU_BUTTON_WIDTH = 200;
+      const LABEL_WIDTH = 50;
+      const KEYBIND_BUTTON_WIDTH = 50;
+      const MAX_BINDS = 3;
+      const screenCenter = SCREEN_WIDTH / 2;
+      const yOffset = i * MENU_BUTTON_HEIGHT + MENU_VERTICAL_OFFSET;
+      const xOffset = screenCenter - MENU_BUTTON_WIDTH / 2;
+      if (entry.type === 'button') {
+        if (x >= xOffset && x <= xOffset + MENU_BUTTON_WIDTH && y >= yOffset && y <= yOffset + MENU_BUTTON_HEIGHT) {
+          entry.onClick();
+        }
+      } else if (entry.type === 'keybind') {
+        const buttonLeft = xOffset + LABEL_WIDTH;
+        const buttonRight = buttonLeft + entry.bindings.length * KEYBIND_BUTTON_WIDTH;
+        const addRight = buttonRight + KEYBIND_BUTTON_WIDTH;
+        // editing keybind
+        if (x >= buttonLeft && x < buttonRight && y >= yOffset && y <= yOffset + MENU_BUTTON_HEIGHT) {
+          entry.editing = Math.floor((x - buttonLeft) / KEYBIND_BUTTON_WIDTH);
+        }
+      }
+    });
+  }
+  resume(pressed: boolean, inputState: InputState<Record<Blah, never>>) {
+
+  }
+
+  type(pressed: boolean, inputState: InputState<Record<Blah, never>>) {
+
+  }
+}
+
 class Menu {
   layer: PIXI.Container;
   buttons: [PIXI.Sprite, TextBox, () => void][];
   onClose: () => void;
-  clickHandler: (event: PIXI.FederatedPointerEvent) => void;
 
   constructor(layer: PIXI.Container, onClose: () => void) {
     this.layer = layer;
     this.buttons = [];
     this.onClose = onClose;
-    this.clickHandler = (event: PIXI.FederatedPointerEvent) => {
-      this.buttons.forEach(([sprite, _, onClick]) => {
-        console.log('detected click...')
-        if (event.screenX >= sprite.x - sprite.anchor.x * sprite.width && event.screenX < sprite.x + (1 - sprite.anchor.x) * sprite.width
-          && event.screenY >= sprite.y - sprite.anchor.y * sprite.height && event.screenY < sprite.y + (1 - sprite.anchor.y) * sprite.height) {
-            console.log('activating a handler!');
-            onClick();
-          }
-      })
-    }
-    this.layer.addEventListener('click', this.clickHandler)
+  }
+
+  handleClick([x, y]: [number, number]) {
+    this.buttons.forEach(([sprite, _, onClick]) => {
+      console.log('detected click...')
+      if (x >= sprite.x - sprite.anchor.x * sprite.width && x < sprite.x + (1 - sprite.anchor.x) * sprite.width
+        && y >= sprite.y - sprite.anchor.y * sprite.height && y < sprite.y + (1 - sprite.anchor.y) * sprite.height) {
+          console.log('activating a handler!');
+          onClick();
+        }
+    })
   }
 
   setScreen(screen: MenuScreen) {
@@ -457,14 +584,9 @@ class Menu {
     this.buttons = [];
   }
 
-  private close() {
-    this.cleanup();
-    this.onClose();
-  }
-
-  cleanup() {
+  close() {
     this.clearButtons();
-    this.layer.removeEventListener('click', this.clickHandler);
+    this.onClose();
   }
 }
 
@@ -517,8 +639,21 @@ export class Renderer {
   }
 
   openMenu() {
+    console.log('opneing menu')
+    if (this.menu) {
+      return;
+    }
     this.menu = new Menu(this.app.stage, () => this.menu = undefined);
+    console.log('set menu')
     this.menu.setScreen('pause');
+  }
+
+  closeMenu() {
+    if (!this.menu) {
+      return;
+    }
+    this.menu.close();
+    this.menu = undefined;
   }
 
   updateThrowingTrajectory(player: PlayerData) {

@@ -35,7 +35,8 @@ uniform float wind;
 
 void main() {
   vec2 pixelPos = ((vPos + 1.0) * 0.5) * uScreenSize;
-  pixelPos = vec2(pixelPos.x, uScreenSize.y - pixelPos.y);
+  // pixel rounding to prevent flickering
+  pixelPos = floor(vec2(pixelPos.x, uScreenSize.y - pixelPos.y) * 16.0) / 16.0;
 
   vec2 relativePos = pixelPos - uBlockOffset;
   vec2 blockPos = relativePos / float(uBlockSize);

@@ -410,7 +410,7 @@ export class Renderer {
   constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
     this.world = world;
-
+    
     this.time = 0;
     const baseFilter = new PIXI.Filter();
     const filter = new PIXI.ColorMatrixFilter();

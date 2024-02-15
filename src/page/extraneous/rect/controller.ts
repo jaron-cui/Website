@@ -3,6 +3,7 @@ import { ButtonPressAction, Game } from "./game";
 import { MenuController } from "./menu";
 import { ActionMap, InputButtonMap, InputController, InputState } from "./input";
 import { GUI_TEXTURES, Renderer } from "./render";
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from './constants';
 
 export class Controller {
   game?: Game;
@@ -165,6 +166,11 @@ function inRegion(box: InteractRegion, [x, y]: [number, number]) {
   return x > box.x && x < box.x + box.w && y > box.y && y < box.y + box.h
 }
 
+
+const MENU_X_OFFSET = Math.floor(SCREEN_WIDTH * 0.3);
+const MENU_Y_OFFSET = Math.floor(SCREEN_HEIGHT * 0.2);
+const MENU_TILE_SIZE = 40;
+
 export type MenuAction = 'select' | 'toggle';
 
 export class OptionsMenuController implements ActionMap<Record<MenuAction, never>> {
@@ -223,15 +229,14 @@ export class OptionsMenuController implements ActionMap<Record<MenuAction, never
     const menuScreen = MENU_SCREENS[screen](this.settings);
     console.log('loading rows ' + menuScreen.rows.length);
     menuScreen.rows.forEach((row, i) => row.items.forEach((item, j) => {
-      const x = item.tileX * 50;
-      const y = i * 50;
+      const x = item.tileX * MENU_TILE_SIZE + MENU_X_OFFSET;
       this.boundingBoxes.push({
         x: x,
-        y: y,
-        w: item.tileWidth * 50,
-        h: 50,
+        y: i * MENU_TILE_SIZE + MENU_Y_OFFSET,
+        w: item.tileWidth * MENU_TILE_SIZE,
+        h: MENU_TILE_SIZE,
         onClick: ([cx, _]) => {
-          item.onSelect && item.onSelect((cx - x) / 50, {
+          item.onSelect && item.onSelect((cx - x) / MENU_TILE_SIZE, {
             navigate: screen => screen ? this.setScreen(screen) : this.close('navigate'),
             settings: this.settings,
             focus: () => this.focusCoordinate = [i, j],
@@ -294,11 +299,9 @@ export class MenuRenderer {
       return;
     }
     menu.rows.forEach((row, i) => row.items.forEach(item => {
-      const y = i * 50;
-      const x = item.tileX * 50;
       const sprite = PIXI.AnimatedSprite.from(getMenuItemTexture(item.type));
-      sprite.x = x;
-      sprite.y = y;
+      sprite.x = item.tileX * MENU_TILE_SIZE + MENU_X_OFFSET;
+      sprite.y = i * MENU_TILE_SIZE + MENU_Y_OFFSET;
       sprite.scale.set(4);
       this.layer.addChild(sprite);
       this.sprites.push(sprite);

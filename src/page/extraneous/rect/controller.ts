@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { ButtonPressAction, Game } from "./game";
 import { MenuController } from "./menu";
 import { ActionMap, InputButtonMap, InputController, InputState } from "./input";
-import { GUI_TEXTURES, Renderer } from "./render";
+import { GUI_TEXTURES, Renderer, TextBox } from "./render";
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from './constants';
 
 export class Controller {
@@ -81,24 +81,24 @@ const MENU_SCREENS: Record<string, (settings: Settings) => MenuScreen> = {
       items: [{
         type: 'large-button',
         text: 'Resume',
-        tileX: 0,
-        tileWidth: 12,
+        tileX: 3,
+        tileWidth: 6,
         onSelect: (_, context) => {console.log('resume bt');context.navigate(undefined)}
       }]
     }, {
       items: [{
         type: 'large-button',
         text: 'Controls',
-        tileX: 0,
-        tileWidth: 12,
+        tileX: 3,
+        tileWidth: 6,
         onSelect: (_, context) => {console.log('control but');context.navigate('controls')}
       }]
     }, {
       items: [{
         type: 'large-button',
         text: 'Exit Game',
-        tileX: 0,
-        tileWidth: 12,
+        tileX: 3,
+        tileWidth: 6,
         onSelect: (_, context) => {console.log('exit game but');context.navigate(undefined)}
       }]
     }]
@@ -258,53 +258,34 @@ export class OptionsMenuController implements ActionMap<Record<MenuAction, never
   }
 }
 
-const HMM: InputController<Record<MenuAction, never>> = {
-  inputButtonMap: {
-    select: ['Enter', 'leftclick', 'rightclick'],
-    toggle: ['Escape']
-  },
-  actions: {
-    select: (pressed, inputState) => {
-
-    },
-    toggle: (pressed, inputState) => {
-
-    }
-  },
-  inputState: {
-    buttons: {
-      select: false,
-      toggle: false
-    },
-    cursorPosition: [0, 0]
-  },
-  enabled: true
-}
-
 export class MenuRenderer {
   layer: PIXI.Container;
   sprites: PIXI.Sprite[];
+  text: TextBox[];
 
   constructor(layer: PIXI.Container, settings: Settings) {
     this.layer = layer;
     this.sprites = [];
+    this.text = [];
   }
 
   rebuildMenu(menu?: MenuScreen) {
     this.sprites.forEach(sprite => this.layer.removeChild(sprite));
+    this.text.forEach(text => text.deleteSprites());
     this.sprites = [];
-    console.log('rebuild!')
+    this.text = [];
     if (!menu) {
-      console.log('no men...')
       return;
     }
     menu.rows.forEach((row, i) => row.items.forEach(item => {
-      const sprite = PIXI.AnimatedSprite.from(getMenuItemTexture(item.type));
-      sprite.x = item.tileX * MENU_TILE_SIZE + MENU_X_OFFSET;
-      sprite.y = i * MENU_TILE_SIZE + MENU_Y_OFFSET;
-      sprite.scale.set(4);
-      this.layer.addChild(sprite);
-      this.sprites.push(sprite);
+      const [x, y] = [item.tileX * MENU_TILE_SIZE + MENU_X_OFFSET, i * MENU_TILE_SIZE + MENU_Y_OFFSET];
+      const button = PIXI.AnimatedSprite.from(getMenuItemTexture(item.type));
+      button.x = x;
+      button.y = y;
+      button.scale.set(4);
+      this.layer.addChild(button);
+      this.sprites.push(button);
+      item.text && this.text.push(new TextBox(x, y, item.text, this.layer, 2));
     }));
   }
 }

@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { useEffect, useRef } from 'react';
-import { BoardLocation, BoardSpace, ChessBoard, legalMove, movePiece, placePiece } from './chess';
+import { BoardLocation, BoardSpace, ChessBoard } from './chess';
 
 function frame(x: number, y: number, w: number, h: number) {
   return {
@@ -112,45 +112,6 @@ class Renderer {
   }
 }
 
-function emptyBoard(): ChessBoard {
-  const board = [];
-  for (let y = 0; y < 8; y += 1) {
-    const row = [];
-    for (let x = 0; x < 8; x += 1) {
-      const space: BoardSpace = {
-        potentialMoves: new Set()
-      }
-      row.push(space);
-    }
-    board.push(row);
-  }
-  return {
-    board: board
-  } as ChessBoard;
-}
-
-function setBoard(board: ChessBoard) {
-  board.board[1].forEach((_, x) => placePiece(board, 'freshPawn', 'white', [x, 1]));
-  placePiece(board, 'rook', 'white', [0, 0]);
-  placePiece(board, 'knight', 'white', [1, 0]);
-  placePiece(board, 'bishop', 'white', [2, 0]);
-  placePiece(board, 'queen', 'white', [3, 0]);
-  placePiece(board, 'king', 'white', [4, 0]);
-  placePiece(board, 'bishop', 'white', [5, 0]);
-  placePiece(board, 'knight', 'white', [6, 0]);
-  placePiece(board, 'rook', 'white', [7, 0]);
-
-  board.board[6].forEach((_, x) => placePiece(board, 'freshPawn', 'black', [x, 6]));
-  placePiece(board, 'rook', 'black', [0, 7]);
-  placePiece(board, 'knight', 'black', [1, 7]);
-  placePiece(board, 'bishop', 'black', [2, 7]);
-  placePiece(board, 'queen', 'black', [3, 7]);
-  placePiece(board, 'king', 'black', [4, 7]);
-  placePiece(board, 'bishop', 'black', [5, 7]);
-  placePiece(board, 'knight', 'black', [6, 7]);
-  placePiece(board, 'rook', 'black', [7, 7]);
-}
-
 async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
   const app = new PIXI.Application<HTMLCanvasElement>({ background: '#7acdeb', width: 600, height: 400 });
   // app.renderer.addListener('mousepos', (event: MouseEvent) => console.log(event.clientX));
@@ -162,8 +123,7 @@ async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
   app.stage.eventMode = 'static';
   app.stage.hitArea = app.screen;
 
-  const board = emptyBoard();
-  setBoard(board);
+  const board = ChessBoard.setBoard();
   await loadTextures();
   const renderer = new Renderer(app, board);
   let selected: BoardLocation | undefined;
@@ -176,9 +136,9 @@ async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
     // console.log(selected);
     if (selected) {
       // console.log('moveTo: ' + [x, y]);
-      if (legalMove(board, 'white', selected, [x, y])) {
+      if (ChessBoard.legalMove(board, 'white', selected, [x, y])) {
         // console.log('legal')
-        movePiece(board, selected, [x, y]);
+        ChessBoard.movePiece(board, selected, [x, y]);
         renderer.animateMovement(selected, [x, y]);
       } else {
         

@@ -2,16 +2,16 @@
 
 type Color = 'white' | 'black';
 
-export type ChessPiece = 'freshPawn' | 'pawn' | 'rook' | 'knight' | 'bishop' | 'king' | 'queen';
-
-export type BoardLocation = [number, number];
-
 interface PotentialMove {
   from: BoardLocation;
   // are you obstructed by this square?
   currentlyAllowed: boolean;
   color: Color;
 }
+
+export type ChessPiece = 'freshPawn' | 'pawn' | 'rook' | 'knight' | 'bishop' | 'king' | 'queen';
+
+export type BoardLocation = [number, number];
 
 export interface BoardSpace {
   piece?: {
@@ -25,6 +25,87 @@ type Row = [BoardSpace, BoardSpace, BoardSpace, BoardSpace, BoardSpace, BoardSpa
 
 export interface ChessBoard {
   board: [Row, Row, Row, Row, Row, Row, Row, Row];
+}
+
+export namespace ChessBoard {
+  export function placePiece(board: ChessBoard, piece: ChessPiece, color: Color, [x, y]: BoardLocation) {
+    // clearPieceMoves(board, [x, y]);
+    const space = at(board, x, y) as BoardSpace;
+    space.piece = { name: piece, color: color };
+    cachePieceMoves(board, [x, y]);
+    updateAssociatedPieces(board, [x, y]);
+  }
+
+  export function removePiece(board: ChessBoard, [x, y]: BoardLocation, avoidUpdateOthers?: boolean) {
+    const formerSpace = at(board, x, y) as BoardSpace;
+    formerSpace.piece = undefined;
+    clearPieceMoves(board, [x, y]);
+    if (!avoidUpdateOthers) {
+      updateAssociatedPieces(board, [x, y]);
+    }
+  }
+
+  export function movePiece(board: ChessBoard, [fx, fy]: BoardLocation, [tx, ty]: BoardLocation) {
+    const piece = at(board, fx, fy)?.piece;
+    if (!piece) {
+      return;
+    }
+    removePiece(board, [fx, fy], true);
+    placePiece(board, piece.name === 'freshPawn' ? 'pawn' : piece.name, piece.color, [tx, ty]);
+    updateAssociatedPieces(board, [fx, fy]);
+  }
+
+  export function legalMove(board: ChessBoard, color: Color, from: BoardLocation, [tx, ty]: BoardLocation): boolean {
+    // if move in set of cached moves
+    for (let move of (at(board, tx, ty) as BoardSpace).potentialMoves) {
+      if (sameLocation(move.from, from) && move.currentlyAllowed) {
+        // TODO: check for check
+        return true;
+      }
+    }
+    return false;
+  }
+
+  export function emptyBoard(): ChessBoard {
+    const board = [];
+    for (let y = 0; y < 8; y += 1) {
+      const row = [];
+      for (let x = 0; x < 8; x += 1) {
+        const space: BoardSpace = {
+          potentialMoves: new Set()
+        }
+        row.push(space);
+      }
+      board.push(row);
+    }
+    return {
+      board: board
+    } as ChessBoard;
+  }
+
+  export function setBoard(b?: ChessBoard): ChessBoard {
+    const board = b || emptyBoard();
+    board.board[1].forEach((_, x) => placePiece(board, 'freshPawn', 'white', [x, 1]));
+    placePiece(board, 'rook', 'white', [0, 0]);
+    placePiece(board, 'knight', 'white', [1, 0]);
+    placePiece(board, 'bishop', 'white', [2, 0]);
+    placePiece(board, 'queen', 'white', [3, 0]);
+    placePiece(board, 'king', 'white', [4, 0]);
+    placePiece(board, 'bishop', 'white', [5, 0]);
+    placePiece(board, 'knight', 'white', [6, 0]);
+    placePiece(board, 'rook', 'white', [7, 0]);
+  
+    board.board[6].forEach((_, x) => placePiece(board, 'freshPawn', 'black', [x, 6]));
+    placePiece(board, 'rook', 'black', [0, 7]);
+    placePiece(board, 'knight', 'black', [1, 7]);
+    placePiece(board, 'bishop', 'black', [2, 7]);
+    placePiece(board, 'queen', 'black', [3, 7]);
+    placePiece(board, 'king', 'black', [4, 7]);
+    placePiece(board, 'bishop', 'black', [5, 7]);
+    placePiece(board, 'knight', 'black', [6, 7]);
+    placePiece(board, 'rook', 'black', [7, 7]);
+    return board;
+  }
 }
 
 function forward(color: Color): 1 | -1 {
@@ -153,23 +234,6 @@ function clearPieceMoves(board: ChessBoard, [x, y]: BoardLocation) {
   });
 }
 
-export function removePiece(board: ChessBoard, [x, y]: BoardLocation, avoidUpdateOthers?: boolean) {
-  const formerSpace = at(board, x, y) as BoardSpace;
-  formerSpace.piece = undefined;
-  clearPieceMoves(board, [x, y]);
-  if (!avoidUpdateOthers) {
-    updateAssociatedPieces(board, [x, y]);
-  }
-}
-
-export function placePiece(board: ChessBoard, piece: ChessPiece, color: Color, [x, y]: BoardLocation) {
-  // clearPieceMoves(board, [x, y]);
-  const space = at(board, x, y) as BoardSpace;
-  space.piece = { name: piece, color: color };
-  cachePieceMoves(board, [x, y]);
-  updateAssociatedPieces(board, [x, y]);
-}
-
 function updateAssociatedPieces(board: ChessBoard, [x, y]: BoardLocation) {
   const space = at(board, x, y) as BoardSpace;
   space.potentialMoves.forEach(move => {
@@ -178,27 +242,7 @@ function updateAssociatedPieces(board: ChessBoard, [x, y]: BoardLocation) {
   });
 }
 
-export function movePiece(board: ChessBoard, [fx, fy]: BoardLocation, [tx, ty]: BoardLocation) {
-  const piece = at(board, fx, fy)?.piece;
-  if (!piece) {
-    return;
-  }
-  removePiece(board, [fx, fy], true);
-  placePiece(board, piece.name === 'freshPawn' ? 'pawn' : piece.name, piece.color, [tx, ty]);
-  updateAssociatedPieces(board, [fx, fy]);
-}
-
 function sameLocation([x1, y1]: BoardLocation, [x2, y2]: BoardLocation): boolean {
   return x1 === x2 && y1 === y2;
 }
 
-export function legalMove(board: ChessBoard, color: Color, from: BoardLocation, [tx, ty]: BoardLocation): boolean {
-  // if move in set of cached moves
-  for (let move of (at(board, tx, ty) as BoardSpace).potentialMoves) {
-    if (sameLocation(move.from, from) && move.currentlyAllowed) {
-      // TODO: check for check
-      return true;
-    }
-  }
-  return false;
-}

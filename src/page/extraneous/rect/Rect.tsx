@@ -148,7 +148,7 @@ export const Rect = () => {
   }, []);
 
   return (
-    <div ref={gameRef} onContextMenu={e => e.preventDefault()} onMouseDown={e => e.preventDefault()}>
+    <div ref={gameRef} onContextMenu={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} style={{overflowY: 'hidden'}}>
     </div>
   );
 }

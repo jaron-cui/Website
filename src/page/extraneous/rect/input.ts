@@ -31,26 +31,100 @@ export interface InputController<T> {
   enabled: boolean;
 }
 
+interface FrameInputs {
+  previousPressedButtons: Set<string>;
+  previousMousePosition: [number, number];
+  buttonChanges: Map<string, boolean[]>;
+  newMousePosition: [number, number];
+}
+
 export class InputHandler {
   app: PIXI.Application<HTMLCanvasElement>
   handlers: [any, string, (event: any) => void][];
   // triggers: InputTriggers;
   inputListenerSets: InputController<any>[];
+
+
   cachedActions: [boolean, InputState<any>, (down: boolean, input: InputState<any>) => void][];
   cachedMouseMove: [InputState<any>, (input: InputState<any>) => void][];
 
   previousMousePosition: [number, number];
   currentMousePosition: [number, number];
 
+  frameInputs: FrameInputs;
+
   constructor(app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
     this.handlers = [];
     this.inputListenerSets = [];
+
     this.cachedActions = [];
     this.cachedMouseMove = [];
     this.previousMousePosition = [0, 0];
     this.currentMousePosition = [0, 0];
+
+    this.frameInputs = {
+      previousPressedButtons: new Set(),
+      previousMousePosition: [0, 0],
+      buttonChanges: new Map(),
+      newMousePosition: [0, 0]
+    }
     this.initializeHandlers();
+  }
+
+  cycleFrameInputs() {
+    // update mouse position
+    const [x0, y0] = this.frameInputs.previousMousePosition;
+    const [x1, y1] = this.frameInputs.newMousePosition;
+    this.inputListenerSets.forEach(controller => {
+      (x0 === x1 && y0 === y1) || (controller.onPointerMove && controller.onPointerMove(controller.inputState));
+      controller.inputState.cursorPosition = this.frameInputs.newMousePosition;
+    });
+    // cycle mouse position
+    this.frameInputs.previousMousePosition = this.frameInputs.newMousePosition;
+    for (let [button, states] of this.frameInputs.buttonChanges) {
+      // pull out actions bound to this button
+      const actions: [string, InputState<any>, (pressed: boolean, input: InputState<any>) => void][] = [];
+      this.inputListenerSets.forEach(controller => {
+        // find matching actions based on keybinds
+        controller.enabled && Object.entries(controller.inputButtonMap).forEach(([binding, boundButtons]) => {
+          boundButtons.forEach(boundButton => {
+            if (boundButton === button) {
+              actions.push([binding, controller.inputState, controller.actions[binding]]);
+            }
+          });
+        });
+      });
+
+      // activate buttons each time the state changes
+      let previous = this.frameInputs.previousPressedButtons.has(button);
+      states.forEach(state => {
+        if (state !== previous) {
+          actions.forEach(([binding, input, action]) => {
+            input.buttons[binding] = state;
+            action(state, input);
+          });
+        }
+        previous = state;
+      });
+      // roll over last input state
+      if (states[states.length - 1]) {
+        this.frameInputs.previousPressedButtons.add(button);
+      } else {
+        this.frameInputs.previousPressedButtons.delete(button);
+      }
+      // empty out button changes
+      this.frameInputs.buttonChanges = new Map();
+    }
+  }
+
+  private cacheInput(button: string, down: boolean) {
+    let list = this.frameInputs.buttonChanges.get(button);
+    if (list === undefined) {
+      this.frameInputs.buttonChanges.set(button, [down]);
+    } else {
+      list.push(down);
+    }
   }
 
   registerInputListeners(inputListenerSet: InputController<any>) {
@@ -58,10 +132,11 @@ export class InputHandler {
   }
 
   processInput() {
-    this.cachedActions.forEach(([down, input, action]) => action(down, input));
+    this.cycleFrameInputs();
+    // this.cachedActions.forEach(([down, input, action]) => action(down, input));
     this.cachedActions = [];
-    this.inputListenerSets.forEach(inputSet => inputSet.inputState.cursorPosition = this.currentMousePosition);
-    this.cachedMouseMove.forEach(([input, action]) => action(input));
+    // this.inputListenerSets.forEach(inputSet => inputSet.inputState.cursorPosition = this.currentMousePosition);
+    // this.cachedMouseMove.forEach(([input, action]) => action(input));
     this.cachedMouseMove = [];
   }
 
@@ -69,7 +144,9 @@ export class InputHandler {
   private initializeHandlers() {
     this.clearHandlers();
 
-    const clickHandler = (clickType: 'leftclick' | 'rightclick', down: boolean) => () => this.inputListenerSets.forEach(controller => {
+    const clickHandler = (clickType: 'leftclick' | 'rightclick', down: boolean) => () => {
+      this.cacheInput(clickType, down);
+      this.inputListenerSets.forEach(controller => {
       Object.entries(controller.inputButtonMap).forEach(([binding, inputs]) => {
         inputs.forEach(input => {
           if (input === clickType) {
@@ -78,12 +155,13 @@ export class InputHandler {
           }
         })
       });
-    });
+    })};
     const leftClick = clickHandler('leftclick', true);
     const leftUnClick = clickHandler('leftclick', false);
     const rightClick = clickHandler('rightclick', true);
     const rightUnClick = clickHandler('rightclick', false);
     const keyHandler = (down: boolean) => (event: KeyboardEvent) => {
+      this.cacheInput(event.key, down);
       this.inputListenerSets.forEach(controller => {
         // TODO: probably move this into the proper typing handler...
         if (!down) {
@@ -104,6 +182,8 @@ export class InputHandler {
 
     const scroll = (event: WheelEvent) => {
       const sign = Math.sign(event.deltaY);
+      this.cacheInput(sign > 0 ? MouseAction.scrollup : MouseAction.scrolldown, true);
+      this.cacheInput(sign > 0 ? MouseAction.scrollup : MouseAction.scrolldown, false);
       this.inputListenerSets.forEach(controller => {
         Object.entries(controller.inputButtonMap).forEach(([binding, inputs]) => {
           inputs.forEach(input => {
@@ -117,6 +197,7 @@ export class InputHandler {
     };
     const mouseMove = (event: MouseEvent) => {
       this.currentMousePosition = [event.screenX, event.screenY];
+      this.frameInputs.newMousePosition = [event.screenX, event.screenY];
       // this.inputListenerSets.forEach(controller => {
       //   controller.onPointerMove && this.cachedMouseMove.push([controller.inputState, controller.onPointerMove]);
       // });

@@ -1,4 +1,5 @@
 import { mod } from "../../../util/util";
+import { MenuAction } from "./controller";
 import { Entity } from "./entity";
 import { Player } from "./entity/player";
 import { ActionMap, InputButtonMap, InputController, InputHandler, InputState } from "./input";
@@ -33,6 +34,23 @@ const MENU_NAVIGATION_INPUTS: InputButtonMap<Record<MenuPressAction, never>> = {
   type: ['any']
 }
 
+// TODO: this kinda sucks, fix it
+function hmm(a: ActionMap<Record<MenuAction, never>>): InputController<Record<MenuAction, never>> {return {
+  inputButtonMap: {
+    select: ['Enter', 'leftclick', 'rightclick'],
+    toggle: ['Escape']
+  },
+  actions: a,
+  inputState: {
+    buttons: {
+      select: false,
+      toggle: false
+    },
+    cursorPosition: [0, 0]
+  },
+  enabled: true
+}}
+
 export class Game {
   player: Player;
   world: World;
@@ -45,19 +63,12 @@ export class Game {
   inputHandler: InputHandler;
 
   playerInput: InputController<Record<ButtonPressAction, never>>;
-  menuInput: InputController<Record<MenuPressAction, never>>;
-
-  menu: MenuController;
+  menuInput: InputController<Record<MenuAction, never>>;
 
   constructor(player: Player, world: World, renderer: Renderer, inputHandler: InputHandler) {
     this.player = player;
     this.world = world;
     this.renderer = renderer;
-    this.menu = new MenuController(() => {
-      this.menuInput.enabled = false;
-      this.playerInput.enabled = true;
-    });
-    this.renderer.menuLayer.addChild(this.menu);
     this.entityCount = 0;
     this.actionQueue = [];
     this.terrainOutOfDate = true;
@@ -84,19 +95,7 @@ export class Game {
       },
       enabled: true
     };
-    this.menuInput = {
-      inputButtonMap: MENU_NAVIGATION_INPUTS,
-      actions: this.menu,
-      inputState: {
-        buttons: {
-          select: false,
-          resume: false,
-          type: false
-        },
-        cursorPosition: [0, 0]
-      },
-      enabled: true
-    }
+    this.menuInput = hmm(renderer.men);
     this.inputHandler.registerInputListeners(this.playerInput);
     this.inputHandler.registerInputListeners(this.menuInput);
   }
@@ -211,12 +210,12 @@ export class Game {
         scrollUp: onScroll(1),
         scrollDown: onScroll(-1),
         pause: (pressed: boolean) => {
-          if (pressed) {
-            console.log('pause')
-            this.playerInput.enabled = false;
-            this.menuInput.enabled = true;
-            navigateMain(this.menu);
-          }
+          // if (pressed) {
+          //   console.log('pause')
+          //   this.playerInput.enabled = false;
+          //   this.menuInput.enabled = true;
+          //   navigateMain(this.menu);
+          // }
         }
     };
   }

@@ -26,6 +26,7 @@ export interface InputController<T> {
   inputButtonMap: InputButtonMap<T>;
   actions: ActionMap<T>;
   onType?: (key: string, inputState: InputState<T>) => void;
+  onPointerMove?: (inputState: InputState<T>) => void;
   inputState: InputState<T>;
   enabled: boolean;
 }
@@ -36,12 +37,19 @@ export class InputHandler {
   // triggers: InputTriggers;
   inputListenerSets: InputController<any>[];
   cachedActions: [boolean, InputState<any>, (down: boolean, input: InputState<any>) => void][];
+  cachedMouseMove: [InputState<any>, (input: InputState<any>) => void][];
+
+  previousMousePosition: [number, number];
+  currentMousePosition: [number, number];
 
   constructor(app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
     this.handlers = [];
     this.inputListenerSets = [];
     this.cachedActions = [];
+    this.cachedMouseMove = [];
+    this.previousMousePosition = [0, 0];
+    this.currentMousePosition = [0, 0];
     this.initializeHandlers();
   }
 
@@ -52,6 +60,9 @@ export class InputHandler {
   processInput() {
     this.cachedActions.forEach(([down, input, action]) => action(down, input));
     this.cachedActions = [];
+    this.inputListenerSets.forEach(inputSet => inputSet.inputState.cursorPosition = this.currentMousePosition);
+    this.cachedMouseMove.forEach(([input, action]) => action(input));
+    this.cachedMouseMove = [];
   }
 
   // TODO: maybe perform grouping so that each controller isn't fully iterated through for every input
@@ -102,10 +113,13 @@ export class InputHandler {
             }
           })
         })
-      })
+      });
     };
     const mouseMove = (event: MouseEvent) => {
-      this.inputListenerSets.forEach(inputSet => inputSet.inputState.cursorPosition = [event.screenX, event.screenY])
+      this.currentMousePosition = [event.screenX, event.screenY];
+      // this.inputListenerSets.forEach(controller => {
+      //   controller.onPointerMove && this.cachedMouseMove.push([controller.inputState, controller.onPointerMove]);
+      // });
     };
 
     this.app.stage.addEventListener('mousedown', leftClick);

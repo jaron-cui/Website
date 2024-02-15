@@ -9,6 +9,7 @@ import { PlayerData } from './entity/player';
 import { ActionMap, InputState } from './input';
 import { MenuController, navigateMain } from './menu';
 import { GRAPHICAL_SCALE, SCREEN_HEIGHT, SCREEN_WIDTH } from './constants';
+import { MenuRenderer, OptionsMenuController, Settings } from './controller';
 // END EXPERIMENT IMPORTS
 
 export const SPRITE_TEXTURES: Record<string, SpriteSet> = {};
@@ -407,6 +408,8 @@ export class Renderer {
   inventorySlots: InventorySlotSprites[];
   trajectorySprites: TrajectorySprites;
 
+  men: OptionsMenuController;
+
   constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
     this.world = world;
@@ -443,6 +446,25 @@ export class Renderer {
     }
     this.menuLayer = new PIXI.Container();
     this.app.stage.addChild(this.menuLayer);
+
+    const settings: Settings = {
+      keybinds: {
+        useMain: ['w', 'a'],
+        useSecondary: [],
+        up: ['up'],
+        left: [],
+        down: [],
+        right: [],
+        jump: [],
+        control: [],
+        shift: [],
+        scrollUp: [],
+        scrollDown: [],
+        pause: []
+      }
+    }
+    const m = new MenuRenderer(this.menuLayer, settings);
+    this.men = new OptionsMenuController(m, settings);
   }
 
   updateThrowingTrajectory(player: PlayerData) {

@@ -239,6 +239,9 @@ function createInitialUniforms() {
   };
 }
 
+const MEDIUM_LETTERS = new Set('bcdefghjknopqrstuvxyz'.split('').map(s => s.charCodeAt(0)));
+const THIN_LETTERS = new Set('ilI'.split('').map(s => s.charCodeAt(0)));
+
 export class TextBox {
   x: number;
   y: number;
@@ -282,14 +285,23 @@ export class TextBox {
 
   private rerender() {
     this.deleteSprites();
+    const margin = 1;
+    let offset = this.x;
     for (let i = 0; i < this.text.length; i += 1) {
       const character = this.text.charCodeAt(i);
       const sprite = PIXI.Sprite.from(GUI_TEXTURES['font'].frames[character - 32]);
-      sprite.x = this.x + this.scale * 7 * i;
+      let letterWidth = 5;
+      if (MEDIUM_LETTERS.has(character)) {
+        letterWidth = 3;
+      } else if (THIN_LETTERS.has(character)) {
+        letterWidth = 3;
+      }
+      sprite.x = offset + margin * this.scale;
       sprite.y = this.y;
       sprite.scale.set(this.scale);
       this.layer.addChild(sprite);
       this.sprites.push(sprite);
+      offset += letterWidth * this.scale + 2 * margin * this.scale;
     }
   }
 

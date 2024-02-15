@@ -138,6 +138,15 @@ export class Game {
       this.renderer.updateTerrain();
       this.terrainOutOfDate = false;
     }
+
+    // TODO: this is kinda bad. fix!
+    if (this.renderer.men.currentScreenID === undefined) {
+      console.log('disalbe')
+      this.renderer.setPauseFilter(false);
+    } else {
+      console.log('albe')
+      this.renderer.setPauseFilter(true);
+    }
   }
 
   updateTrajectory() {
@@ -210,12 +219,7 @@ export class Game {
         scrollUp: onScroll(1),
         scrollDown: onScroll(-1),
         pause: (pressed: boolean) => {
-          // if (pressed) {
-          //   console.log('pause')
-          //   this.playerInput.enabled = false;
-          //   this.menuInput.enabled = true;
-          //   navigateMain(this.menu);
-          // }
+          // console.log('pausse')
         }
     };
   }

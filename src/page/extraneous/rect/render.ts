@@ -397,6 +397,23 @@ interface InventorySlotSprites {
   count: TextBox;
 }
 
+class Effects {
+  blur: PIXI.BlurFilter;
+  color: PIXI.ColorMatrixFilter;
+
+  constructor(layer: PIXI.Container, area: PIXI.Rectangle) {
+    const baseFilter = new PIXI.Filter();
+    this.blur = new PIXI.BlurFilter(2);
+    this.color = new PIXI.ColorMatrixFilter();
+    this.color.contrast(0.1, true);
+    this.color.brightness(0.75, true);
+    layer.filters = [baseFilter, this.blur, this.color];
+    layer.filterArea = area;
+    this.blur.enabled = false;
+    this.color.enabled = false;
+  }
+}
+
 export class Renderer {
   app: PIXI.Application<HTMLCanvasElement>;
 
@@ -408,6 +425,8 @@ export class Renderer {
   inventorySlots: InventorySlotSprites[];
   trajectorySprites: TrajectorySprites;
 
+  effects: Effects;
+
   men: OptionsMenuController;
 
   constructor(world: World, app: PIXI.Application<HTMLCanvasElement>) {
@@ -415,14 +434,6 @@ export class Renderer {
     this.world = world;
     
     this.time = 0;
-    const baseFilter = new PIXI.Filter();
-    const filter = new PIXI.ColorMatrixFilter();
-    filter.desaturate();
-    const filter2 = new PIXI.BlurFilter(2);
-    this.app.stage.filters = [baseFilter, filter, filter2];
-    filter.enabled = false;
-    filter2.enabled = false;
-    this.app.stage.filterArea = this.app.renderer.screen;
 
     const shader = PIXI.Shader.from(vertexShader, fragmentShader, createInitialUniforms());
     this.terrainLayer = new PIXI.Mesh(geometry, shader);
@@ -444,6 +455,10 @@ export class Renderer {
       sprites: [],
       spriteGroup: particles
     }
+
+    const effectLayer = terrainLayer;//new PIXI.Container();
+    // this.app.stage.addChild(effectLayer);
+    this.effects = new Effects(effectLayer, this.app.renderer.screen);
     this.menuLayer = new PIXI.Container();
     this.app.stage.addChild(this.menuLayer);
 
@@ -465,6 +480,16 @@ export class Renderer {
     }
     const m = new MenuRenderer(this.menuLayer, settings);
     this.men = new OptionsMenuController(m, settings);
+  }
+
+  setPauseFilter(on: boolean) {
+    if (on) {
+      this.effects.blur.enabled = true;
+      this.effects.color.enabled = true;
+    } else {
+      this.effects.blur.enabled = false;
+      this.effects.color.enabled = false;
+    }
   }
 
   updateThrowingTrajectory(player: PlayerData) {

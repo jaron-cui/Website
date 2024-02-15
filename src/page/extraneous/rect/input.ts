@@ -44,24 +44,12 @@ export class InputHandler {
   // triggers: InputTriggers;
   inputListenerSets: InputController<any>[];
 
-
-  cachedActions: [boolean, InputState<any>, (down: boolean, input: InputState<any>) => void][];
-  cachedMouseMove: [InputState<any>, (input: InputState<any>) => void][];
-
-  previousMousePosition: [number, number];
-  currentMousePosition: [number, number];
-
   frameInputs: FrameInputs;
 
   constructor(app: PIXI.Application<HTMLCanvasElement>) {
     this.app = app;
     this.handlers = [];
     this.inputListenerSets = [];
-
-    this.cachedActions = [];
-    this.cachedMouseMove = [];
-    this.previousMousePosition = [0, 0];
-    this.currentMousePosition = [0, 0];
 
     this.frameInputs = {
       previousPressedButtons: new Set(),
@@ -89,7 +77,7 @@ export class InputHandler {
         // find matching actions based on keybinds
         controller.enabled && Object.entries(controller.inputButtonMap).forEach(([binding, boundButtons]) => {
           boundButtons.forEach(boundButton => {
-            if (boundButton === button) {
+            if (boundButton.toLowerCase() === button.toLowerCase() || boundButton === 'any') {
               actions.push([binding, controller.inputState, controller.actions[binding]]);
             }
           });
@@ -133,29 +121,13 @@ export class InputHandler {
 
   processInput() {
     this.cycleFrameInputs();
-    // this.cachedActions.forEach(([down, input, action]) => action(down, input));
-    this.cachedActions = [];
-    // this.inputListenerSets.forEach(inputSet => inputSet.inputState.cursorPosition = this.currentMousePosition);
-    // this.cachedMouseMove.forEach(([input, action]) => action(input));
-    this.cachedMouseMove = [];
   }
 
   // TODO: maybe perform grouping so that each controller isn't fully iterated through for every input
   private initializeHandlers() {
     this.clearHandlers();
 
-    const clickHandler = (clickType: 'leftclick' | 'rightclick', down: boolean) => () => {
-      this.cacheInput(clickType, down);
-      this.inputListenerSets.forEach(controller => {
-      Object.entries(controller.inputButtonMap).forEach(([binding, inputs]) => {
-        inputs.forEach(input => {
-          if (input === clickType) {
-            controller.inputState.buttons[binding] = down;
-            controller.enabled && this.cachedActions.push([down, controller.inputState, controller.actions[binding]]);
-          }
-        })
-      });
-    })};
+    const clickHandler = (clickType: 'leftclick' | 'rightclick', down: boolean) => () => this.cacheInput(clickType, down);
     const leftClick = clickHandler('leftclick', true);
     const leftUnClick = clickHandler('leftclick', false);
     const rightClick = clickHandler('rightclick', true);
@@ -167,40 +139,18 @@ export class InputHandler {
         if (!down) {
           controller.enabled && controller.onType && controller.onType(event.key, controller.inputState);
         }
-        Object.entries(controller.inputButtonMap).forEach(([binding, inputs]) => {
-          inputs.forEach(input => {
-            if (input === 'any' || (input.toLowerCase() === event.key.toLowerCase()) && controller.inputState.buttons[binding] !== down) {
-              controller.inputState.buttons[binding] = down;
-              controller.enabled && this.cachedActions.push([down, controller.inputState, controller.actions[binding]]);
-            }
-          })
-        });
       });
     }
     const keyDown = keyHandler(true);
     const keyUp = keyHandler(false);
 
     const scroll = (event: WheelEvent) => {
-      const sign = Math.sign(event.deltaY);
-      this.cacheInput(sign > 0 ? MouseAction.scrollup : MouseAction.scrolldown, true);
-      this.cacheInput(sign > 0 ? MouseAction.scrollup : MouseAction.scrolldown, false);
-      this.inputListenerSets.forEach(controller => {
-        Object.entries(controller.inputButtonMap).forEach(([binding, inputs]) => {
-          inputs.forEach(input => {
-            if ((sign > 0 && input === MouseAction.scrollup) || (sign < 0 && input === MouseAction.scrolldown)) {
-              this.cachedActions.push([true, controller.inputState, controller.actions[binding]]);
-              this.cachedActions.push([false, controller.inputState, controller.actions[binding]]);
-            }
-          })
-        })
-      });
+      const scroll = Math.sign(event.deltaY) > 0 ? MouseAction.scrollup : MouseAction.scrolldown;
+      this.cacheInput(scroll, true);
+      this.cacheInput(scroll, false);
     };
     const mouseMove = (event: MouseEvent) => {
-      this.currentMousePosition = [event.screenX, event.screenY];
       this.frameInputs.newMousePosition = [event.screenX, event.screenY];
-      // this.inputListenerSets.forEach(controller => {
-      //   controller.onPointerMove && this.cachedMouseMove.push([controller.inputState, controller.onPointerMove]);
-      // });
     };
 
     this.app.stage.addEventListener('mousedown', leftClick);

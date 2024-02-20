@@ -2,10 +2,12 @@ import { ExperienceInfo, ProjectInfo } from "./types";
 import links from '../data/links.json';
 import projects from '../data/projects.json';
 import experiences from '../data/experiences.json';
+import { NEW_PROJECTS } from "./projects";
 
 export const LINKS = links;
 
-export const PROJECTS: ProjectInfo[] = projects as ProjectInfo[];
+export const LEGACY_PROJECTS: ProjectInfo[] = projects.map(project => ({ legacy: true, ...project })) as ProjectInfo[];
+export const PROJECTS: ProjectInfo[] = [...LEGACY_PROJECTS, ...NEW_PROJECTS];
 
 const projectMap: {[key in string]: ProjectInfo} = {};
 PROJECTS.forEach(project => projectMap[project.id] = project);

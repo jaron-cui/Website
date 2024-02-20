@@ -23,7 +23,7 @@ function searchFor(search: string) {
       dateToString(project.date),
       project.title,
       ...getRelatedTech(project.technologies),
-      ...project.features
+      ...(project.legacy ? project.features : [])
     ];
 
     return stringsContain(strings, search);

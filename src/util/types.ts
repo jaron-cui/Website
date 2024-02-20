@@ -1,4 +1,5 @@
-export type ProjectInfo = {
+export type LegacyProjectInfo = {
+  legacy: true;
   id: string;
   title: string;
   date: string;
@@ -11,6 +12,19 @@ export type ProjectInfo = {
   clip?: string;
   gallery?: Media[];
 };
+
+export type NewProjectInfo = {
+  legacy: false;
+  id: string;
+  title: string;
+  date: string;
+  status: ProjectStatus;
+  technologies: string[];
+  repository?: string;
+  page: (fullpage: boolean) => JSX.Element;
+};
+
+export type ProjectInfo = LegacyProjectInfo | NewProjectInfo;
 
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'ON_HOLD';
 

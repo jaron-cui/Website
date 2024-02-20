@@ -7,18 +7,29 @@ import { processParagraph, wrapContent } from "../util/util";
 import { LinkButton } from './Buttons';
 import ProjectEntryGallery from './ProjectEntryGallery';
 import ProjectEntryLabel, { ProjectEntryProps } from './ProjectEntryLabel';
+import { NewProjectInfo } from '../util/types';
+
+type NewProjectEntryProps = NewProjectInfo & {
+  open: boolean;
+  setOpen: (value: boolean) => void;
+}
+
+function NewProjectEntry(props: NewProjectEntryProps) {
+  return props.page(false);
+}
 
 export default function ProjectEntry(props: ProjectEntryProps & { locked?: boolean }) {
   const [content, setContent] = useState<any>();
 
+  
   useEffect(() => {
-    if (props.open && props.clip && !content) {
+    if (props.legacy && props.open && props.clip && !content) {
       setContent(
         <Clip link={props.clip}/>
       );
     }
   }, [props.open]);
-  
+
   return (
     <div style={{
       ...DEFAULT_FONT,
@@ -36,21 +47,29 @@ export default function ProjectEntry(props: ProjectEntryProps & { locked?: boole
         </span>
       </div>
       <Collapse in={props.open}>
-        <div style={{padding: '20px'}}>
-          <div>
-            <h4>Features</h4>
-            <ul>
-              {props.features.map((feature, i) => <li key={i}>{feature}</li>)}
-            </ul>
-          </div>
-          {props.gallery && wrapContent(<ProjectEntryGallery media={props.gallery}/>)}
-          {props.video && wrapContent(<iframe width="768" height="432" src={props.video}></iframe>)}
-          {props.clip && wrapContent(content)}
-          <div style={{paddingTop: '10px'}}>
-            <h4>Description</h4>
-            {props.paragraphs.map(processParagraph)}
-          </div>
-        </div>
+        {
+          props.legacy ? (
+            <div style={{padding: '20px'}}>
+              <div>
+                <h4>Features</h4>
+                <ul>
+                  {props.features.map((feature, i) => <li key={i}>{feature}</li>)}
+                </ul>
+              </div>
+              {props.gallery && wrapContent(<ProjectEntryGallery media={props.gallery}/>)}
+              {props.video && wrapContent(<iframe width="768" height="432" src={props.video}></iframe>)}
+              {props.clip && wrapContent(content)}
+              <div style={{paddingTop: '10px'}}>
+                <h4>Description</h4>
+                {props.paragraphs.map(processParagraph)}
+              </div>
+            </div>
+          ) : (
+            <div style={{padding: '20px'}}>
+              <NewProjectEntry {...props}/>
+            </div>
+          )
+        }
       </Collapse>
     </div>
   );

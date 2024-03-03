@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 
-export default function WidthSwitch<T>(
-  { props, Wide, Narrow, breakpoint }: { props: T, Wide: (props: T) => JSX.Element, Narrow: (props: T) => JSX.Element, breakpoint: number }
+export default function WidthSwitch(
+  { breakpoint, children }: { breakpoint?: number, children: JSX.Element[] }
 ) {
+  const [Wide, Narrow] = children;
   const [width, setWidth] = useState<number>(window.innerWidth);
   
   useEffect(() => {
@@ -11,5 +12,5 @@ export default function WidthSwitch<T>(
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
-  return width > breakpoint ? <Wide {...props}/> : <Narrow {...props}/>;
+  return width > (breakpoint || 600) ? Wide : Narrow;
 }

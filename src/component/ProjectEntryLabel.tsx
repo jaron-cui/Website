@@ -1,7 +1,7 @@
 import { Button } from "@mui/material";
 import { BUTTON_STYLE, CENTERED_VERTICAL, DEFAULT_FONT, TRUNCATE_TEXT } from "../util/styles";
 import { ProjectInfo, ProjectStatus } from "../util/types";
-import { dateToString } from "../util/util";
+import { formatDateString } from "../util/util";
 import WidthSwitch from "./WidthSwitch";
 
 export type ProjectEntryProps = ProjectInfo & {
@@ -49,7 +49,7 @@ function Header({ title, technologies }: { title: string, technologies: string[]
 
 function Date({ date }: { date: string }) {
   return (
-    <i>{dateToString(date)}</i>
+    <i>{formatDateString(date)}</i>
   );
 }
 
@@ -110,11 +110,9 @@ function NarrowProjectEntryLabel(props: ProjectEntryProps & { locked?: boolean }
 
 export default function ProjectEntryLabel(props: ProjectEntryProps & { locked?: boolean }) {
   return (
-    <WidthSwitch
-      props={props}
-      Wide={WideProjectEntryLabel}
-      Narrow={NarrowProjectEntryLabel}
-      breakpoint={600}
-    />
+    <WidthSwitch>
+      <WideProjectEntryLabel {...props}/>
+      <NarrowProjectEntryLabel {...props}/>
+    </WidthSwitch>
   );
 }

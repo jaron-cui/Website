@@ -101,5 +101,8 @@ function WideNavigation({ currentPath }: { currentPath: string }) {
 }
 
 export default function Navigation(props: { currentPath: string }) {
-  return <WidthSwitch breakpoint={600} Narrow={NarrowNavigation} Wide={WideNavigation} props={props} />
+  return <WidthSwitch>
+    <WideNavigation {...props}/>
+    <NarrowNavigation {...props}/>
+  </WidthSwitch>
 }

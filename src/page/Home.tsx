@@ -55,7 +55,7 @@ export default function Home() {
             </p>
           </Col>
           <Col xs={2}>
-            <img src='./portrait.jpg' alt='Portrait' style={{
+            <img src='portrait-square.jpg' alt='Portrait' style={{
               width: '150px', height: '150px', margin: '20px', borderRadius: '50%'
             }}/>
           </Col>

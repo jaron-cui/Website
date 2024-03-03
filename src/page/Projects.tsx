@@ -1,6 +1,6 @@
 import { PROJECTS } from '../util/constants';
 import { ProjectInfo } from '../util/types';
-import { dateToString, getRelatedTech, stringsContain } from '../util/util';
+import { formatDateString, getRelatedTech, stringsContain } from '../util/util';
 import ProjectEntry from '../component/ProjectEntry';
 import SearchableEntries from '../component/SearchableEntries';
 
@@ -20,7 +20,7 @@ export default function Projects({ initialSearch }: { initialSearch?: string }) 
 function searchFor(search: string) {
   return function matchProject(project: ProjectInfo) {
     const strings: string[] = [
-      dateToString(project.date),
+      formatDateString(project.date),
       project.title,
       ...getRelatedTech(project.technologies),
       ...(project.legacy ? project.features : [])

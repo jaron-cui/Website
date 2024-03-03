@@ -14,8 +14,12 @@ export function wrapContent(content: any) {
   );
 }
 
-export function dateToString(date: string) {
-  return new Date(`${date}T00:00:00`).toLocaleString('default', {
+export function formatDateString(date: string) {
+  return dateToString(new Date(`${date}T00:00:00`));
+}
+
+export function dateToString(date: Date) {
+  return date.toLocaleString('default', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -29,7 +33,7 @@ export function isSemesterTimeframe(timeframe: Timeframe): timeframe is Semester
 export function formatTimeframe(timeframe: Timeframe) {
   return isSemesterTimeframe(timeframe) ?
     timeframe.semesters.join(' | ') :
-    `${dateToString(timeframe.start)} - ${dateToString(timeframe.end)}`;
+    `${formatDateString(timeframe.start)} - ${formatDateString(timeframe.end)}`;
 }
 
 const SEASON_TO_DATE = {

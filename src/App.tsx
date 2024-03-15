@@ -15,6 +15,7 @@ import Tetris from './page/extraneous/Tetris';
 import Groc from './page/extraneous/Grocery';
 import { Rect } from './page/extraneous/rect/Rect';
 import { Chess } from './page/extraneous/chess/view';
+import { ConnectFour } from './page/extraneous/connect-four/view';
 
 const paths = [
   ['/', () => <Home />],
@@ -30,7 +31,8 @@ const paths = [
   ['/#/tetris', () => <Tetris />],
   ['/#/screen', () => <Groc />],
   ['/#/rect', () => <Rect />],
-  ['/#/chess', () => <Chess/>]
+  ['/#/chess', () => <Chess/>],
+  ['/#/connect-four', () => <ConnectFour/>]
 ]
 
 function App() {

@@ -62,6 +62,8 @@ export class ConnectFourRenderer {
     this.app.stage.addChild(this.pieceLayer, this.slotLayer);
 
     this.ongoingAnimations = new Set();
+    
+    this.initSprites(board);
 
     // const boardTex = PIXI.BaseTexture.from('chessboard.png');
     // boardTex.scaleMode = PIXI.SCALE_MODES.NEAREST;
@@ -101,22 +103,22 @@ export class ConnectFourRenderer {
   }
 
   update() {
-    const g = 0.01;
+    const g = 0.04;
     const remove: PieceAnimation[] = [];
     this.ongoingAnimations.forEach(animation => {
       animation.rowCoordinate += animation.velocity;
       if (animation.rowCoordinate > animation.rowDestination) {
         animation.rowCoordinate = animation.rowDestination;
-        if (animation.velocity < 0.02) {
+        if (animation.velocity < 0.01) {
           remove.push(animation);
         } else {
-          animation.velocity *= -0.3;
+          animation.velocity *= -0.4;
         }
       }
       animation.velocity += g;
       animation.piece.y = ((animation.rowCoordinate + 0.5) * 17) * 4;
     });
-    remove.forEach(this.ongoingAnimations.delete);
+    remove.forEach(animation => this.ongoingAnimations.delete(animation));
   }
 
   startMoveAnimation(player: number, row: number, column: number) {
@@ -137,7 +139,7 @@ export class ConnectFourRenderer {
       piece: sprite,
       rowCoordinate: startHeight,
       rowDestination: row,
-      velocity: 0
+      velocity: 0.1
     });
   }
 }

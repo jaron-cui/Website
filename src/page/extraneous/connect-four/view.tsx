@@ -17,7 +17,13 @@ async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
   await ConnectFourRenderer.loadTextures();
   const renderer = new ConnectFourRenderer(app, board);
 
+  let boo = 6;
+  let clicked = false;
   app.stage.addEventListener('click', event => {
+    if (boo > 0) {
+      clicked = true;
+    }
+    boo -= 1;
     // const [x, y]: BoardLocation = [Math.floor(event.screenX / 50), Math.floor(event.screenY / 50)] as BoardLocation;
     // if (x < 0 || x >= 8 || y < 0 || y >= 8) {
     //   return;
@@ -40,7 +46,16 @@ async function createApp(): Promise<PIXI.Application<HTMLCanvasElement>> {
     // }
   })
 
-  app.ticker.add(delta => { renderer.update() });
+  app.ticker.add(delta => { 
+    renderer.update();
+    if (clicked) {
+      clicked = false;
+      const player = board.playerTurn;
+      const row = ConnectFourBoard.move(board, 2);
+      console.log('row ' + row);
+      renderer.startMoveAnimation(player, row, 2);
+    }
+  });
   return app;
 }
 

@@ -20,12 +20,12 @@ export namespace ConnectFourBoard {
     if (!canMove(board, column)) {
       throw Error('Illegal move.');
     }
-    let landedRow = board.slots.length - 1;
-    for (let row = 0; row < board.slots.length - 1; row += 1) {
-      if (board.slots[row][column + 1] !== undefined) {
-        landedRow = row;
+    let landedRow = 0;
+    for (let row = 0; row < board.slots.length; row += 1) {
+      if (board.slots[row][column] !== undefined) {
         break;
       }
+      landedRow = row;
     }
     board.slots[landedRow][column] = board.playerTurn;
     board.playerTurn = (board.playerTurn + 1) % board.playerCount;

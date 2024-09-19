@@ -73,7 +73,7 @@
     "date": "2022-03-06",
     "status": "COMPLETED",
     "technologies": ["Rust", "Nannou"],
-    "clip": "https://drive.google.com/uc?export=download&id=14uJ6_58N_Oi3TRHTWGL-zIMZR6YP8dl8",
+    "clip": "https://drive.google.com/file/d/14uJ6_58N_Oi3TRHTWGL-zIMZR6YP8dl8/preview?loop=1",
     "features": [
       "Algebraically-resolved collisions",
       "Gravity",
@@ -153,7 +153,7 @@
     "date": "2021-04-15",
     "status": "COMPLETED",
     "technologies": ["Java"],
-    "clip": "https://drive.google.com/uc?export=download&id=1jYfMvI46QrOYmRXe764Nlq3pmSBrfTjS",
+    "clip": "https://drive.google.com/file/d/1jYfMvI46QrOYmRXe764Nlq3pmSBrfTjS/preview",
     "features": [
       "Orthogonal maze generation",
       "Hexagonal maze generation",
@@ -177,7 +177,7 @@
     "date": "2021-03-24",
     "status": "COMPLETED",
     "technologies": ["Java"],
-    "clip": "https://drive.google.com/uc?export=download&id=1rM-qhn94SdljSHCZszBRe20AeS5wjC2P",
+    "clip": "https://drive.google.com/file/d/1rM-qhn94SdljSHCZszBRe20AeS5wjC2P/preview",
     "features": [
       "Vertical and horizontal seam carving",
       "Image import/export",
@@ -218,7 +218,7 @@
     "date": "2022-07-17",
     "status": "ON_HOLD",
     "technologies": ["C++", "SFML"],
-    "clip": "https://drive.google.com/uc?export=download&id=1ReWX4WrXyg7f0TGS8U7dbxFbKpKYp-zA",
+    "clip": "https://drive.google.com/file/d/1ReWX4WrXyg7f0TGS8U7dbxFbKpKYp-zA/preview",
     "features": [
       "Spring physics!"
     ],

@@ -122,7 +122,8 @@ export function processParagraph(paragraph: string) {
 
 export function toDownloadLink(link: string) {
   const parts = link.match(/\/d\/([^\/]+)\/view/) as string[];
-  return 'https://drive.google.com/uc?export=download&id=FILEID'.replace('FILEID', parts[1]);
+  https://lh3.googleusercontent.com/d/1QMB-Dw8Lf-U1raDzSS_p_09l71cFe7V2=w800?authuser=0
+  return 'https://lh3.googleusercontent.com/d/FILEID=w800?authuser=0'.replace('FILEID', parts[1]);
 }
 
 export function mod(n: number, m: number) {

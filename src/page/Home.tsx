@@ -50,7 +50,7 @@ export default function Home() {
             <h3>Student at Northeastern University</h3>
             <hr/>
             <p>
-              I'm a senior at Northeastern University interested in Computer Science and Robotics. Why?
+              I'm a Northeastern University graduate and NYU Masters student interested in Computer Science and Robotics. Why?
               Because I love to build things, both physically and in code! Here's what I've been working on lately:
             </p>
           </Col>

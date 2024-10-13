@@ -108,7 +108,7 @@ export const NEW_PROJECTS: NewProjectInfo[] = [
     id: 'robotic-hand',
     title: 'Robotic Hand',
     date: '2024-02-01',
-    status: 'ACTIVE',
+    status: 'COMPLETED',
     repository: 'https://github.com/jaron-cui/robotic-hand',
     technologies: ['Python', '3D Printing', 'CAD', 'Computer Aided Design', 'Fusion360', 'Blender'],
     page: fullscreen => {
